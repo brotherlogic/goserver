@@ -2,6 +2,7 @@ package goserver
 
 import (
 	"google.golang.org/grpc"
+	"log"
 
 	pb "github.com/brotherlogic/discovery/proto"
 )
@@ -25,4 +26,9 @@ func (s *GoServer) RegisterServer(external bool) {
 
 func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool) int32 {
 	return s.registerServer(IP, servername, external, grpcDialler{}, mainBuilder{})
+}
+
+// Serve Runs the server
+func (s *GoServer) Serve() {
+	log.Printf("%v is serving!", s)
 }
