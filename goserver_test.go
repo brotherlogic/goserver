@@ -55,7 +55,7 @@ func (clientBuilder failingBuilder) NewDiscoveryServiceClient(conn *grpc.ClientC
 
 func TestFailToDial(t *testing.T) {
 	server := GoServer{}
-	madeupport := server.registerServer("madeup", "madeup", failingDialler{}, passingBuilder{})
+	madeupport := server.registerServer("madeup", "madeup", false, failingDialler{}, passingBuilder{})
 
 	if madeupport > 0 {
 		t.Errorf("Dial failure did not lead to bad port")
@@ -64,7 +64,7 @@ func TestFailToDial(t *testing.T) {
 
 func TestFailToRegister(t *testing.T) {
 	server := GoServer{}
-	madeupport := server.registerServer("madeup", "madeup", passingDialler{}, failingBuilder{})
+	madeupport := server.registerServer("madeup", "madeup", false, passingDialler{}, failingBuilder{})
 
 	if madeupport > 0 {
 		t.Errorf("Dial failure did not lead to bad port")
@@ -74,9 +74,16 @@ func TestFailToRegister(t *testing.T) {
 
 func TestRegisterServer(t *testing.T) {
 	server := GoServer{}
-	madeupport := server.registerServer("madeup", "madeup", passingDialler{}, passingBuilder{})
+	madeupport := server.registerServer("madeup", "madeup", false, passingDialler{}, passingBuilder{})
 
 	if madeupport != 35 {
 		t.Errorf("Port number is wrong: %v", madeupport)
+	}
+}
+
+func TestGetIP(t *testing.T) {
+	ip := getLocalIP()
+	if ip == "" || ip == "127.0.0.1" {
+		t.Errorf("Get IP is returning the wrong address: %v", ip)
 	}
 }
