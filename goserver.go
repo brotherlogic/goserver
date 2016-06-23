@@ -4,6 +4,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"log"
+	"net"
 	"strconv"
 
 	pb "github.com/brotherlogic/discovery/proto"
@@ -16,6 +17,8 @@ const (
 
 // GoServer The basic server construct
 type GoServer struct {
+	servername string
+	port       int32
 }
 
 type dialler interface {
@@ -26,8 +29,26 @@ type clientBuilder interface {
 	NewDiscoveryServiceClient(conn *grpc.ClientConn) pb.DiscoveryServiceClient
 }
 
+func getLocalIP() string {
+	ifaces, _ := net.Interfaces()
+
+	var ip net.IP
+	for _, i := range ifaces {
+		addrs, _ := i.Addrs()
+
+		for _, addr := range addrs {
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			}
+		}
+	}
+
+	return ip.String()
+}
+
 // RegisterServer Registers a server with the system and gets the port number it should use
-func (s *GoServer) registerServer(IP string, servername string, dialler dialler, builder clientBuilder) int32 {
+func (s *GoServer) registerServer(IP string, servername string, external bool, dialler dialler, builder clientBuilder) int32 {
 	conn, err := dialler.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
 	if err != nil {
 		log.Printf("Could not connect: %v", err)
@@ -37,7 +58,7 @@ func (s *GoServer) registerServer(IP string, servername string, dialler dialler,
 	defer conn.Close()
 	registry := builder.NewDiscoveryServiceClient(conn)
 
-	entry := pb.RegistryEntry{Ip: IP, Name: servername}
+	entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external}
 	r, err := registry.RegisterService(context.Background(), &entry)
 	if err != nil {
 		log.Printf("Could not register service: %v", err)
