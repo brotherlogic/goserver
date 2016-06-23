@@ -12,7 +12,7 @@ import (
 
 const (
 	registryIP   = "10.0.1.17"
-	registryPort = 50052
+	registryPort = 50055
 )
 
 // GoServer The basic server construct
