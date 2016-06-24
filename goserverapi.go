@@ -3,6 +3,8 @@ package goserver
 import (
 	"google.golang.org/grpc"
 	"log"
+	"net"
+	"strconv"
 
 	pb "github.com/brotherlogic/discovery/proto"
 )
@@ -29,6 +31,10 @@ func (s *GoServer) getRegisteredServerPort(IP string, servername string, externa
 }
 
 // Serve Runs the server
-func (s *GoServer) Serve() {
+func (s *GoServer) Serve(port int) {
 	log.Printf("%v is serving!", s)
+	lis, _ := net.Listen("tcp", ":"+strconv.Itoa(int(s.port)))
+	server := grpc.NewServer()
+	s.Register(server)
+	server.Serve(lis)
 }

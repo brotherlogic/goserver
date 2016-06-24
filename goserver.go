@@ -21,6 +21,11 @@ type GoServer struct {
 	port       int32
 }
 
+// Register Registers grpc endpoints
+func (s *GoServer) Register(server *grpc.Server) {
+	// To be extended by other classes
+}
+
 type dialler interface {
 	Dial(host string, opts ...grpc.DialOption) (*grpc.ClientConn, error)
 }

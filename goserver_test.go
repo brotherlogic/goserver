@@ -87,3 +87,8 @@ func TestGetIP(t *testing.T) {
 		t.Errorf("Get IP is returning the wrong address: %v", ip)
 	}
 }
+
+func TestRegister(t *testing.T) {
+	server := GoServer{}
+	server.Register(&grpc.Server{})
+}
