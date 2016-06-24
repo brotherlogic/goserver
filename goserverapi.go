@@ -31,7 +31,7 @@ func (s *GoServer) getRegisteredServerPort(IP string, servername string, externa
 }
 
 // Serve Runs the server
-func (s *GoServer) Serve(port int) {
+func (s *GoServer) Serve() {
 	log.Printf("%v is serving!", s)
 	lis, _ := net.Listen("tcp", ":"+strconv.Itoa(int(s.port)))
 	server := grpc.NewServer()
