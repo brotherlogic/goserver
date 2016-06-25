@@ -38,8 +38,8 @@ func (s *GoServer) getRegisteredServerPort(IP string, servername string, externa
 }
 
 // Serve Runs the server
-func (s *GoServer) Serve() {
-	s.PrepServer()
+func (s *GoServer) Serve(servername string) {
+	s.PrepServer(servername)
 	s.monitorBuilder = mainMonitorBuilder{}
 	s.dialler = grpcDialler{}
 

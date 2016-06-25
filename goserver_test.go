@@ -109,7 +109,7 @@ type TestServer struct {
 
 func InitTestServer() TestServer {
 	s := TestServer{}
-	s.PrepServer()
+	s.PrepServer("testserver")
 	s.monitorBuilder = passingMonitorBuilder{}
 	s.dialler = passingDialler{}
 	s.heartbeatTime = time.Millisecond
