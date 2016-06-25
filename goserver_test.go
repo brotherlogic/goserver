@@ -4,10 +4,12 @@ import (
 	"errors"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"log"
 	"testing"
 	"time"
 
 	pb "github.com/brotherlogic/discovery/proto"
+	pbd "github.com/brotherlogic/monitor/proto"
 )
 
 type passingDialler struct{}
@@ -54,6 +56,18 @@ func (clientBuilder failingBuilder) NewDiscoveryServiceClient(conn *grpc.ClientC
 	return failingDiscoveryServiceClient{}
 }
 
+type passingMonitorServiceClient struct{}
+
+func (MonitorServiceClient passingMonitorServiceClient) ReceiveHeartbeat(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pbd.Empty, error) {
+	return &pbd.Empty{}, nil
+}
+
+type passingMonitorBuilder struct{}
+
+func (monitorBuilder passingMonitorBuilder) NewMonitorServiceClient(conn *grpc.ClientConn) pbd.MonitorServiceClient {
+	return passingMonitorServiceClient{}
+}
+
 func TestFailToDial(t *testing.T) {
 	server := GoServer{}
 	madeupport := server.registerServer("madeup", "madeup", false, failingDialler{}, passingBuilder{})
@@ -89,9 +103,22 @@ func TestGetIP(t *testing.T) {
 	}
 }
 
-func InitTestServer() GoServer {
-	s := GoServer{}
+type TestServer struct {
+	GoServer
+}
+
+func InitTestServer() TestServer {
+	s := TestServer{}
+	s.PrepServer()
+	s.heartbeatChan = make(chan int)
+	s.monitorBuilder = passingMonitorBuilder{}
+	s.dialler = passingDialler{}
 	return s
+}
+
+func (s *TestServer) Serve() {
+	log.Printf("Serving!")
+	go s.Heartbeat()
 }
 
 func TestHeartbeat(t *testing.T) {
@@ -99,7 +126,7 @@ func TestHeartbeat(t *testing.T) {
 	server.Serve()
 
 	//Wait 10 seconds
-	time.Sleep(10 * time.Second)
+	time.Sleep(10 * time.Millisecond)
 
 	server.Teardown()
 	if server.heartbeatCount < 9 {
