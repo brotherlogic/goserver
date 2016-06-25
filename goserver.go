@@ -31,9 +31,10 @@ type GoServer struct {
 }
 
 // PrepServer builds out the server for use.
-func (s *GoServer) PrepServer() {
+func (s *GoServer) PrepServer(servername string) {
 	s.heartbeatChan = make(chan int)
 	s.heartbeatTime = time.Minute * 1
+	s.servername = servername
 }
 
 // Register Registers grpc endpoints
