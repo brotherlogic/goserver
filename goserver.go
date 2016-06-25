@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	pb "github.com/brotherlogic/discovery/proto"
+	pbd "github.com/brotherlogic/monitor/proto"
 )
 
 const (
@@ -19,6 +20,7 @@ const (
 type GoServer struct {
 	servername string
 	port       int32
+	registry   pb.RegistryEntry
 }
 
 // Register Registers grpc endpoints
@@ -32,6 +34,13 @@ type dialler interface {
 
 type clientBuilder interface {
 	NewDiscoveryServiceClient(conn *grpc.ClientConn) pb.DiscoveryServiceClient
+}
+
+func (s *GoServer) sendHeartbeat(monitorIP string, monitorPort int, dialler dialler, builder clientBuilder) {
+	conn, _ := dialler.Dial(monitorIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
+	defer conn.Close()
+	monitor := pbd.NewMonitorServiceClient(conn)
+	monitor.ReceiveHeartbeat(context.Background(), &s.registry)
 }
 
 func getLocalIP() string {

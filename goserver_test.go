@@ -88,6 +88,19 @@ func TestGetIP(t *testing.T) {
 	}
 }
 
+func TestHeartbeat(t *testing.T) {
+	server := TestServer()
+	server.Serve()
+
+	//Wait 10 seconds
+	time.Sleep(10 * time.Second)
+
+	server.Teardown()
+	if server.CountHeartbeats() < 9 {
+		t.Errorf("Did not deliver heartbeats")
+	}
+}
+
 func TestRegister(t *testing.T) {
 	server := GoServer{}
 	server.Register(&grpc.Server{})
