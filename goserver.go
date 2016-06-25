@@ -33,6 +33,7 @@ type GoServer struct {
 // PrepServer builds out the server for use.
 func (s *GoServer) PrepServer() {
 	s.heartbeatChan = make(chan int)
+	s.heartbeatTime = time.Minute * 1
 }
 
 // Register Registers grpc endpoints
