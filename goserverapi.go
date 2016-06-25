@@ -7,12 +7,19 @@ import (
 	"strconv"
 
 	pb "github.com/brotherlogic/discovery/proto"
+	pbd "github.com/brotherlogic/monitor/proto"
 )
 
 type grpcDialler struct{}
 
 func (dialler grpcDialler) Dial(host string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
 	return grpc.Dial(host, opts...)
+}
+
+type mainMonitorBuilder struct{}
+
+func (monitorBuilder mainMonitorBuilder) NewMonitorServiceClient(conn *grpc.ClientConn) pbd.MonitorServiceClient {
+	return pbd.NewMonitorServiceClient(conn)
 }
 
 type mainBuilder struct{}
@@ -32,6 +39,10 @@ func (s *GoServer) getRegisteredServerPort(IP string, servername string, externa
 
 // Serve Runs the server
 func (s *GoServer) Serve() {
+	s.PrepServer()
+	s.monitorBuilder = mainMonitorBuilder{}
+	s.dialler = grpcDialler{}
+
 	log.Printf("%v is serving!", s)
 	lis, _ := net.Listen("tcp", ":"+strconv.Itoa(int(s.port)))
 	server := grpc.NewServer()

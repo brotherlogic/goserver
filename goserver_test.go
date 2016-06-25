@@ -110,7 +110,6 @@ type TestServer struct {
 func InitTestServer() TestServer {
 	s := TestServer{}
 	s.PrepServer()
-	s.heartbeatChan = make(chan int)
 	s.monitorBuilder = passingMonitorBuilder{}
 	s.dialler = passingDialler{}
 	return s
