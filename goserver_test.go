@@ -9,7 +9,7 @@ import (
 	"time"
 
 	pb "github.com/brotherlogic/discovery/proto"
-	pbd "github.com/brotherlogic/monitor/proto"
+	pbd "github.com/brotherlogic/monitor/monitorproto"
 )
 
 type passingDialler struct{}
@@ -66,8 +66,12 @@ func (clientBuilder failingBuilder) NewDiscoveryServiceClient(conn *grpc.ClientC
 
 type passingMonitorServiceClient struct{}
 
-func (MonitorServiceClient passingMonitorServiceClient) ReceiveHeartbeat(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pbd.Empty, error) {
-	return &pbd.Empty{}, nil
+func (MonitorServiceClient passingMonitorServiceClient) ReceiveHeartbeat(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pbd.Heartbeat, error) {
+	return &pbd.Heartbeat{}, nil
+}
+
+func (MonitorServiceClient passingMonitorServiceClient) GetHeartbeats(ctx context.Context, in *pbd.Empty, opts ...grpc.CallOption) (*pbd.HeartbeatList, error) {
+	return &pbd.HeartbeatList{}, nil
 }
 
 type passingMonitorBuilder struct{}

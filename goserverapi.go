@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	pb "github.com/brotherlogic/discovery/proto"
-	pbd "github.com/brotherlogic/monitor/proto"
+	pbd "github.com/brotherlogic/monitor/monitorproto"
 )
 
 type grpcDialler struct{}

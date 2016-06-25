@@ -9,7 +9,7 @@ import (
 	"time"
 
 	pb "github.com/brotherlogic/discovery/proto"
-	pbd "github.com/brotherlogic/monitor/proto"
+	pbd "github.com/brotherlogic/monitor/monitorproto"
 )
 
 const (
