@@ -18,14 +18,20 @@ const (
 
 // GoServer The basic server construct
 type GoServer struct {
-	servername string
-	port       int32
-	registry   pb.RegistryEntry
+	servername     string
+	port           int32
+	registry       pb.RegistryEntry
+	heartbeatChan  chan int
+	heartbeatCount int
 }
 
 // Register Registers grpc endpoints
 func (s *GoServer) Register(server *grpc.Server) {
 	// To be extended by other classes
+}
+
+func (s *GoServer) Teardown() {
+	s.heartbeatChan <- 0
 }
 
 type dialler interface {

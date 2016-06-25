@@ -5,6 +5,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"testing"
+	"time"
 
 	pb "github.com/brotherlogic/discovery/proto"
 )
@@ -88,15 +89,20 @@ func TestGetIP(t *testing.T) {
 	}
 }
 
+func InitTestServer() GoServer {
+	s := GoServer{}
+	return s
+}
+
 func TestHeartbeat(t *testing.T) {
-	server := TestServer()
+	server := InitTestServer()
 	server.Serve()
 
 	//Wait 10 seconds
 	time.Sleep(10 * time.Second)
 
 	server.Teardown()
-	if server.CountHeartbeats() < 9 {
+	if server.heartbeatCount < 9 {
 		t.Errorf("Did not deliver heartbeats")
 	}
 }
