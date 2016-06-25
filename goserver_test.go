@@ -118,7 +118,7 @@ func InitTestServer() TestServer {
 
 func (s *TestServer) Serve() {
 	log.Printf("Serving!")
-	go s.Heartbeat()
+	go s.heartbeat()
 }
 
 func TestHeartbeat(t *testing.T) {
@@ -128,7 +128,7 @@ func TestHeartbeat(t *testing.T) {
 	//Wait 10 seconds
 	time.Sleep(10 * time.Millisecond)
 
-	server.Teardown()
+	server.teardown()
 	if server.heartbeatCount < 9 {
 		t.Errorf("Did not deliver heartbeats")
 	}
