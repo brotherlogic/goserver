@@ -30,6 +30,7 @@ type GoServer struct {
 	heartbeatTime  time.Duration
 }
 
+// PrepServer builds out the server for use.
 func (s *GoServer) PrepServer() {
 	s.heartbeatChan = make(chan int)
 }
@@ -39,12 +40,12 @@ func (s *GoServer) Register(server *grpc.Server) {
 	// To be extended by other classes
 }
 
-func (s *GoServer) Teardown() {
+func (s *GoServer) teardown() {
 	log.Printf("TEARING DOWN %v", &s.heartbeatChan)
 	s.heartbeatChan <- 0
 }
 
-func (s *GoServer) Heartbeat() {
+func (s *GoServer) heartbeat() {
 	running := true
 	for running {
 		s.sendHeartbeat(s.monitor.Ip, int(s.monitor.Port), s.dialler, s.monitorBuilder)
