@@ -29,17 +29,19 @@ func (clientBuilder mainBuilder) NewDiscoveryServiceClient(conn *grpc.ClientConn
 }
 
 // RegisterServer registers this server
-func (s *GoServer) RegisterServer(external bool) {
+func (s *GoServer) RegisterServer(servername string, external bool) {
+	s.servername = servername
 	s.port = s.getRegisteredServerPort(getLocalIP(), s.servername, external)
 }
 
 func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool) int32 {
+	log.Printf("HERE with %v and %v", IP, servername)
 	return s.registerServer(IP, servername, external, grpcDialler{}, mainBuilder{})
 }
 
 // Serve Runs the server
-func (s *GoServer) Serve(servername string) {
-	s.PrepServer(servername)
+func (s *GoServer) Serve() {
+	s.PrepServer()
 	s.monitorBuilder = mainMonitorBuilder{}
 	s.dialler = grpcDialler{}
 

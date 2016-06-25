@@ -31,10 +31,9 @@ type GoServer struct {
 }
 
 // PrepServer builds out the server for use.
-func (s *GoServer) PrepServer(servername string) {
+func (s *GoServer) PrepServer() {
 	s.heartbeatChan = make(chan int)
 	s.heartbeatTime = time.Minute * 1
-	s.servername = servername
 }
 
 // Register Registers grpc endpoints
@@ -43,7 +42,6 @@ func (s *GoServer) Register(server *grpc.Server) {
 }
 
 func (s *GoServer) teardown() {
-	log.Printf("TEARING DOWN %v", &s.heartbeatChan)
 	s.heartbeatChan <- 0
 }
 
@@ -53,7 +51,6 @@ func (s *GoServer) heartbeat() {
 		s.sendHeartbeat(s.monitor.Ip, int(s.monitor.Port), s.dialler, s.monitorBuilder)
 		select {
 		case <-s.heartbeatChan:
-			log.Printf("RECEIVED CHANNEL")
 			running = false
 		default:
 			time.Sleep(s.heartbeatTime)

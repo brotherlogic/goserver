@@ -34,6 +34,10 @@ func (DiscoveryServiceClient passingDiscoveryServiceClient) Discover(ctx context
 	return &pb.RegistryEntry{}, nil
 }
 
+func (DiscoveryServiceClient passingDiscoveryServiceClient) ListAllServices(ctx context.Context, in *pb.Empty, opts ...grpc.CallOption) (*pb.ServiceList, error) {
+	return &pb.ServiceList{}, nil
+}
+
 type failingDiscoveryServiceClient struct{}
 
 func (DiscoveryServiceClient failingDiscoveryServiceClient) RegisterService(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
@@ -42,6 +46,10 @@ func (DiscoveryServiceClient failingDiscoveryServiceClient) RegisterService(ctx 
 
 func (DiscoveryServiceClient failingDiscoveryServiceClient) Discover(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
 	return &pb.RegistryEntry{}, nil
+}
+
+func (DiscoveryServiceClient failingDiscoveryServiceClient) ListAllServices(ctx context.Context, in *pb.Empty, opts ...grpc.CallOption) (*pb.ServiceList, error) {
+	return &pb.ServiceList{}, nil
 }
 
 type passingBuilder struct{}
@@ -109,7 +117,7 @@ type TestServer struct {
 
 func InitTestServer() TestServer {
 	s := TestServer{}
-	s.PrepServer("testserver")
+	s.PrepServer()
 	s.monitorBuilder = passingMonitorBuilder{}
 	s.dialler = passingDialler{}
 	s.heartbeatTime = time.Millisecond
