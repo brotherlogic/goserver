@@ -6,8 +6,10 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"time"
 
 	pb "github.com/brotherlogic/discovery/proto"
+	pbd "github.com/brotherlogic/monitor/proto"
 )
 
 const (
@@ -17,13 +19,49 @@ const (
 
 // GoServer The basic server construct
 type GoServer struct {
-	servername string
-	port       int32
+	servername     string
+	port           int32
+	registry       pb.RegistryEntry
+	monitor        pb.RegistryEntry
+	dialler        dialler
+	monitorBuilder monitorBuilder
+	heartbeatChan  chan int
+	heartbeatCount int
+	heartbeatTime  time.Duration
+}
+
+// PrepServer builds out the server for use.
+func (s *GoServer) PrepServer() {
+	s.heartbeatChan = make(chan int)
+	s.heartbeatTime = time.Minute * 1
 }
 
 // Register Registers grpc endpoints
 func (s *GoServer) Register(server *grpc.Server) {
 	// To be extended by other classes
+}
+
+func (s *GoServer) teardown() {
+	log.Printf("TEARING DOWN %v", &s.heartbeatChan)
+	s.heartbeatChan <- 0
+}
+
+func (s *GoServer) heartbeat() {
+	running := true
+	for running {
+		s.sendHeartbeat(s.monitor.Ip, int(s.monitor.Port), s.dialler, s.monitorBuilder)
+		select {
+		case <-s.heartbeatChan:
+			log.Printf("RECEIVED CHANNEL")
+			running = false
+		default:
+			time.Sleep(s.heartbeatTime)
+		}
+	}
+}
+
+type monitorBuilder interface {
+	NewMonitorServiceClient(conn *grpc.ClientConn) pbd.MonitorServiceClient
 }
 
 type dialler interface {
@@ -32,6 +70,14 @@ type dialler interface {
 
 type clientBuilder interface {
 	NewDiscoveryServiceClient(conn *grpc.ClientConn) pb.DiscoveryServiceClient
+}
+
+func (s *GoServer) sendHeartbeat(monitorIP string, monitorPort int, dialler dialler, builder monitorBuilder) {
+	conn, _ := dialler.Dial(monitorIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
+	defer conn.Close()
+	monitor := builder.NewMonitorServiceClient(conn)
+	monitor.ReceiveHeartbeat(context.Background(), &s.registry)
+	s.heartbeatCount++
 }
 
 func getLocalIP() string {
