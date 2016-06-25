@@ -112,6 +112,7 @@ func InitTestServer() TestServer {
 	s.PrepServer()
 	s.monitorBuilder = passingMonitorBuilder{}
 	s.dialler = passingDialler{}
+	s.heartbeatTime = time.Millisecond
 	return s
 }
 
