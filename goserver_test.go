@@ -2,11 +2,12 @@ package goserver
 
 import (
 	"errors"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"log"
 	"testing"
 	"time"
+
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 
 	pb "github.com/brotherlogic/discovery/proto"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
@@ -116,32 +117,38 @@ func TestGetIP(t *testing.T) {
 }
 
 type TestServer struct {
-	GoServer
+	*GoServer
+}
+
+func (s TestServer) Register(server *grpc.Server) {
+	//Do Nothing
 }
 
 func InitTestServer() TestServer {
-	s := TestServer{}
+	s := TestServer{&GoServer{}}
+	s.register = s
 	s.PrepServer()
 	s.monitorBuilder = passingMonitorBuilder{}
 	s.dialler = passingDialler{}
 	s.heartbeatTime = time.Millisecond
+	s.clientBuilder = passingBuilder{}
+	log.Printf("Set heartbeat time")
 	return s
-}
-
-func (s *TestServer) Serve() {
-	log.Printf("Serving!")
-	go s.heartbeat()
 }
 
 func TestHeartbeat(t *testing.T) {
 	server := InitTestServer()
-	server.Serve()
+	go server.Serve()
+	log.Printf("Done Serving")
 
 	//Wait 10 seconds
 	time.Sleep(10 * time.Millisecond)
-
+	log.Printf("Tearing Down")
 	server.teardown()
+
+	log.Printf("Now %v", server.heartbeatCount)
 	if server.heartbeatCount < 9 {
 		t.Errorf("Did not deliver heartbeats")
 	}
+	log.Printf("Finished this all off")
 }
