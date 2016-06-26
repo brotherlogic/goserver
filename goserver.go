@@ -17,15 +17,6 @@ const (
 	registryPort = 50055
 )
 
-//Registerer Device to allow in place registration
-type Registerer interface {
-	Register(server *grpc.Server, s *GoServer)
-}
-
-type noregister struct{}
-
-func (Registerer noregister) Register(server *grpc.Server, s *GoServer) {}
-
 // GoServer The basic server construct
 type GoServer struct {
 	servername     string
@@ -37,7 +28,6 @@ type GoServer struct {
 	heartbeatChan  chan int
 	heartbeatCount int
 	heartbeatTime  time.Duration
-	registerer     Registerer
 }
 
 // PrepServer builds out the server for use.
