@@ -39,6 +39,11 @@ func (s *GoServer) getRegisteredServerPort(IP string, servername string, externa
 	return s.registerServer(IP, servername, external, grpcDialler{}, mainBuilder{})
 }
 
+// Register registers this server
+func (s *GoServer) Register(server *grpc.Server) {
+	//To be extended by other things
+}
+
 // Serve Runs the server
 func (s *GoServer) Serve() {
 	s.PrepServer()
@@ -48,6 +53,6 @@ func (s *GoServer) Serve() {
 	log.Printf("%v is serving!", s)
 	lis, _ := net.Listen("tcp", ":"+strconv.Itoa(int(s.port)))
 	server := grpc.NewServer()
-	s.registerer.Register(server, s)
+	s.Register(server)
 	server.Serve(lis)
 }
