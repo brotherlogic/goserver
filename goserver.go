@@ -1,12 +1,13 @@
 package goserver
 
 import (
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 	"log"
 	"net"
 	"strconv"
 	"time"
+
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 
 	pb "github.com/brotherlogic/discovery/proto"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
@@ -32,21 +33,20 @@ type GoServer struct {
 	monitor        pb.RegistryEntry
 	dialler        dialler
 	monitorBuilder monitorBuilder
+	clientBuilder  clientBuilder
 	heartbeatChan  chan int
 	heartbeatCount int
 	heartbeatTime  time.Duration
-	Register       Registerable
-}
-
-// SetRegisterable sets the registerable component
-func (s *GoServer) SetRegisterable(r Registerable) {
-	s.Register = r
+	register       Registerable
 }
 
 // PrepServer builds out the server for use.
 func (s *GoServer) PrepServer() {
 	s.heartbeatChan = make(chan int)
 	s.heartbeatTime = time.Minute * 1
+	s.monitorBuilder = mainMonitorBuilder{}
+	s.dialler = grpcDialler{}
+	s.clientBuilder = mainBuilder{}
 }
 
 func (s *GoServer) teardown() {
@@ -61,6 +61,7 @@ func (s *GoServer) heartbeat() {
 		case <-s.heartbeatChan:
 			running = false
 		default:
+			log.Printf("Sleeping for %v", s.heartbeatTime)
 			time.Sleep(s.heartbeatTime)
 		}
 	}
@@ -83,6 +84,7 @@ func (s *GoServer) sendHeartbeat(monitorIP string, monitorPort int, dialler dial
 	defer conn.Close()
 	monitor := builder.NewMonitorServiceClient(conn)
 	monitor.ReceiveHeartbeat(context.Background(), &s.registry)
+	log.Printf("BEAT")
 	s.heartbeatCount++
 }
 
@@ -102,6 +104,24 @@ func getLocalIP() string {
 	}
 
 	return ip.String()
+}
+
+func (s *GoServer) setupHeartbeats(dialler dialler, builder clientBuilder) {
+	log.Printf("Setting up heartbeats")
+	conn, _ := dialler.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
+	defer conn.Close()
+
+	registry := builder.NewDiscoveryServiceClient(conn)
+	log.Printf("REGISTRY IS HERE %v", registry)
+	entry := pb.RegistryEntry{Name: "monitor"}
+	r, err := registry.Discover(context.Background(), &entry)
+
+	if err == nil {
+		s.monitor = *r
+		log.Printf("Running heartbeats")
+		go s.heartbeat()
+	}
+	log.Printf("Heartbeats beating")
 }
 
 // RegisterServer Registers a server with the system and gets the port number it should use
