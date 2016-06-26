@@ -35,7 +35,11 @@ type GoServer struct {
 	heartbeatChan  chan int
 	heartbeatCount int
 	heartbeatTime  time.Duration
-	register       Registerable
+	Register       Registerable
+}
+
+func (s *GoServer) SetRegisterable(r Registerable) {
+	s.Register = r
 }
 
 // PrepServer builds out the server for use.
