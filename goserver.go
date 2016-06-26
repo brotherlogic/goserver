@@ -80,7 +80,7 @@ type clientBuilder interface {
 }
 
 func (s *GoServer) sendHeartbeat(monitorIP string, monitorPort int, dialler dialler, builder monitorBuilder) {
-	conn, _ := dialler.Dial(monitorIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
+	conn, _ := dialler.Dial(monitorIP+":"+strconv.Itoa(monitorPort), grpc.WithInsecure())
 	defer conn.Close()
 	monitor := builder.NewMonitorServiceClient(conn)
 	monitor.ReceiveHeartbeat(context.Background(), &s.registry)
