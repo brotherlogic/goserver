@@ -17,6 +17,7 @@ const (
 	registryPort = 50055
 )
 
+// Registerable Allows the system to register itself
 type Registerable interface {
 	Register(server *grpc.Server)
 }
