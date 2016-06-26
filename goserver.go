@@ -38,6 +38,7 @@ type GoServer struct {
 	Register       Registerable
 }
 
+// SetRegisterable sets the registerable component
 func (s *GoServer) SetRegisterable(r Registerable) {
 	s.Register = r
 }
