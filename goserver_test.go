@@ -145,8 +145,3 @@ func TestHeartbeat(t *testing.T) {
 		t.Errorf("Did not deliver heartbeats")
 	}
 }
-
-func TestRegister(t *testing.T) {
-	server := GoServer{}
-	server.Register(&grpc.Server{})
-}
