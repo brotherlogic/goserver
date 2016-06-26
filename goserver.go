@@ -20,7 +20,7 @@ const (
 
 // Registerable Allows the system to register itself
 type Registerable interface {
-	Register(server *grpc.Server)
+	DoRegister(server *grpc.Server)
 }
 
 type baseRegistrable struct{ Registerable }
@@ -37,7 +37,7 @@ type GoServer struct {
 	heartbeatChan  chan int
 	heartbeatCount int
 	heartbeatTime  time.Duration
-	register       Registerable
+	Register       Registerable
 }
 
 // PrepServer builds out the server for use.

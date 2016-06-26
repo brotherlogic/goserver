@@ -45,7 +45,7 @@ func (s *GoServer) Serve() {
 	log.Printf("%v is serving!", s)
 	lis, _ := net.Listen("tcp", ":"+strconv.Itoa(int(s.port)))
 	server := grpc.NewServer()
-	s.register.Register(server)
+	s.Register.DoRegister(server)
 	s.setupHeartbeats(s.dialler, s.clientBuilder)
 	server.Serve(lis)
 }

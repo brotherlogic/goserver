@@ -120,13 +120,13 @@ type TestServer struct {
 	*GoServer
 }
 
-func (s TestServer) Register(server *grpc.Server) {
+func (s TestServer) DoRegister(server *grpc.Server) {
 	//Do Nothing
 }
 
 func InitTestServer() TestServer {
 	s := TestServer{&GoServer{}}
-	s.register = s
+	s.Register = s
 	s.PrepServer()
 	s.monitorBuilder = passingMonitorBuilder{}
 	s.dialler = passingDialler{}
