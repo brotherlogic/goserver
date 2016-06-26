@@ -17,6 +17,12 @@ const (
 	registryPort = 50055
 )
 
+type Registerable interface {
+	Register(server *grpc.Server)
+}
+
+type baseRegistrable struct{ Registerable }
+
 // GoServer The basic server construct
 type GoServer struct {
 	servername     string
@@ -28,6 +34,7 @@ type GoServer struct {
 	heartbeatChan  chan int
 	heartbeatCount int
 	heartbeatTime  time.Duration
+	register       Registerable
 }
 
 // PrepServer builds out the server for use.
