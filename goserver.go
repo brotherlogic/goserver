@@ -19,12 +19,12 @@ const (
 
 //Registerer Device to allow in place registration
 type Registerer interface {
-	Register(server *grpc.Server)
+	Register(server *grpc.Server, s *GoServer)
 }
 
 type noregister struct{}
 
-func (Registerer noregister) Register(server *grpc.Server) {}
+func (Registerer noregister) Register(server *grpc.Server, s *GoServer) {}
 
 // GoServer The basic server construct
 type GoServer struct {
