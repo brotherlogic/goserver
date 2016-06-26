@@ -17,6 +17,15 @@ const (
 	registryPort = 50055
 )
 
+//Registerer Device to allow in place registration
+type Registerer interface {
+	Register(server *grpc.Server)
+}
+
+type noregister struct{}
+
+func (Registerer noregister) Register(server *grpc.Server) {}
+
 // GoServer The basic server construct
 type GoServer struct {
 	servername     string
@@ -28,17 +37,13 @@ type GoServer struct {
 	heartbeatChan  chan int
 	heartbeatCount int
 	heartbeatTime  time.Duration
+	registerer     Registerer
 }
 
 // PrepServer builds out the server for use.
 func (s *GoServer) PrepServer() {
 	s.heartbeatChan = make(chan int)
 	s.heartbeatTime = time.Minute * 1
-}
-
-// Register Registers grpc endpoints
-func (s *GoServer) Register(server *grpc.Server) {
-	// To be extended by other classes
 }
 
 func (s *GoServer) teardown() {

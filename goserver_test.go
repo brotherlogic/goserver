@@ -148,5 +148,6 @@ func TestHeartbeat(t *testing.T) {
 
 func TestRegister(t *testing.T) {
 	server := GoServer{}
-	server.Register(&grpc.Server{})
+	server.registerer = noregister{}
+	server.registerer.Register(&grpc.Server{})
 }
