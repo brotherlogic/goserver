@@ -141,6 +141,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, d
 		log.Printf("Could not register service: %v", err)
 		return -1
 	}
+	s.registry = *r
 
 	return r.Port
 }
