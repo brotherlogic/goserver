@@ -93,13 +93,15 @@ func getLocalIP() string {
 
 	var ip net.IP
 	for _, i := range ifaces {
+	    log.Printf("HERE 1 = %v", i)
 		addrs, _ := i.Addrs()
 
 		for _, addr := range addrs {
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			}
+		    if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+		                if ipnet.IP.To4() != nil {
+				                ip =  ipnet.IP
+						            }
+							            }
 		}
 	}
 
