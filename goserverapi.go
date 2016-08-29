@@ -35,6 +35,12 @@ func (s *GoServer) RegisterServer(servername string, external bool) {
 	s.port = s.getRegisteredServerPort(getLocalIP(), s.servername, external)
 }
 
+func (s *GoServer) close(conn *grpc.ClientConn) {
+	if conn != nil {
+		conn.Close()
+	}
+}
+
 func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool) int32 {
 	log.Printf("HERE with %v and %v", IP, servername)
 	return s.registerServer(IP, servername, external, grpcDialler{}, mainBuilder{})

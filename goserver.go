@@ -67,6 +67,15 @@ func (s *GoServer) heartbeat() {
 	}
 }
 
+//Log a simple string message
+func (s *GoServer) Log(message string) {
+	conn, _ := s.dialler.Dial(s.monitor.Ip+":"+strconv.Itoa(int(s.monitor.Port)), grpc.WithInsecure())
+	monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
+	messageLog := &pbd.MessageLog{Message: message, Entry: &s.registry}
+	monitor.WriteMessageLog(context.Background(), messageLog)
+	s.close(conn)
+}
+
 type monitorBuilder interface {
 	NewMonitorServiceClient(conn *grpc.ClientConn) pbd.MonitorServiceClient
 }
@@ -81,11 +90,11 @@ type clientBuilder interface {
 
 func (s *GoServer) sendHeartbeat(monitorIP string, monitorPort int, dialler dialler, builder monitorBuilder) {
 	conn, _ := dialler.Dial(monitorIP+":"+strconv.Itoa(monitorPort), grpc.WithInsecure())
-	defer conn.Close()
 	monitor := builder.NewMonitorServiceClient(conn)
 	monitor.ReceiveHeartbeat(context.Background(), &s.registry)
 	log.Printf("BEAT")
 	s.heartbeatCount++
+	s.close(conn)
 }
 
 func getLocalIP() string {
@@ -93,15 +102,15 @@ func getLocalIP() string {
 
 	var ip net.IP
 	for _, i := range ifaces {
-	    log.Printf("HERE 1 = %v", i)
+		log.Printf("HERE 1 = %v", i)
 		addrs, _ := i.Addrs()
 
 		for _, addr := range addrs {
-		    if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-		                if ipnet.IP.To4() != nil {
-				                ip =  ipnet.IP
-						            }
-							            }
+			if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+				if ipnet.IP.To4() != nil {
+					ip = ipnet.IP
+				}
+			}
 		}
 	}
 
@@ -111,7 +120,6 @@ func getLocalIP() string {
 func (s *GoServer) setupHeartbeats(dialler dialler, builder clientBuilder) {
 	log.Printf("Setting up heartbeats")
 	conn, _ := dialler.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
-	defer conn.Close()
 
 	registry := builder.NewDiscoveryServiceClient(conn)
 	log.Printf("REGISTRY IS HERE %v", registry)
@@ -124,6 +132,7 @@ func (s *GoServer) setupHeartbeats(dialler dialler, builder clientBuilder) {
 		go s.heartbeat()
 	}
 	log.Printf("Heartbeats beating")
+	s.close(conn)
 }
 
 // RegisterServer Registers a server with the system and gets the port number it should use
@@ -134,16 +143,14 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, d
 		return -1
 	}
 
-	defer conn.Close()
 	registry := builder.NewDiscoveryServiceClient(conn)
-
 	entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external}
 	r, err := registry.RegisterService(context.Background(), &entry)
 	if err != nil {
-		log.Printf("Could not register service: %v", err)
+		log.Printf("Could not register this service: %v", err)
 		return -1
 	}
 	s.registry = *r
-
+	s.close(conn)
 	return r.Port
 }
