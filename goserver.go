@@ -38,6 +38,7 @@ type GoServer struct {
 	heartbeatCount int
 	heartbeatTime  time.Duration
 	Register       Registerable
+	SkipLog        bool
 }
 
 // PrepServer builds out the server for use.
@@ -69,11 +70,13 @@ func (s *GoServer) heartbeat() {
 
 //Log a simple string message
 func (s *GoServer) Log(message string) {
-	conn, _ := s.dialler.Dial(s.monitor.Ip+":"+strconv.Itoa(int(s.monitor.Port)), grpc.WithInsecure())
-	monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
-	messageLog := &pbd.MessageLog{Message: message, Entry: &s.registry}
-	monitor.WriteMessageLog(context.Background(), messageLog)
-	s.close(conn)
+	if !s.SkipLog {
+		conn, _ := s.dialler.Dial(s.monitor.Ip+":"+strconv.Itoa(int(s.monitor.Port)), grpc.WithInsecure())
+		monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
+		messageLog := &pbd.MessageLog{Message: message, Entry: &s.registry}
+		monitor.WriteMessageLog(context.Background(), messageLog)
+		s.close(conn)
+	}
 }
 
 type monitorBuilder interface {
