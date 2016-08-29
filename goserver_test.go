@@ -16,7 +16,7 @@ import (
 type passingDialler struct{}
 
 func (dialler passingDialler) Dial(host string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
-	return &grpc.ClientConn{}, nil
+	return nil, nil
 }
 
 type failingDialler struct{}
@@ -76,11 +76,11 @@ func (MonitorServiceClient passingMonitorServiceClient) GetHeartbeats(ctx contex
 }
 
 func (MonitorServiceClient passingMonitorServiceClient) WriteMessageLog(ctx context.Context, in *pbd.MessageLog, opts ...grpc.CallOption) (*pbd.LogWriteResponse, error) {
-     return &pbd.LogWriteResponse{}, nil
+	return &pbd.LogWriteResponse{}, nil
 }
 
 func (MonitorServiceClient passingMonitorServiceClient) WriteValueLog(ctx context.Context, in *pbd.ValueLog, opts ...grpc.CallOption) (*pbd.LogWriteResponse, error) {
-     return &pbd.LogWriteResponse{}, nil
+	return &pbd.LogWriteResponse{}, nil
 }
 
 type passingMonitorBuilder struct{}
@@ -115,6 +115,11 @@ func TestRegisterServer(t *testing.T) {
 	if madeupport != 35 {
 		t.Errorf("Port number is wrong: %v", madeupport)
 	}
+}
+
+func TestLog(t *testing.T) {
+	server := InitTestServer()
+	server.Log("MadeUpLog")
 }
 
 func TestGetIP(t *testing.T) {
