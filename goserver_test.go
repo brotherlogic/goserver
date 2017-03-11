@@ -75,6 +75,10 @@ func (MonitorServiceClient passingMonitorServiceClient) GetHeartbeats(ctx contex
 	return &pbd.HeartbeatList{}, nil
 }
 
+func (MonitorServiceClient passingMonitorServiceClient) ReadMessageLogs(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pbd.MessageLogReadResponse, error) {
+	return &pbd.MessageLogReadResponse{}, nil
+}
+
 func (MonitorServiceClient passingMonitorServiceClient) WriteMessageLog(ctx context.Context, in *pbd.MessageLog, opts ...grpc.CallOption) (*pbd.LogWriteResponse, error) {
 	return &pbd.LogWriteResponse{}, nil
 }
