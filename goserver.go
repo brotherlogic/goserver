@@ -155,5 +155,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, d
 	}
 	s.registry = *r
 	s.close(conn)
+
+	log.Printf("Registered %v on port %v", servername, r.Port)
 	return r.Port
 }
