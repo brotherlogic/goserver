@@ -79,6 +79,10 @@ func (s *GoServer) Log(message string) {
 	}
 }
 
+type hostGetter interface {
+	Hostname() (string, error)
+}
+
 type monitorBuilder interface {
 	NewMonitorServiceClient(conn *grpc.ClientConn) pbd.MonitorServiceClient
 }
@@ -139,7 +143,7 @@ func (s *GoServer) setupHeartbeats(dialler dialler, builder clientBuilder) {
 }
 
 // RegisterServer Registers a server with the system and gets the port number it should use
-func (s *GoServer) registerServer(IP string, servername string, external bool, dialler dialler, builder clientBuilder) int32 {
+func (s *GoServer) registerServer(IP string, servername string, external bool, dialler dialler, builder clientBuilder, getter hostGetter) int32 {
 	conn, err := dialler.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
 	if err != nil {
 		log.Printf("Could not connect: %v", err)
@@ -147,7 +151,11 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, d
 	}
 
 	registry := builder.NewDiscoveryServiceClient(conn)
-	entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external}
+	hostname, err := getter.Hostname()
+	if err != nil {
+		hostname = "Server-" + IP
+	}
+	entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname}
 	r, err := registry.RegisterService(context.Background(), &entry)
 	if err != nil {
 		log.Printf("Could not register this service: %v", err)
