@@ -3,6 +3,7 @@ package goserver
 import (
 	"log"
 	"net"
+	"os"
 	"strconv"
 
 	"google.golang.org/grpc"
@@ -10,6 +11,12 @@ import (
 	pb "github.com/brotherlogic/discovery/proto"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
 )
+
+type osHostGetter struct{}
+
+func (hostGetter osHostGetter) Hostname() (string, error) {
+	return os.Hostname()
+}
 
 type grpcDialler struct{}
 
@@ -43,7 +50,7 @@ func (s *GoServer) close(conn *grpc.ClientConn) {
 
 func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool) int32 {
 	log.Printf("HERE with %v and %v", IP, servername)
-	return s.registerServer(IP, servername, external, grpcDialler{}, mainBuilder{})
+	return s.registerServer(IP, servername, external, grpcDialler{}, mainBuilder{}, osHostGetter{})
 }
 
 // Serve Runs the server

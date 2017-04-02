@@ -13,6 +13,18 @@ import (
 	pbd "github.com/brotherlogic/monitor/monitorproto"
 )
 
+type basicGetter struct{}
+
+func (hostGetter basicGetter) Hostname() (string, error) {
+	return "basic", nil
+}
+
+type failingGetter struct{}
+
+func (hostGetter failingGetter) Hostname() (string, error) {
+	return "", errors.New("Built to Fail")
+}
+
 type passingDialler struct{}
 
 func (dialler passingDialler) Dial(host string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
@@ -28,7 +40,7 @@ func (dialler failingDialler) Dial(host string, opts ...grpc.DialOption) (*grpc.
 type passingDiscoveryServiceClient struct{}
 
 func (DiscoveryServiceClient passingDiscoveryServiceClient) RegisterService(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
-	return &pb.RegistryEntry{Port: 35}, nil
+	return &pb.RegistryEntry{Port: 35, Identifier: in.Identifier}, nil
 }
 
 func (DiscoveryServiceClient passingDiscoveryServiceClient) Discover(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
@@ -95,7 +107,7 @@ func (monitorBuilder passingMonitorBuilder) NewMonitorServiceClient(conn *grpc.C
 
 func TestFailToDial(t *testing.T) {
 	server := GoServer{}
-	madeupport := server.registerServer("madeup", "madeup", false, failingDialler{}, passingBuilder{})
+	madeupport := server.registerServer("madeup", "madeup", false, failingDialler{}, passingBuilder{}, basicGetter{})
 
 	if madeupport > 0 {
 		t.Errorf("Dial failure did not lead to bad port")
@@ -104,17 +116,25 @@ func TestFailToDial(t *testing.T) {
 
 func TestFailToRegister(t *testing.T) {
 	server := GoServer{}
-	madeupport := server.registerServer("madeup", "madeup", false, passingDialler{}, failingBuilder{})
+	madeupport := server.registerServer("madeup", "madeup", false, passingDialler{}, failingBuilder{}, basicGetter{})
 
 	if madeupport > 0 {
 		t.Errorf("Dial failure did not lead to bad port")
 	}
+}
 
+func TestFailToGet(t *testing.T) {
+	server := GoServer{}
+	server.registerServer("madeup", "madeup", false, passingDialler{}, passingBuilder{}, failingGetter{})
+
+	if server.registry.Identifier != "Server-madeup" {
+		t.Errorf("Server has not registered correctly: %v", server.registry)
+	}
 }
 
 func TestRegisterServer(t *testing.T) {
 	server := GoServer{}
-	madeupport := server.registerServer("madeup", "madeup", false, passingDialler{}, passingBuilder{})
+	madeupport := server.registerServer("madeup", "madeup", false, passingDialler{}, passingBuilder{}, basicGetter{})
 
 	if madeupport != 35 {
 		t.Errorf("Port number is wrong: %v", madeupport)
