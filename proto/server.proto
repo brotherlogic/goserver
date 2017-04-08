@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package goserver;
+
+message Alive {}
+
+service goserverService {
+  rpc IsAlive (Alive) returns (Alive) {};
+}

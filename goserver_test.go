@@ -185,7 +185,7 @@ func TestHeartbeat(t *testing.T) {
 
 	log.Printf("Now %v", server.heartbeatCount)
 	if server.heartbeatCount < 9 {
-		t.Errorf("Did not deliver heartbeats")
+		t.Errorf("Did not deliver heartbeats: %v", server.heartbeatCount)
 	}
 	log.Printf("Finished this all off")
 }
