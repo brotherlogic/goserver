@@ -6,9 +6,11 @@ import (
 	"os"
 	"strconv"
 
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
 	pb "github.com/brotherlogic/discovery/proto"
+	pbl "github.com/brotherlogic/goserver/proto"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
 )
 
@@ -48,6 +50,11 @@ func (s *GoServer) close(conn *grpc.ClientConn) {
 	}
 }
 
+// IsAlive Reports liveness of the server
+func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, error) {
+	return &pbl.Alive{}, nil
+}
+
 func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool) int32 {
 	log.Printf("HERE with %v and %v", IP, servername)
 	return s.registerServer(IP, servername, external, grpcDialler{}, mainBuilder{}, osHostGetter{})
@@ -59,6 +66,7 @@ func (s *GoServer) Serve() {
 	lis, _ := net.Listen("tcp", ":"+strconv.Itoa(int(s.port)))
 	server := grpc.NewServer()
 	s.Register.DoRegister(server)
+	pbl.RegisterGoserverServiceServer(server, s)
 	s.setupHeartbeats(s.dialler, s.clientBuilder)
 	server.Serve(lis)
 }
