@@ -161,6 +161,10 @@ func (s TestServer) DoRegister(server *grpc.Server) {
 	//Do Nothing
 }
 
+func (s TestServer) ReportHealth() bool {
+	return true
+}
+
 func InitTestServer() TestServer {
 	s := TestServer{&GoServer{}}
 	s.Register = s
