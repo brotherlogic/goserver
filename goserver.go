@@ -21,6 +21,7 @@ const (
 // Registerable Allows the system to register itself
 type Registerable interface {
 	DoRegister(server *grpc.Server)
+	ReportHealth() bool
 }
 
 type baseRegistrable struct{ Registerable }
