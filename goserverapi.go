@@ -50,6 +50,11 @@ func (s *GoServer) close(conn *grpc.ClientConn) {
 	}
 }
 
+// RegisterServingTask registers tasks to run when serving
+func (s *GoServer) RegisterServingTask(task func()) {
+	s.servingFuncs = append(s.servingFuncs, task)
+}
+
 // IsAlive Reports liveness of the server
 func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, error) {
 	return &pbl.Alive{}, nil
@@ -68,5 +73,11 @@ func (s *GoServer) Serve() {
 	s.Register.DoRegister(server)
 	pbl.RegisterGoserverServiceServer(server, s)
 	s.setupHeartbeats(s.dialler, s.clientBuilder)
+
+	// Background all the serving funcs
+	for _, f := range s.servingFuncs {
+		go f()
+	}
+
 	server.Serve(lis)
 }
