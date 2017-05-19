@@ -40,6 +40,7 @@ type GoServer struct {
 	heartbeatTime  time.Duration
 	Register       Registerable
 	SkipLog        bool
+	servingFuncs   []func()
 }
 
 // PrepServer builds out the server for use.
