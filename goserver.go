@@ -126,6 +126,22 @@ func getLocalIP() string {
 	return ip.String()
 }
 
+//Dial a local server
+func (s *GoServer) Dial(server string, dialler dialler, builder clientBuilder) (*grpc.ClientConn, error) {
+	conn, err := dialler.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+	registry := builder.NewDiscoveryServiceClient(conn)
+	entry := pb.RegistryEntry{Name: server}
+	r, err := registry.Discover(context.Background(), &entry)
+	if err != nil {
+		return nil, err
+	}
+
+	return dialler.Dial(r.Ip+":"+strconv.Itoa(int(r.Port)), grpc.WithInsecure())
+}
+
 func (s *GoServer) setupHeartbeats(dialler dialler, builder clientBuilder) {
 	log.Printf("Setting up heartbeats")
 	conn, _ := dialler.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())

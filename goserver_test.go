@@ -58,7 +58,7 @@ func (DiscoveryServiceClient failingDiscoveryServiceClient) RegisterService(ctx 
 }
 
 func (DiscoveryServiceClient failingDiscoveryServiceClient) Discover(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
-	return &pb.RegistryEntry{}, nil
+	return &pb.RegistryEntry{}, errors.New("Built to fail")
 }
 
 func (DiscoveryServiceClient failingDiscoveryServiceClient) ListAllServices(ctx context.Context, in *pb.Empty, opts ...grpc.CallOption) (*pb.ServiceList, error) {
@@ -129,6 +129,30 @@ func TestFailToGet(t *testing.T) {
 
 	if server.registry.Identifier != "Server-madeup" {
 		t.Errorf("Server has not registered correctly: %v", server.registry)
+	}
+}
+
+func TestStraightDial(t *testing.T) {
+	server := GoServer{}
+	_, err := server.Dial("madeup", passingDialler{}, passingBuilder{})
+	if err != nil {
+		t.Errorf("Dial has failed: %v", err)
+	}
+}
+
+func TestFailedDialler(t *testing.T) {
+	server := GoServer{}
+	_, err := server.Dial("madeup", failingDialler{}, passingBuilder{})
+	if err == nil {
+		t.Errorf("Dial has failed: %v", err)
+	}
+}
+
+func TestBadRegistry(t *testing.T) {
+	server := GoServer{}
+	_, err := server.Dial("madeup", passingDialler{}, failingBuilder{})
+	if err == nil {
+		t.Errorf("Dial has failed: %v", err)
 	}
 }
 
