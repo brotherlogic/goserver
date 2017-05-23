@@ -156,6 +156,11 @@ func TestBadRegistry(t *testing.T) {
 	}
 }
 
+func TestBadRegister(t *testing.T) {
+	server := GoServer{}
+	server.reregister(failingDialler{}, passingBuilder{})
+}
+
 func TestRegisterServer(t *testing.T) {
 	server := GoServer{}
 	madeupport := server.registerServer("madeup", "madeup", false, passingDialler{}, passingBuilder{}, basicGetter{})

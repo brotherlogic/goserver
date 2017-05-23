@@ -60,6 +60,7 @@ func (s *GoServer) heartbeat() {
 	running := true
 	for running {
 		s.sendHeartbeat(s.monitor.Ip, int(s.monitor.Port), s.dialler, s.monitorBuilder)
+		s.reregister(s.dialler, s.clientBuilder)
 		select {
 		case <-s.heartbeatChan:
 			running = false
@@ -67,6 +68,16 @@ func (s *GoServer) heartbeat() {
 			log.Printf("Sleeping for %v", s.heartbeatTime)
 			time.Sleep(s.heartbeatTime)
 		}
+	}
+}
+
+func (s *GoServer) reregister(d dialler, b clientBuilder) {
+	conn, err := d.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
+	if err == nil {
+		c := b.NewDiscoveryServiceClient(conn)
+		c.RegisterService(context.Background(), &s.registry)
+	} else {
+		log.Printf("Dialling discovery failed: %v", err)
 	}
 }
 
