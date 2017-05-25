@@ -73,6 +73,7 @@ func (s *GoServer) heartbeat() {
 
 func (s *GoServer) reregister(d dialler, b clientBuilder) {
 	conn, err := d.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
+	log.Printf("Re-registering %v:%v -> %v", registryIP, registryPort, s.registry)
 	if err == nil {
 		c := b.NewDiscoveryServiceClient(conn)
 		c.RegisterService(context.Background(), &s.registry)
