@@ -68,7 +68,10 @@ func (s *GoServer) getRegisteredServerPort(IP string, servername string, externa
 // Serve Runs the server
 func (s *GoServer) Serve() {
 	log.Printf("%v is serving!", s)
-	lis, _ := net.Listen("tcp", ":"+strconv.Itoa(int(s.port)))
+	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.port)))
+	if err != nil {
+		log.Fatalf("Unable to grab port: %v -> %v", s, err)
+	}
 	server := grpc.NewServer()
 	s.Register.DoRegister(server)
 	pbl.RegisterGoserverServiceServer(server, s)
