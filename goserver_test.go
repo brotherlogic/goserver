@@ -34,7 +34,7 @@ func (dialler passingDialler) Dial(host string, opts ...grpc.DialOption) (*grpc.
 type failingDialler struct{}
 
 func (dialler failingDialler) Dial(host string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
-	return &grpc.ClientConn{}, errors.New("Built to fail")
+	return nil, errors.New("Built to fail")
 }
 
 type passingDiscoveryServiceClient struct{}

@@ -75,12 +75,12 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 	conn, err := d.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
 	log.Printf("Re-registering %v:%v -> %v", registryIP, registryPort, s.registry)
 	if err == nil {
-		defer conn.Close()
 		c := b.NewDiscoveryServiceClient(conn)
 		c.RegisterService(context.Background(), &s.registry)
 	} else {
 		log.Printf("Dialling discovery failed: %v", err)
 	}
+	s.close(conn)
 }
 
 //Log a simple string message
