@@ -151,6 +151,7 @@ func (s *GoServer) Dial(server string, dialler dialler, builder clientBuilder) (
 	if err != nil {
 		return nil, err
 	}
+	s.close(conn)
 
 	return dialler.Dial(r.Ip+":"+strconv.Itoa(int(r.Port)), grpc.WithInsecure())
 }
