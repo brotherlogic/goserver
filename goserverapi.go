@@ -12,6 +12,7 @@ import (
 	pb "github.com/brotherlogic/discovery/proto"
 	pbl "github.com/brotherlogic/goserver/proto"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
+	"github.com/golang/protobuf/proto"
 )
 
 type osHostGetter struct{}
@@ -63,6 +64,16 @@ func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, erro
 func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool) int32 {
 	log.Printf("HERE with %v and %v", IP, servername)
 	return s.registerServer(IP, servername, external, grpcDialler{}, mainBuilder{}, osHostGetter{})
+}
+
+//Save a protobuf
+func (s *GoServer) Save(key string, p proto.Message) error {
+	return s.ksclient.Save(key, p)
+}
+
+//Read a protobuf
+func (s *GoServer) Read(key string, typ proto.Message) (proto.Message, error) {
+	return s.ksclient.Load(key, typ)
 }
 
 // Serve Runs the server

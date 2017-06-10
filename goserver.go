@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/brotherlogic/keystore/client"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
@@ -41,6 +42,7 @@ type GoServer struct {
 	Register       Registerable
 	SkipLog        bool
 	servingFuncs   []func()
+	ksclient       keystoreclient.Keystoreclient
 }
 
 // PrepServer builds out the server for use.
