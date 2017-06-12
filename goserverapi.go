@@ -68,12 +68,12 @@ func (s *GoServer) getRegisteredServerPort(IP string, servername string, externa
 
 //Save a protobuf
 func (s *GoServer) Save(key string, p proto.Message) error {
-	return s.ksclient.Save(key, p)
+	return s.KSclient.Save(key, p)
 }
 
 //Read a protobuf
 func (s *GoServer) Read(key string, typ proto.Message) (proto.Message, error) {
-	return s.ksclient.Load(key, typ)
+	return s.KSclient.Load(key, typ)
 }
 
 // Serve Runs the server
