@@ -42,7 +42,7 @@ type GoServer struct {
 	Register       Registerable
 	SkipLog        bool
 	servingFuncs   []func()
-	ksclient       keystoreclient.Keystoreclient
+	KSclient       keystoreclient.Keystoreclient
 }
 
 // PrepServer builds out the server for use.
