@@ -2,8 +2,15 @@ syntax = "proto3";
 
 package goserver;
 
+message Empty {}
+
 message Alive {}
+
+message MoteRequest {
+  bool master = 1;
+}
 
 service goserverService {
   rpc IsAlive (Alive) returns (Alive) {};
+  rpc Mote(MoteRequest) returns (Empty) {};
 }

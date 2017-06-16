@@ -61,6 +61,12 @@ func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, erro
 	return &pbl.Alive{}, nil
 }
 
+// Mote promotes or demotes a server into production
+func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, error) {
+	err := s.Register.Mote(in.Master)
+	return &pbl.Empty{}, err
+}
+
 func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool) int32 {
 	log.Printf("HERE with %v and %v", IP, servername)
 	return s.registerServer(IP, servername, external, grpcDialler{}, mainBuilder{}, osHostGetter{})
