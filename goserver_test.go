@@ -194,6 +194,10 @@ func (s TestServer) ReportHealth() bool {
 	return true
 }
 
+func (s TestServer) Mote(master bool) error {
+	return nil
+}
+
 func InitTestServer() TestServer {
 	s := TestServer{&GoServer{}}
 	s.Register = s

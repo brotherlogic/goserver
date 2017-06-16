@@ -23,6 +23,7 @@ const (
 type Registerable interface {
 	DoRegister(server *grpc.Server)
 	ReportHealth() bool
+	Mote(master bool) error
 }
 
 type baseRegistrable struct{ Registerable }
