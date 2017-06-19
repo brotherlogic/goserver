@@ -215,13 +215,12 @@ func TestHeartbeat(t *testing.T) {
 	go server.Serve()
 	log.Printf("Done Serving")
 
-	//Wait 10 seconds
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(20 * time.Millisecond)
 	log.Printf("Tearing Down")
 	server.teardown()
 
 	log.Printf("Now %v", server.heartbeatCount)
-	if server.heartbeatCount < 9 {
+	if server.heartbeatCount < 9 || server.heartbeatCount > 20 {
 		t.Errorf("Did not deliver heartbeats: %v", server.heartbeatCount)
 	}
 	log.Printf("Finished this all off")
