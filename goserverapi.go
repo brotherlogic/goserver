@@ -79,7 +79,7 @@ func (s *GoServer) Save(key string, p proto.Message) error {
 
 //Read a protobuf
 func (s *GoServer) Read(key string, typ proto.Message) (proto.Message, error) {
-	return s.KSclient.Load(key, typ)
+	return s.KSclient.Read(key, typ)
 }
 
 // Serve Runs the server
