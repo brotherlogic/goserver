@@ -44,7 +44,7 @@ func (DiscoveryServiceClient passingDiscoveryServiceClient) RegisterService(ctx 
 }
 
 func (DiscoveryServiceClient passingDiscoveryServiceClient) Discover(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
-	return &pb.RegistryEntry{}, nil
+	return &pb.RegistryEntry{Ip: "10.10.10.10", Port: 23}, nil
 }
 
 func (DiscoveryServiceClient passingDiscoveryServiceClient) ListAllServices(ctx context.Context, in *pb.Empty, opts ...grpc.CallOption) (*pb.ServiceList, error) {
@@ -156,6 +156,26 @@ func TestBadRegistry(t *testing.T) {
 	}
 }
 
+func TestGetIPSuccess(t *testing.T) {
+	server := GoServer{}
+	server.clientBuilder = passingBuilder{}
+	server.dialler = passingDialler{}
+	_, port := server.GetIP("madeup")
+	if port < 0 {
+		t.Errorf("Get IP has failed")
+	}
+}
+
+func TestGetIPFail(t *testing.T) {
+	server := GoServer{}
+	server.clientBuilder = failingBuilder{}
+	server.dialler = passingDialler{}
+	_, port := server.GetIP("madeup")
+	if port >= 0 {
+		t.Errorf("Failing builder has not failed")
+	}
+}
+
 func TestBadRegister(t *testing.T) {
 	server := GoServer{}
 	server.reregister(failingDialler{}, passingBuilder{})
@@ -215,13 +235,12 @@ func TestHeartbeat(t *testing.T) {
 	go server.Serve()
 	log.Printf("Done Serving")
 
-	//Wait 10 seconds
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(20 * time.Millisecond)
 	log.Printf("Tearing Down")
 	server.teardown()
 
 	log.Printf("Now %v", server.heartbeatCount)
-	if server.heartbeatCount < 9 {
+	if server.heartbeatCount < 9 || server.heartbeatCount > 20 {
 		t.Errorf("Did not deliver heartbeats: %v", server.heartbeatCount)
 	}
 	log.Printf("Finished this all off")

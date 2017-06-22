@@ -97,6 +97,24 @@ func (s *GoServer) Log(message string) {
 	}
 }
 
+//GetIP gets an IP address from the discovery server
+func (s *GoServer) GetIP(servername string) (string, int) {
+	conn, _ := s.dialler.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
+
+	registry := s.clientBuilder.NewDiscoveryServiceClient(conn)
+	entry := pb.RegistryEntry{Name: servername}
+	r, err := registry.Discover(context.Background(), &entry)
+
+	log.Printf("%v and %v", r, err)
+
+	if err != nil {
+		return "", -1
+	}
+
+	s.close(conn)
+	return r.Ip, int(r.Port)
+}
+
 type hostGetter interface {
 	Hostname() (string, error)
 }
