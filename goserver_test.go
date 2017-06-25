@@ -44,7 +44,7 @@ func (DiscoveryServiceClient passingDiscoveryServiceClient) RegisterService(ctx 
 }
 
 func (DiscoveryServiceClient passingDiscoveryServiceClient) Discover(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
-	return &pb.RegistryEntry{}, nil
+	return &pb.RegistryEntry{Ip: "10.10.10.10", Port: 23}, nil
 }
 
 func (DiscoveryServiceClient passingDiscoveryServiceClient) ListAllServices(ctx context.Context, in *pb.Empty, opts ...grpc.CallOption) (*pb.ServiceList, error) {
@@ -153,6 +153,26 @@ func TestBadRegistry(t *testing.T) {
 	_, err := server.Dial("madeup", passingDialler{}, failingBuilder{})
 	if err == nil {
 		t.Errorf("Dial has failed: %v", err)
+	}
+}
+
+func TestGetIPSuccess(t *testing.T) {
+	server := GoServer{}
+	server.clientBuilder = passingBuilder{}
+	server.dialler = passingDialler{}
+	_, port := server.GetIP("madeup")
+	if port < 0 {
+		t.Errorf("Get IP has failed")
+	}
+}
+
+func TestGetIPFail(t *testing.T) {
+	server := GoServer{}
+	server.clientBuilder = failingBuilder{}
+	server.dialler = passingDialler{}
+	_, port := server.GetIP("madeup")
+	if port >= 0 {
+		t.Errorf("Failing builder has not failed")
 	}
 }
 
