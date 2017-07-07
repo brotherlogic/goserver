@@ -97,6 +97,17 @@ func (s *GoServer) Log(message string) {
 	}
 }
 
+//LogFunction logs a function call
+func (s *GoServer) LogFunction(f string, time int32) {
+	if !s.SkipLog {
+		conn, _ := s.dialler.Dial(s.monitor.Ip+":"+strconv.Itoa(int(s.monitor.Port)), grpc.WithInsecure())
+		monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
+		functionCall := &pbd.FunctionCall{Binary: s.servername, Name: f, Time: time}
+		monitor.WriteFunctionCall(context.Background(), functionCall)
+		s.close(conn)
+	}
+}
+
 //GetIP gets an IP address from the discovery server
 func (s *GoServer) GetIP(servername string) (string, int) {
 	conn, _ := s.dialler.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())

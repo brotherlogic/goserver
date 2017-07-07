@@ -99,6 +99,14 @@ func (MonitorServiceClient passingMonitorServiceClient) WriteValueLog(ctx contex
 	return &pbd.LogWriteResponse{}, nil
 }
 
+func (MonitorServiceClient passingMonitorServiceClient) WriteFunctionCall(ctx context.Context, in *pbd.FunctionCall, opts ...grpc.CallOption) (*pbd.Empty, error) {
+	return &pbd.Empty{}, nil
+}
+
+func (MonitorServiceClient passingMonitorServiceClient) GetStats(ctx context.Context, in *pbd.FunctionCall, opts ...grpc.CallOption) (*pbd.Stats, error) {
+	return &pbd.Stats{}, nil
+}
+
 type passingMonitorBuilder struct{}
 
 func (monitorBuilder passingMonitorBuilder) NewMonitorServiceClient(conn *grpc.ClientConn) pbd.MonitorServiceClient {
@@ -193,6 +201,11 @@ func TestRegisterServer(t *testing.T) {
 func TestLog(t *testing.T) {
 	server := InitTestServer()
 	server.Log("MadeUpLog")
+}
+
+func TestLogFunction(t *testing.T) {
+	server := InitTestServer()
+	server.LogFunction("blah", 12)
 }
 
 func TestGetIP(t *testing.T) {
