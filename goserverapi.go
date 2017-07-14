@@ -92,7 +92,7 @@ func (s *GoServer) Serve() {
 	server := grpc.NewServer()
 	s.Register.DoRegister(server)
 	pbl.RegisterGoserverServiceServer(server, s)
-	s.setupHeartbeats(s.dialler, s.clientBuilder)
+	s.setupHeartbeats()
 
 	// Background all the serving funcs
 	for _, f := range s.servingFuncs {
