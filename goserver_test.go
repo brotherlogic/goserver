@@ -103,8 +103,8 @@ func (MonitorServiceClient passingMonitorServiceClient) WriteFunctionCall(ctx co
 	return &pbd.Empty{}, nil
 }
 
-func (MonitorServiceClient passingMonitorServiceClient) GetStats(ctx context.Context, in *pbd.FunctionCall, opts ...grpc.CallOption) (*pbd.Stats, error) {
-	return &pbd.Stats{}, nil
+func (MonitorServiceClient passingMonitorServiceClient) GetStats(ctx context.Context, in *pbd.FunctionCall, opts ...grpc.CallOption) (*pbd.StatsList, error) {
+	return &pbd.StatsList{}, nil
 }
 
 type passingMonitorBuilder struct{}

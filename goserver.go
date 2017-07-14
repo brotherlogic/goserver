@@ -33,7 +33,6 @@ type GoServer struct {
 	servername     string
 	port           int32
 	registry       pb.RegistryEntry
-	monitor        pb.RegistryEntry
 	dialler        dialler
 	monitorBuilder monitorBuilder
 	clientBuilder  clientBuilder
@@ -62,7 +61,7 @@ func (s *GoServer) teardown() {
 func (s *GoServer) heartbeat() {
 	running := true
 	for running {
-		s.sendHeartbeat(s.monitor.Ip, int(s.monitor.Port), s.dialler, s.monitorBuilder)
+		s.sendHeartbeat(s.dialler, s.monitorBuilder)
 		s.reregister(s.dialler, s.clientBuilder)
 		select {
 		case <-s.heartbeatChan:
@@ -89,7 +88,8 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 //Log a simple string message
 func (s *GoServer) Log(message string) {
 	if !s.SkipLog {
-		conn, _ := s.dialler.Dial(s.monitor.Ip+":"+strconv.Itoa(int(s.monitor.Port)), grpc.WithInsecure())
+		monitorIP, monitorPort := s.GetIP("monitor")
+		conn, _ := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
 		monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
 		messageLog := &pbd.MessageLog{Message: message, Entry: &s.registry}
 		monitor.WriteMessageLog(context.Background(), messageLog)
@@ -100,7 +100,8 @@ func (s *GoServer) Log(message string) {
 //LogFunction logs a function call
 func (s *GoServer) LogFunction(f string, time int32) {
 	if !s.SkipLog {
-		conn, _ := s.dialler.Dial(s.monitor.Ip+":"+strconv.Itoa(int(s.monitor.Port)), grpc.WithInsecure())
+		monitorIP, monitorPort := s.GetIP("monitor")
+		conn, _ := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
 		monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
 		functionCall := &pbd.FunctionCall{Binary: s.servername, Name: f, Time: time}
 		monitor.WriteFunctionCall(context.Background(), functionCall)
@@ -142,7 +143,8 @@ type clientBuilder interface {
 	NewDiscoveryServiceClient(conn *grpc.ClientConn) pb.DiscoveryServiceClient
 }
 
-func (s *GoServer) sendHeartbeat(monitorIP string, monitorPort int, dialler dialler, builder monitorBuilder) {
+func (s *GoServer) sendHeartbeat(dialler dialler, builder monitorBuilder) {
+	monitorIP, monitorPort := s.GetIP("monitor")
 	conn, _ := dialler.Dial(monitorIP+":"+strconv.Itoa(monitorPort), grpc.WithInsecure())
 	monitor := builder.NewMonitorServiceClient(conn)
 	monitor.ReceiveHeartbeat(context.Background(), &s.registry)
@@ -188,22 +190,9 @@ func (s *GoServer) Dial(server string, dialler dialler, builder clientBuilder) (
 	return dialler.Dial(r.Ip+":"+strconv.Itoa(int(r.Port)), grpc.WithInsecure())
 }
 
-func (s *GoServer) setupHeartbeats(dialler dialler, builder clientBuilder) {
-	log.Printf("Setting up heartbeats")
-	conn, _ := dialler.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
-
-	registry := builder.NewDiscoveryServiceClient(conn)
-	log.Printf("REGISTRY IS HERE %v", registry)
-	entry := pb.RegistryEntry{Name: "monitor"}
-	r, err := registry.Discover(context.Background(), &entry)
-
-	if err == nil {
-		s.monitor = *r
-		log.Printf("Running heartbeats")
-		go s.heartbeat()
-	}
-	log.Printf("Heartbeats beating")
-	s.close(conn)
+func (s *GoServer) setupHeartbeats() {
+	log.Printf("Running heartbeats")
+	go s.heartbeat()
 }
 
 // RegisterServer Registers a server with the system and gets the port number it should use
