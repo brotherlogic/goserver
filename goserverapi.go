@@ -41,8 +41,8 @@ func (clientBuilder mainBuilder) NewDiscoveryServiceClient(conn *grpc.ClientConn
 
 // RegisterServer registers this server
 func (s *GoServer) RegisterServer(servername string, external bool) {
-	s.servername = servername
-	s.port = s.getRegisteredServerPort(getLocalIP(), s.servername, external)
+	s.Servername = servername
+	s.Port = s.getRegisteredServerPort(getLocalIP(), s.Servername, external)
 }
 
 func (s *GoServer) close(conn *grpc.ClientConn) {
@@ -85,7 +85,7 @@ func (s *GoServer) Read(key string, typ proto.Message) (proto.Message, error) {
 // Serve Runs the server
 func (s *GoServer) Serve() {
 	log.Printf("%v is serving!", s)
-	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.port)))
+	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.Port)))
 	if err != nil {
 		log.Fatalf("Unable to grab port: %v -> %v", s, err)
 	}
