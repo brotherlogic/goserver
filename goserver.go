@@ -30,8 +30,8 @@ type baseRegistrable struct{ Registerable }
 
 // GoServer The basic server construct
 type GoServer struct {
-	servername     string
-	port           int32
+	Servername     string
+	Port           int32
 	registry       pb.RegistryEntry
 	dialler        dialler
 	monitorBuilder monitorBuilder
@@ -43,6 +43,8 @@ type GoServer struct {
 	SkipLog        bool
 	servingFuncs   []func()
 	KSclient       keystoreclient.Keystoreclient
+	suicideTime    time.Duration
+	Killme         bool
 }
 
 // PrepServer builds out the server for use.
@@ -52,6 +54,8 @@ func (s *GoServer) PrepServer() {
 	s.monitorBuilder = mainMonitorBuilder{}
 	s.dialler = grpcDialler{}
 	s.clientBuilder = mainBuilder{}
+	s.suicideTime = time.Minute
+	s.Killme = true
 }
 
 func (s *GoServer) teardown() {
@@ -103,7 +107,7 @@ func (s *GoServer) LogFunction(f string, time int32) {
 		monitorIP, monitorPort := s.GetIP("monitor")
 		conn, _ := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
 		monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
-		functionCall := &pbd.FunctionCall{Binary: s.servername, Name: f, Time: time}
+		functionCall := &pbd.FunctionCall{Binary: s.Servername, Name: f, Time: time}
 		monitor.WriteFunctionCall(context.Background(), functionCall)
 		s.close(conn)
 	}

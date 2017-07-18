@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"time"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -14,6 +15,16 @@ import (
 	pbd "github.com/brotherlogic/monitor/monitorproto"
 	"github.com/golang/protobuf/proto"
 )
+
+func (s *GoServer) suicideWatch() {
+	for true && s.Killme {
+		time.Sleep(s.suicideTime)
+		//commit suicide if we're detached from the parent
+		if os.Getppid() == 1 && s.Killme {
+			os.Exit(1)
+		}
+	}
+}
 
 type osHostGetter struct{}
 
@@ -41,8 +52,8 @@ func (clientBuilder mainBuilder) NewDiscoveryServiceClient(conn *grpc.ClientConn
 
 // RegisterServer registers this server
 func (s *GoServer) RegisterServer(servername string, external bool) {
-	s.servername = servername
-	s.port = s.getRegisteredServerPort(getLocalIP(), s.servername, external)
+	s.Servername = servername
+	s.Port = s.getRegisteredServerPort(getLocalIP(), s.Servername, external)
 }
 
 func (s *GoServer) close(conn *grpc.ClientConn) {
@@ -85,7 +96,7 @@ func (s *GoServer) Read(key string, typ proto.Message) (proto.Message, error) {
 // Serve Runs the server
 func (s *GoServer) Serve() {
 	log.Printf("%v is serving!", s)
-	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.port)))
+	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.Port)))
 	if err != nil {
 		log.Fatalf("Unable to grab port: %v -> %v", s, err)
 	}
@@ -93,6 +104,8 @@ func (s *GoServer) Serve() {
 	s.Register.DoRegister(server)
 	pbl.RegisterGoserverServiceServer(server, s)
 	s.setupHeartbeats()
+
+	go s.suicideWatch()
 
 	// Background all the serving funcs
 	for _, f := range s.servingFuncs {
