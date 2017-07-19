@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"time"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -14,6 +15,16 @@ import (
 	pbd "github.com/brotherlogic/monitor/monitorproto"
 	"github.com/golang/protobuf/proto"
 )
+
+func (s *GoServer) suicideWatch() {
+	for true && s.Killme {
+		time.Sleep(s.suicideTime)
+		//commit suicide if we're detached from the parent
+		if os.Getppid() == 1 && s.Killme {
+			os.Exit(1)
+		}
+	}
+}
 
 type osHostGetter struct{}
 
@@ -93,6 +104,8 @@ func (s *GoServer) Serve() {
 	s.Register.DoRegister(server)
 	pbl.RegisterGoserverServiceServer(server, s)
 	s.setupHeartbeats()
+
+	go s.suicideWatch()
 
 	// Background all the serving funcs
 	for _, f := range s.servingFuncs {

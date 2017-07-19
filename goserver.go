@@ -43,6 +43,8 @@ type GoServer struct {
 	SkipLog        bool
 	servingFuncs   []func()
 	KSclient       keystoreclient.Keystoreclient
+	suicideTime    time.Duration
+	Killme         bool
 }
 
 // PrepServer builds out the server for use.
@@ -52,6 +54,8 @@ func (s *GoServer) PrepServer() {
 	s.monitorBuilder = mainMonitorBuilder{}
 	s.dialler = grpcDialler{}
 	s.clientBuilder = mainBuilder{}
+	s.suicideTime = time.Minute
+	s.Killme = true
 }
 
 func (s *GoServer) teardown() {
