@@ -17,10 +17,13 @@ import (
 )
 
 func (s *GoServer) suicideWatch() {
+	log.Printf("NOT EVEN %v", s.Killme)
 	for true && s.Killme {
 		time.Sleep(s.suicideTime)
 		//commit suicide if we're detached from the parent
+		log.Printf("HERE %v, %v", os.Getppid(), s.Killme)
 		if os.Getppid() == 1 && s.Killme {
+			s.LogFunction("death-"+strconv.Itoa(os.Getppid()), 1)
 			os.Exit(1)
 		}
 	}
