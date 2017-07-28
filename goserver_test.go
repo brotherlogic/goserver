@@ -135,8 +135,8 @@ func TestFailToGet(t *testing.T) {
 	server := GoServer{}
 	server.registerServer("madeup", "madeup", false, passingDialler{}, passingBuilder{}, failingGetter{})
 
-	if server.registry.Identifier != "Server-madeup" {
-		t.Errorf("Server has not registered correctly: %v", server.registry)
+	if server.Registry.Identifier != "Server-madeup" {
+		t.Errorf("Server has not registered correctly: %v", server.Registry)
 	}
 }
 

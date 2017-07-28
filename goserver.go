@@ -32,7 +32,7 @@ type baseRegistrable struct{ Registerable }
 type GoServer struct {
 	Servername     string
 	Port           int32
-	registry       pb.RegistryEntry
+	Registry       pb.RegistryEntry
 	dialler        dialler
 	monitorBuilder monitorBuilder
 	clientBuilder  clientBuilder
@@ -79,10 +79,10 @@ func (s *GoServer) heartbeat() {
 
 func (s *GoServer) reregister(d dialler, b clientBuilder) {
 	conn, err := d.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
-	log.Printf("Re-registering %v:%v -> %v", registryIP, registryPort, s.registry)
+	log.Printf("Re-registering %v:%v -> %v", registryIP, registryPort, s.Registry)
 	if err == nil {
 		c := b.NewDiscoveryServiceClient(conn)
-		c.RegisterService(context.Background(), &s.registry)
+		c.RegisterService(context.Background(), &s.Registry)
 	} else {
 		log.Printf("Dialling discovery failed: %v", err)
 	}
@@ -95,7 +95,7 @@ func (s *GoServer) Log(message string) {
 		monitorIP, monitorPort := s.GetIP("monitor")
 		conn, _ := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
 		monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
-		messageLog := &pbd.MessageLog{Message: message, Entry: &s.registry}
+		messageLog := &pbd.MessageLog{Message: message, Entry: &s.Registry}
 		monitor.WriteMessageLog(context.Background(), messageLog)
 		s.close(conn)
 	}
@@ -151,7 +151,7 @@ func (s *GoServer) sendHeartbeat(dialler dialler, builder monitorBuilder) {
 	monitorIP, monitorPort := s.GetIP("monitor")
 	conn, _ := dialler.Dial(monitorIP+":"+strconv.Itoa(monitorPort), grpc.WithInsecure())
 	monitor := builder.NewMonitorServiceClient(conn)
-	monitor.ReceiveHeartbeat(context.Background(), &s.registry)
+	monitor.ReceiveHeartbeat(context.Background(), &s.Registry)
 	log.Printf("BEAT")
 	s.heartbeatCount++
 	s.close(conn)
@@ -218,7 +218,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, d
 		log.Printf("Could not register this service: %v", err)
 		return -1
 	}
-	s.registry = *r
+	s.Registry = *r
 	s.close(conn)
 
 	log.Printf("Registered %v on port %v", servername, r.Port)
