@@ -124,6 +124,7 @@ func (s *GoServer) GetIP(servername string) (string, int) {
 	log.Printf("%v and %v", r, err)
 
 	if err != nil {
+		s.close(conn)
 		return "", -1
 	}
 
@@ -187,6 +188,7 @@ func (s *GoServer) Dial(server string, dialler dialler, builder clientBuilder) (
 	entry := pb.RegistryEntry{Name: server}
 	r, err := registry.Discover(context.Background(), &entry)
 	if err != nil {
+		s.close(conn)
 		return nil, err
 	}
 	s.close(conn)
@@ -215,6 +217,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, d
 	entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname}
 	r, err := registry.RegisterService(context.Background(), &entry)
 	if err != nil {
+		s.close(conn)
 		log.Printf("Could not register this service: %v", err)
 		return -1
 	}
