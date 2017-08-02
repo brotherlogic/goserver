@@ -17,11 +17,9 @@ import (
 )
 
 func (s *GoServer) suicideWatch() {
-	log.Printf("NOT EVEN %v", s.Killme)
 	for true && s.Killme {
 		time.Sleep(s.suicideTime)
 		//commit suicide if we're detached from the parent
-		log.Printf("HERE %v, %v", os.Getppid(), s.Killme)
 		if os.Getppid() == 1 && s.Killme {
 			s.LogFunction("death-"+strconv.Itoa(os.Getppid()), 1)
 			os.Exit(1)
@@ -82,7 +80,6 @@ func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, e
 }
 
 func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool) int32 {
-	log.Printf("HERE with %v and %v", IP, servername)
 	return s.registerServer(IP, servername, external, grpcDialler{}, mainBuilder{}, osHostGetter{})
 }
 
@@ -98,7 +95,6 @@ func (s *GoServer) Read(key string, typ proto.Message) (proto.Message, error) {
 
 // Serve Runs the server
 func (s *GoServer) Serve() {
-	log.Printf("%v is serving!", s)
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.Port)))
 	if err != nil {
 		log.Fatalf("Unable to grab port: %v -> %v", s, err)

@@ -1,7 +1,6 @@
 package goserver
 
 import (
-	"log"
 	"net"
 	"strconv"
 	"time"
@@ -71,7 +70,6 @@ func (s *GoServer) heartbeat() {
 		case <-s.heartbeatChan:
 			running = false
 		default:
-			log.Printf("Sleeping for %v", s.heartbeatTime)
 			time.Sleep(s.heartbeatTime)
 		}
 	}
@@ -79,12 +77,9 @@ func (s *GoServer) heartbeat() {
 
 func (s *GoServer) reregister(d dialler, b clientBuilder) {
 	conn, err := d.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
-	log.Printf("Re-registering %v:%v -> %v", registryIP, registryPort, s.Registry)
 	if err == nil {
 		c := b.NewDiscoveryServiceClient(conn)
 		c.RegisterService(context.Background(), &s.Registry)
-	} else {
-		log.Printf("Dialling discovery failed: %v", err)
 	}
 	s.close(conn)
 }
@@ -121,8 +116,6 @@ func (s *GoServer) GetIP(servername string) (string, int) {
 	entry := pb.RegistryEntry{Name: servername}
 	r, err := registry.Discover(context.Background(), &entry)
 
-	log.Printf("%v and %v", r, err)
-
 	if err != nil {
 		s.close(conn)
 		return "", -1
@@ -153,7 +146,6 @@ func (s *GoServer) sendHeartbeat(dialler dialler, builder monitorBuilder) {
 	conn, _ := dialler.Dial(monitorIP+":"+strconv.Itoa(monitorPort), grpc.WithInsecure())
 	monitor := builder.NewMonitorServiceClient(conn)
 	monitor.ReceiveHeartbeat(context.Background(), &s.Registry)
-	log.Printf("BEAT")
 	s.heartbeatCount++
 	s.close(conn)
 }
@@ -163,7 +155,6 @@ func getLocalIP() string {
 
 	var ip net.IP
 	for _, i := range ifaces {
-		log.Printf("HERE 1 = %v", i)
 		addrs, _ := i.Addrs()
 
 		for _, addr := range addrs {
@@ -197,7 +188,6 @@ func (s *GoServer) Dial(server string, dialler dialler, builder clientBuilder) (
 }
 
 func (s *GoServer) setupHeartbeats() {
-	log.Printf("Running heartbeats")
 	go s.heartbeat()
 }
 
@@ -205,7 +195,6 @@ func (s *GoServer) setupHeartbeats() {
 func (s *GoServer) registerServer(IP string, servername string, external bool, dialler dialler, builder clientBuilder, getter hostGetter) int32 {
 	conn, err := dialler.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
 	if err != nil {
-		log.Printf("Could not connect: %v", err)
 		return -1
 	}
 
@@ -218,12 +207,10 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, d
 	r, err := registry.RegisterService(context.Background(), &entry)
 	if err != nil {
 		s.close(conn)
-		log.Printf("Could not register this service: %v", err)
 		return -1
 	}
 	s.Registry = *r
 	s.close(conn)
 
-	log.Printf("Registered %v on port %v", servername, r.Port)
 	return r.Port
 }
