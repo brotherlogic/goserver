@@ -76,6 +76,12 @@ func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, erro
 // Mote promotes or demotes a server into production
 func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, error) {
 	err := s.Register.Mote(in.Master)
+
+	// If we were able to mote then we should inform discovery
+	if err != nil {
+		s.reregister(s.dialler, s.clientBuilder)
+	}
+
 	return &pbl.Empty{}, err
 }
 
