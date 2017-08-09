@@ -79,7 +79,7 @@ func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, e
 	err := s.Register.Mote(in.Master)
 
 	// If we were able to mote then we should inform discovery
-	if err != nil {
+	if err == nil {
 		s.Registry.Master = in.Master
 		s.reregister(s.dialler, s.clientBuilder)
 	}
