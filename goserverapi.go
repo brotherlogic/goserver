@@ -75,6 +75,7 @@ func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, erro
 
 // Mote promotes or demotes a server into production
 func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, error) {
+	t := time.Now()
 	err := s.Register.Mote(in.Master)
 
 	// If we were able to mote then we should inform discovery
@@ -83,6 +84,7 @@ func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, e
 		s.reregister(s.dialler, s.clientBuilder)
 	}
 
+	s.LogFunction("Mote", int32(time.Now().Sub(t).Nanoseconds()/1000000))
 	return &pbl.Empty{}, err
 }
 
