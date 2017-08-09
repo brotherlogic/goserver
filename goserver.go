@@ -31,7 +31,7 @@ type baseRegistrable struct{ Registerable }
 type GoServer struct {
 	Servername     string
 	Port           int32
-	Registry       pb.RegistryEntry
+	Registry       *pb.RegistryEntry
 	dialler        dialler
 	monitorBuilder monitorBuilder
 	clientBuilder  clientBuilder
@@ -76,12 +76,14 @@ func (s *GoServer) heartbeat() {
 }
 
 func (s *GoServer) reregister(d dialler, b clientBuilder) {
-	conn, err := d.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
-	if err == nil {
-		c := b.NewDiscoveryServiceClient(conn)
-		c.RegisterService(context.Background(), &s.Registry)
+	if s.Registry != nil {
+		conn, err := d.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
+		if err == nil {
+			c := b.NewDiscoveryServiceClient(conn)
+			c.RegisterService(context.Background(), s.Registry)
+		}
+		s.close(conn)
 	}
-	s.close(conn)
 }
 
 //Log a simple string message
@@ -90,7 +92,7 @@ func (s *GoServer) Log(message string) {
 		monitorIP, monitorPort := s.GetIP("monitor")
 		conn, _ := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
 		monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
-		messageLog := &pbd.MessageLog{Message: message, Entry: &s.Registry}
+		messageLog := &pbd.MessageLog{Message: message, Entry: s.Registry}
 		monitor.WriteMessageLog(context.Background(), messageLog)
 		s.close(conn)
 	}
@@ -145,7 +147,7 @@ func (s *GoServer) sendHeartbeat(dialler dialler, builder monitorBuilder) {
 	monitorIP, monitorPort := s.GetIP("monitor")
 	conn, _ := dialler.Dial(monitorIP+":"+strconv.Itoa(monitorPort), grpc.WithInsecure())
 	monitor := builder.NewMonitorServiceClient(conn)
-	monitor.ReceiveHeartbeat(context.Background(), &s.Registry)
+	monitor.ReceiveHeartbeat(context.Background(), s.Registry)
 	s.heartbeatCount++
 	s.close(conn)
 }
@@ -209,7 +211,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, d
 		s.close(conn)
 		return -1
 	}
-	s.Registry = *r
+	s.Registry = r
 	s.close(conn)
 
 	return r.Port
