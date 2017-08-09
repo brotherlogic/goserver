@@ -196,6 +196,12 @@ func TestRegisterServer(t *testing.T) {
 	if madeupport != 35 {
 		t.Errorf("Port number is wrong: %v", madeupport)
 	}
+
+	server.reregister(passingDialler{}, passingBuilder{})
+
+	if server.Registry.GetPort() != 35 {
+		t.Errorf("Not stored registry info: %v", server.Registry)
+	}
 }
 
 func TestLog(t *testing.T) {
