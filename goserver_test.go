@@ -211,7 +211,7 @@ func TestLog(t *testing.T) {
 
 func TestLogFunction(t *testing.T) {
 	server := InitTestServer()
-	server.LogFunction("blah", 12)
+	server.LogFunction("blah", time.Now())
 }
 
 func TestGetIP(t *testing.T) {

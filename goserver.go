@@ -99,12 +99,12 @@ func (s *GoServer) Log(message string) {
 }
 
 //LogFunction logs a function call
-func (s *GoServer) LogFunction(f string, time int32) {
+func (s *GoServer) LogFunction(f string, t time.Time) {
 	if !s.SkipLog {
 		monitorIP, monitorPort := s.GetIP("monitor")
 		conn, _ := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
 		monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
-		functionCall := &pbd.FunctionCall{Binary: s.Servername, Name: f, Time: time}
+		functionCall := &pbd.FunctionCall{Binary: s.Servername, Name: f, Time: int32(time.Now().Sub(t).Nanoseconds() / 1000000)}
 		monitor.WriteFunctionCall(context.Background(), functionCall)
 		s.close(conn)
 	}
