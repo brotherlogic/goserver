@@ -21,7 +21,7 @@ func (s *GoServer) suicideWatch() {
 		time.Sleep(s.suicideTime)
 		//commit suicide if we're detached from the parent
 		if os.Getppid() == 1 && s.Killme {
-			s.LogFunction("death-"+strconv.Itoa(os.Getppid()), 1)
+			s.LogFunction("death-"+strconv.Itoa(os.Getppid()), time.Now())
 			os.Exit(1)
 		}
 	}
@@ -77,14 +77,7 @@ func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, erro
 func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, error) {
 	t := time.Now()
 	err := s.Register.Mote(in.Master)
-
-	// If we were able to mote then we should inform discovery
-	if err == nil {
-		s.Registry.Master = in.Master
-		s.reregister(s.dialler, s.clientBuilder)
-	}
-
-	s.LogFunction("Mote", int32(time.Now().Sub(t).Nanoseconds()/1000000))
+	s.LogFunction("MasterMote", t)
 	return &pbl.Empty{}, err
 }
 
