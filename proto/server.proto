@@ -4,7 +4,9 @@ package goserver;
 
 message Empty {}
 
-message Alive {}
+message Alive {
+  string name = 1;
+}
 
 message MoteRequest {
   bool master = 1;
