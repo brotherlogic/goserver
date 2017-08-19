@@ -70,7 +70,7 @@ func (s *GoServer) RegisterServingTask(task func()) {
 
 // IsAlive Reports liveness of the server
 func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, error) {
-	return &pbl.Alive{}, nil
+	return &pbl.Alive{Name: s.Registry.GetName()}, nil
 }
 
 // Mote promotes or demotes a server into production
@@ -122,5 +122,6 @@ func (s *GoServer) Serve() {
 		go f()
 	}
 
+	log.Printf("%v is Serving", s.Registry)
 	server.Serve(lis)
 }
