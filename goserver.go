@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	registryIP   = "192.168.86.64"
+	registryIP   = "192.168.86.42"
 	registryPort = 50055
 )
 

@@ -1,6 +1,7 @@
 package goserver
 
 import (
+	"errors"
 	"log"
 	"net"
 	"os"
@@ -70,7 +71,10 @@ func (s *GoServer) RegisterServingTask(task func()) {
 
 // IsAlive Reports liveness of the server
 func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, error) {
-	return &pbl.Alive{Name: s.Registry.GetName()}, nil
+	if s.Register.ReportHealth() {
+		return &pbl.Alive{Name: s.Registry.GetName()}, nil
+	}
+	return nil, errors.New("Server reports unhealthy")
 }
 
 // Mote promotes or demotes a server into production
