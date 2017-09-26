@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	registryIP   = "192.168.86.64"
-	registryPort = 50055
+	RegistryIP   = "192.168.86.26"
+	RegistryPort = 50055
 )
 
 // Registerable Allows the system to register itself
@@ -77,7 +77,7 @@ func (s *GoServer) heartbeat() {
 
 func (s *GoServer) reregister(d dialler, b clientBuilder) {
 	if s.Registry != nil {
-		conn, err := d.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
+		conn, err := d.Dial(RegistryIP+":"+strconv.Itoa(RegistryPort), grpc.WithInsecure())
 		if err == nil {
 			c := b.NewDiscoveryServiceClient(conn)
 			c.RegisterService(context.Background(), s.Registry)
@@ -112,7 +112,7 @@ func (s *GoServer) LogFunction(f string, t time.Time) {
 
 //GetIP gets an IP address from the discovery server
 func (s *GoServer) GetIP(servername string) (string, int) {
-	conn, _ := s.dialler.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
+	conn, _ := s.dialler.Dial(RegistryIP+":"+strconv.Itoa(RegistryPort), grpc.WithInsecure())
 
 	registry := s.clientBuilder.NewDiscoveryServiceClient(conn)
 	entry := pb.RegistryEntry{Name: servername}
@@ -173,7 +173,7 @@ func getLocalIP() string {
 
 //Dial a local server
 func (s *GoServer) Dial(server string, dialler dialler, builder clientBuilder) (*grpc.ClientConn, error) {
-	conn, err := dialler.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
+	conn, err := dialler.Dial(RegistryIP+":"+strconv.Itoa(RegistryPort), grpc.WithInsecure())
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +195,7 @@ func (s *GoServer) setupHeartbeats() {
 
 // RegisterServer Registers a server with the system and gets the port number it should use
 func (s *GoServer) registerServer(IP string, servername string, external bool, dialler dialler, builder clientBuilder, getter hostGetter) int32 {
-	conn, err := dialler.Dial(registryIP+":"+strconv.Itoa(registryPort), grpc.WithInsecure())
+	conn, err := dialler.Dial(RegistryIP+":"+strconv.Itoa(RegistryPort), grpc.WithInsecure())
 	if err != nil {
 		return -1
 	}
