@@ -1,6 +1,7 @@
 package goserver
 
 import (
+	"log"
 	"net"
 	"strconv"
 	"time"
@@ -76,7 +77,9 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 		conn, err := d.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
 		if err == nil {
 			c := b.NewDiscoveryServiceClient(conn)
-			c.RegisterService(context.Background(), s.Registry, grpc.FailFast(false))
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			c.RegisterService(ctx, s.Registry, grpc.FailFast(false))
 		}
 		s.close(conn)
 	}
@@ -86,11 +89,15 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 func (s *GoServer) Log(message string) {
 	if !s.SkipLog {
 		monitorIP, monitorPort := s.GetIP("monitor")
-		conn, _ := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
-		monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
-		messageLog := &pbd.MessageLog{Message: message, Entry: s.Registry}
-		monitor.WriteMessageLog(context.Background(), messageLog, grpc.FailFast(false))
-		s.close(conn)
+		conn, err := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
+		if err == nil {
+			monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
+			messageLog := &pbd.MessageLog{Message: message, Entry: s.Registry}
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
+			s.close(conn)
+		}
 	}
 }
 
@@ -98,29 +105,37 @@ func (s *GoServer) Log(message string) {
 func (s *GoServer) LogFunction(f string, t time.Time) {
 	if !s.SkipLog {
 		monitorIP, monitorPort := s.GetIP("monitor")
-		conn, _ := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
-		monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
-		functionCall := &pbd.FunctionCall{Binary: s.Servername, Name: f, Time: int32(time.Now().Sub(t).Nanoseconds() / 1000000)}
-		monitor.WriteFunctionCall(context.Background(), functionCall, grpc.FailFast(false))
-		s.close(conn)
+		conn, err := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
+		if err == nil {
+			monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
+			functionCall := &pbd.FunctionCall{Binary: s.Servername, Name: f, Time: int32(time.Now().Sub(t).Nanoseconds() / 1000000)}
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			monitor.WriteFunctionCall(ctx, functionCall, grpc.FailFast(false))
+			s.close(conn)
+		}
 	}
 }
 
 //GetIP gets an IP address from the discovery server
 func (s *GoServer) GetIP(servername string) (string, int) {
-	conn, _ := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
+	conn, err := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
+	if err == nil {
 
-	registry := s.clientBuilder.NewDiscoveryServiceClient(conn)
-	entry := pb.RegistryEntry{Name: servername}
-	r, err := registry.Discover(context.Background(), &entry, grpc.FailFast(false))
+		registry := s.clientBuilder.NewDiscoveryServiceClient(conn)
+		entry := pb.RegistryEntry{Name: servername}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		r, err := registry.Discover(ctx, &entry, grpc.FailFast(false))
 
-	if err != nil {
-		s.close(conn)
-		return "", -1
+		if err == nil {
+			s.close(conn)
+			return r.Ip, int(r.Port)
+		}
 	}
-
 	s.close(conn)
-	return r.Ip, int(r.Port)
+	return "", -1
+
 }
 
 type hostGetter interface {
@@ -140,12 +155,19 @@ type clientBuilder interface {
 }
 
 func (s *GoServer) sendHeartbeat(dialler dialler, builder monitorBuilder) {
+	log.Printf("HEART")
 	monitorIP, monitorPort := s.GetIP("monitor")
-	conn, _ := dialler.Dial(monitorIP+":"+strconv.Itoa(monitorPort), grpc.WithInsecure())
-	monitor := builder.NewMonitorServiceClient(conn)
-	monitor.ReceiveHeartbeat(context.Background(), s.Registry, grpc.FailFast(false))
-	s.heartbeatCount++
-	s.close(conn)
+	conn, err := dialler.Dial(monitorIP+":"+strconv.Itoa(monitorPort), grpc.WithInsecure())
+	if err == nil {
+		monitor := builder.NewMonitorServiceClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		log.Printf("Heartbeat1")
+		monitor.ReceiveHeartbeat(ctx, s.Registry, grpc.FailFast(false))
+		log.Printf("Heartbeat2")
+		s.heartbeatCount++
+		s.close(conn)
+	}
 }
 
 func getLocalIP() string {
@@ -175,7 +197,9 @@ func (s *GoServer) Dial(server string, dialler dialler, builder clientBuilder) (
 	}
 	registry := builder.NewDiscoveryServiceClient(conn)
 	entry := pb.RegistryEntry{Name: server}
-	r, err := registry.Discover(context.Background(), &entry, grpc.FailFast(false))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := registry.Discover(ctx, &entry, grpc.FailFast(false))
 	if err != nil {
 		s.close(conn)
 		return nil, err
@@ -202,7 +226,9 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, d
 		hostname = "Server-" + IP
 	}
 	entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname}
-	r, err := registry.RegisterService(context.Background(), &entry, grpc.FailFast(false))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := registry.RegisterService(ctx, &entry, grpc.FailFast(false))
 	if err != nil {
 		s.close(conn)
 		return -1
