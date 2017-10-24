@@ -132,6 +132,7 @@ func (s *GoServer) GetIP(servername string) (string, int) {
 			s.close(conn)
 			return r.Ip, int(r.Port)
 		}
+		log.Printf("Error connecting to discover: %v", err)
 	}
 	s.close(conn)
 	return "", -1
