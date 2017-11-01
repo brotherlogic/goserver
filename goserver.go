@@ -218,6 +218,7 @@ func (s *GoServer) setupHeartbeats() {
 func (s *GoServer) registerServer(IP string, servername string, external bool, dialler dialler, builder clientBuilder, getter hostGetter) int32 {
 	conn, err := dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
 	if err != nil {
+		log.Printf("Failed to register: %v", err)
 		return -1
 	}
 
@@ -232,6 +233,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, d
 	r, err := registry.RegisterService(ctx, &entry, grpc.FailFast(false))
 	if err != nil {
 		s.close(conn)
+		log.Printf("Failure to register: %v", err)
 		return -1
 	}
 	s.Registry = r
