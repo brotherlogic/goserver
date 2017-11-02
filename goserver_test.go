@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 
 	pb "github.com/brotherlogic/discovery/proto"
+	pbg "github.com/brotherlogic/goserver/proto"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
 )
 
@@ -235,6 +236,10 @@ func (s TestServer) ReportHealth() bool {
 
 func (s TestServer) Mote(master bool) error {
 	return nil
+}
+
+func (s TestServer) GetState() []*pbg.State {
+	return []*pbg.State{}
 }
 
 func InitTestServer() TestServer {

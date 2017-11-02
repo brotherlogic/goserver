@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 
 	pb "github.com/brotherlogic/discovery/proto"
+	pbg "github.com/brotherlogic/goserver/proto"
 	utils "github.com/brotherlogic/goserver/utils"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
 )
@@ -20,6 +21,7 @@ type Registerable interface {
 	DoRegister(server *grpc.Server)
 	ReportHealth() bool
 	Mote(master bool) error
+	GetState() []*pbg.State
 }
 
 type baseRegistrable struct{ Registerable }

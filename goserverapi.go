@@ -77,6 +77,11 @@ func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, erro
 	return nil, errors.New("Server reports unhealthy")
 }
 
+//State gets the state of the server.
+func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, error) {
+	return &pbl.ServerState{States: s.Register.GetState()}, nil
+}
+
 // Mote promotes or demotes a server into production
 func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, error) {
 	t := time.Now()
