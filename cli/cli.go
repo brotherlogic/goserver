@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"time"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -26,4 +27,9 @@ func main() {
 	check := pb.NewGoserverServiceClient(conn)
 	health, err := check.IsAlive(context.Background(), &pb.Alive{})
 	log.Printf("%v and %v", health, err)
+
+	state, _ := check.State(context.Background(), &pb.Empty{})
+	for _, s := range state.GetStates() {
+		log.Printf("%v and %v", s.GetKey(), time.Unix(s.GetTimeValue(), 0))
+	}
 }
