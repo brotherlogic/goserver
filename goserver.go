@@ -101,12 +101,14 @@ func (s *GoServer) Log(message string) {
 			defer cancel()
 			_, err := monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
 			if err != nil {
+				log.Printf("Log Message fail: %v", err)
 				s.LogFunction(fmt.Sprintf("Log-writefail: %v", err), t)
 			} else {
 				s.LogFunction("Log", t)
 			}
 			s.close(conn)
 		} else {
+			log.Printf("Connection error: %v", err)
 			s.LogFunction("Log-connectfail", t)
 		}
 	}
@@ -122,7 +124,10 @@ func (s *GoServer) LogFunction(f string, t time.Time) {
 			functionCall := &pbd.FunctionCall{Binary: s.Servername, Name: f, Time: int32(time.Now().Sub(t).Nanoseconds() / 1000000)}
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
-			monitor.WriteFunctionCall(ctx, functionCall, grpc.FailFast(false))
+			_, err := monitor.WriteFunctionCall(ctx, functionCall, grpc.FailFast(false))
+			if err != nil {
+				log.Printf("Log Function fail: %v", err)
+			}
 			s.close(conn)
 		}
 	}
