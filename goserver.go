@@ -1,6 +1,7 @@
 package goserver
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -89,6 +90,7 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 
 //Log a simple string message
 func (s *GoServer) Log(message string) {
+	t := time.Now()
 	if !s.SkipLog {
 		monitorIP, monitorPort := s.GetIP("monitor")
 		conn, err := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
@@ -97,8 +99,15 @@ func (s *GoServer) Log(message string) {
 			messageLog := &pbd.MessageLog{Message: message, Entry: s.Registry}
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
-			monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
+			_, err := monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
+			if err != nil {
+				s.LogFunction(fmt.Sprintf("Log-writefail: %v", err), t)
+			} else {
+				s.LogFunction("Log", t)
+			}
 			s.close(conn)
+		} else {
+			s.LogFunction("Log-connectfail", t)
 		}
 	}
 }
