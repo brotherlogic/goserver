@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 
 	pb "github.com/brotherlogic/discovery/proto"
 	pbg "github.com/brotherlogic/goserver/proto"
@@ -52,6 +53,28 @@ func (DiscoveryServiceClient passingDiscoveryServiceClient) ListAllServices(ctx 
 	return &pb.ServiceList{}, nil
 }
 
+type failPassDiscoveryServiceClient struct {
+	fails int
+}
+
+func (DiscoveryServiceClient failPassDiscoveryServiceClient) RegisterService(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
+	return &pb.RegistryEntry{Port: 35, Identifier: in.Identifier}, nil
+}
+
+func (DiscoveryServiceClient *failPassDiscoveryServiceClient) Discover(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
+	log.Printf("BUT %p", &DiscoveryServiceClient)
+	if DiscoveryServiceClient.fails > 0 {
+		DiscoveryServiceClient.fails--
+		log.Printf("YEP %v", DiscoveryServiceClient)
+		return nil, grpc.Errorf(codes.Unavailable, "Made up failure %v", 23)
+	}
+	return &pb.RegistryEntry{Ip: "10.10.10.10", Port: 23}, nil
+}
+
+func (DiscoveryServiceClient failPassDiscoveryServiceClient) ListAllServices(ctx context.Context, in *pb.Empty, opts ...grpc.CallOption) (*pb.ServiceList, error) {
+	return &pb.ServiceList{}, nil
+}
+
 type failingDiscoveryServiceClient struct{}
 
 func (DiscoveryServiceClient failingDiscoveryServiceClient) RegisterService(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
@@ -70,6 +93,12 @@ type passingBuilder struct{}
 
 func (clientBuilder passingBuilder) NewDiscoveryServiceClient(conn *grpc.ClientConn) pb.DiscoveryServiceClient {
 	return passingDiscoveryServiceClient{}
+}
+
+type passingFailBuilder struct{}
+
+func (clientBuilder passingFailBuilder) NewDiscoveryServiceClient(conn *grpc.ClientConn) pb.DiscoveryServiceClient {
+	return &failPassDiscoveryServiceClient{fails: 1}
 }
 
 type failingBuilder struct{}
@@ -168,6 +197,16 @@ func TestBadRegistry(t *testing.T) {
 func TestGetIPSuccess(t *testing.T) {
 	server := GoServer{}
 	server.clientBuilder = passingBuilder{}
+	server.dialler = passingDialler{}
+	_, port := server.GetIP("madeup")
+	if port < 0 {
+		t.Errorf("Get IP has failed")
+	}
+}
+
+func TestGetIPOneFail(t *testing.T) {
+	server := GoServer{}
+	server.clientBuilder = passingFailBuilder{}
 	server.dialler = passingDialler{}
 	_, port := server.GetIP("madeup")
 	if port < 0 {
