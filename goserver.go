@@ -249,7 +249,6 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, d
 	r, err := registry.RegisterService(ctx, &entry, grpc.FailFast(false))
 	if err != nil {
 		s.close(conn)
-		log.Printf("Failure to register: %v with %v", err, entry)
 		return -1
 	}
 	s.Registry = r

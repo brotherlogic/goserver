@@ -53,9 +53,10 @@ func (clientBuilder mainBuilder) NewDiscoveryServiceClient(conn *grpc.ClientConn
 }
 
 // RegisterServer registers this server
-func (s *GoServer) RegisterServer(servername string, external bool) {
+func (s *GoServer) RegisterServer(servername string, external bool) bool {
 	s.Servername = servername
 	s.Port = s.getRegisteredServerPort(getLocalIP(), s.Servername, external)
+	return s.Port > 0
 }
 
 func (s *GoServer) close(conn *grpc.ClientConn) {
