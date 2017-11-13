@@ -13,6 +13,7 @@ import (
 
 	pb "github.com/brotherlogic/discovery/proto"
 	pbl "github.com/brotherlogic/goserver/proto"
+	pbks "github.com/brotherlogic/keystore/proto"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
 	"github.com/golang/protobuf/proto"
 )
@@ -110,7 +111,7 @@ func (s *GoServer) Save(key string, p proto.Message) error {
 }
 
 //Read a protobuf
-func (s *GoServer) Read(key string, typ proto.Message) (proto.Message, error) {
+func (s *GoServer) Read(key string, typ proto.Message) (proto.Message, *pbks.ReadResponse, error) {
 	return s.KSclient.Read(key, typ)
 }
 
