@@ -1,7 +1,6 @@
 package goserver
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -10,6 +9,8 @@ import (
 	"github.com/brotherlogic/keystore/client"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/brotherlogic/discovery/proto"
 	pbg "github.com/brotherlogic/goserver/proto"
@@ -90,7 +91,6 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 
 //Log a simple string message
 func (s *GoServer) Log(message string) {
-	t := time.Now()
 	if !s.SkipLog {
 		monitorIP, monitorPort := s.GetIP("monitor")
 		conn, err := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
@@ -99,17 +99,8 @@ func (s *GoServer) Log(message string) {
 			messageLog := &pbd.MessageLog{Message: message, Entry: s.Registry}
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
-			_, err := monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
-			if err != nil {
-				log.Printf("Log Message fail: %v", err)
-				s.LogFunction(fmt.Sprintf("Log-writefail: %v", err), t)
-			} else {
-				s.LogFunction("Log", t)
-			}
+			monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
 			s.close(conn)
-		} else {
-			log.Printf("Connection error: %v", err)
-			s.LogFunction("Log-connectfail", t)
 		}
 	}
 }
@@ -124,10 +115,7 @@ func (s *GoServer) LogFunction(f string, t time.Time) {
 			functionCall := &pbd.FunctionCall{Binary: s.Servername, Name: f, Time: int32(time.Now().Sub(t).Nanoseconds() / 1000000)}
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
-			_, err := monitor.WriteFunctionCall(ctx, functionCall, grpc.FailFast(false))
-			if err != nil {
-				log.Printf("Log Function fail: %v", err)
-			}
+			monitor.WriteFunctionCall(ctx, functionCall, grpc.FailFast(false))
 			s.close(conn)
 		}
 	}
@@ -137,12 +125,15 @@ func (s *GoServer) LogFunction(f string, t time.Time) {
 func (s *GoServer) GetIP(servername string) (string, int) {
 	conn, err := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
 	if err == nil {
-
 		registry := s.clientBuilder.NewDiscoveryServiceClient(conn)
-		entry := pb.RegistryEntry{Name: servername}
+		entry := &pb.RegistryEntry{Name: servername}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		r, err := registry.Discover(ctx, &entry, grpc.FailFast(false))
+		r, err := registry.Discover(ctx, entry, grpc.FailFast(false))
+		e, ok := status.FromError(err)
+		if ok && e.Code() == codes.Unavailable {
+			r, err = registry.Discover(ctx, entry, grpc.FailFast(false))
+		}
 
 		if err == nil {
 			s.close(conn)
@@ -152,7 +143,6 @@ func (s *GoServer) GetIP(servername string) (string, int) {
 	}
 	s.close(conn)
 	return "", -1
-
 }
 
 type hostGetter interface {
