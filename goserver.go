@@ -107,18 +107,20 @@ func (s *GoServer) Log(message string) {
 
 //LogFunction logs a function call
 func (s *GoServer) LogFunction(f string, t time.Time) {
-	if !s.SkipLog {
-		monitorIP, monitorPort := s.GetIP("monitor")
-		conn, err := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
-		if err == nil {
-			monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
-			functionCall := &pbd.FunctionCall{Binary: s.Servername, Name: f, Time: int32(time.Now().Sub(t).Nanoseconds() / 1000000)}
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-			defer cancel()
-			monitor.WriteFunctionCall(ctx, functionCall, grpc.FailFast(false))
-			s.close(conn)
+	go func() {
+		if !s.SkipLog {
+			monitorIP, monitorPort := s.GetIP("monitor")
+			conn, err := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
+			if err == nil {
+				monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
+				functionCall := &pbd.FunctionCall{Binary: s.Servername, Name: f, Time: int32(time.Now().Sub(t).Nanoseconds() / 1000000)}
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+				defer cancel()
+				monitor.WriteFunctionCall(ctx, functionCall, grpc.FailFast(false))
+				s.close(conn)
+			}
 		}
-	}
+	}()
 }
 
 //GetIP gets an IP address from the discovery server
