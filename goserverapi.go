@@ -116,10 +116,10 @@ func (s *GoServer) Read(key string, typ proto.Message) (proto.Message, *pbks.Rea
 }
 
 // Serve Runs the server
-func (s *GoServer) Serve() {
+func (s *GoServer) Serve() error {
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.Port)))
 	if err != nil {
-		log.Fatalf("Unable to grab port: %v -> %v", s, err)
+		return err
 	}
 	server := grpc.NewServer()
 	s.Register.DoRegister(server)
@@ -135,4 +135,5 @@ func (s *GoServer) Serve() {
 
 	log.Printf("%v is Serving", s.Registry)
 	server.Serve(lis)
+	return nil
 }
