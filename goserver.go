@@ -1,7 +1,6 @@
 package goserver
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -29,6 +28,11 @@ type Registerable interface {
 
 type baseRegistrable struct{ Registerable }
 
+type sFunc struct {
+	fun func()
+	d   time.Duration
+}
+
 // GoServer The basic server construct
 type GoServer struct {
 	Servername     string
@@ -42,7 +46,7 @@ type GoServer struct {
 	heartbeatTime  time.Duration
 	Register       Registerable
 	SkipLog        bool
-	servingFuncs   []func()
+	servingFuncs   []sFunc
 	KSclient       keystoreclient.Keystoreclient
 	suicideTime    time.Duration
 	Killme         bool
@@ -146,34 +150,6 @@ func (s *GoServer) GetIP(servername string) (string, int) {
 	}
 	s.close(conn)
 	return "", -1
-}
-
-//GetServers gets an IP address from the discovery server
-func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
-	conn, err := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
-	if err == nil {
-		registry := s.clientBuilder.NewDiscoveryServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-		r, err := registry.ListAllServices(ctx, &pb.Empty{}, grpc.FailFast(false))
-		e, ok := status.FromError(err)
-		if ok && e.Code() == codes.Unavailable {
-			r, err = registry.ListAllServices(ctx, &pb.Empty{}, grpc.FailFast(false))
-		}
-
-		if err == nil {
-			s.close(conn)
-			arr := make([]*pb.RegistryEntry, 0)
-			for _, s := range r.GetServices() {
-				if s.GetName() == servername {
-					arr = append(arr, s)
-				}
-			}
-			return arr, nil
-		}
-	}
-	s.close(conn)
-	return nil, fmt.Errorf("Unable to establish connection")
 }
 
 type hostGetter interface {

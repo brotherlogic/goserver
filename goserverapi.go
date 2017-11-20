@@ -2,6 +2,7 @@ package goserver
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -10,9 +11,12 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/brotherlogic/discovery/proto"
 	pbl "github.com/brotherlogic/goserver/proto"
+	"github.com/brotherlogic/goserver/utils"
 	pbks "github.com/brotherlogic/keystore/proto"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
 	"github.com/golang/protobuf/proto"
@@ -68,7 +72,12 @@ func (s *GoServer) close(conn *grpc.ClientConn) {
 
 // RegisterServingTask registers tasks to run when serving
 func (s *GoServer) RegisterServingTask(task func()) {
-	s.servingFuncs = append(s.servingFuncs, task)
+	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: 0})
+}
+
+// RegisterRepeatingTask registers a repeating task with a given frequency
+func (s *GoServer) RegisterRepeatingTask(task func(), freq time.Duration) {
+	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq})
 }
 
 // IsAlive Reports liveness of the server
@@ -110,9 +119,50 @@ func (s *GoServer) Save(key string, p proto.Message) error {
 	return s.KSclient.Save(key, p)
 }
 
+func (s *GoServer) run(t sFunc) {
+	if t.d == 0 {
+		t.fun()
+	} else {
+		for true {
+			if s.Registry.GetMaster() {
+				t.fun()
+			}
+			time.Sleep(t.d)
+		}
+	}
+}
+
 //Read a protobuf
 func (s *GoServer) Read(key string, typ proto.Message) (proto.Message, *pbks.ReadResponse, error) {
 	return s.KSclient.Read(key, typ)
+}
+
+//GetServers gets an IP address from the discovery server
+func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
+	conn, err := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
+	if err == nil {
+		registry := s.clientBuilder.NewDiscoveryServiceClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		r, err := registry.ListAllServices(ctx, &pb.Empty{}, grpc.FailFast(false))
+		e, ok := status.FromError(err)
+		if ok && e.Code() == codes.Unavailable {
+			r, err = registry.ListAllServices(ctx, &pb.Empty{}, grpc.FailFast(false))
+		}
+
+		if err == nil {
+			s.close(conn)
+			arr := make([]*pb.RegistryEntry, 0)
+			for _, s := range r.GetServices() {
+				if s.GetName() == servername {
+					arr = append(arr, s)
+				}
+			}
+			return arr, nil
+		}
+	}
+	s.close(conn)
+	return nil, fmt.Errorf("Unable to establish connection")
 }
 
 // Serve Runs the server
@@ -130,7 +180,7 @@ func (s *GoServer) Serve() error {
 
 	// Background all the serving funcs
 	for _, f := range s.servingFuncs {
-		go f()
+		go s.run(f)
 	}
 
 	log.Printf("%v is Serving", s.Registry)
