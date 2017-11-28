@@ -15,6 +15,7 @@ message MoteRequest {
 message State {
   string key = 1;
   int64 time_value = 2;
+  int64 value = 3;
 }
 
 message ServerState {
