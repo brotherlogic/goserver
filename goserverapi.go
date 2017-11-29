@@ -121,7 +121,7 @@ func (s *GoServer) Save(key string, p proto.Message) error {
 
 func (s *GoServer) run(t sFunc) {
 	time.Sleep(time.Minute)
-	s.Log(fmt.Sprintf("Running %v", t.d))
+	s.Log(fmt.Sprintf("Running %v -> %v", t.d, s.Registry.GetMaster()))
 	if t.d == 0 {
 		t.fun()
 	} else {
