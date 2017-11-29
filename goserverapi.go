@@ -120,6 +120,8 @@ func (s *GoServer) Save(key string, p proto.Message) error {
 }
 
 func (s *GoServer) run(t sFunc) {
+	time.Sleep(time.Minute)
+	s.Log(fmt.Sprintf("Running %v", t.d))
 	if t.d == 0 {
 		t.fun()
 	} else {
