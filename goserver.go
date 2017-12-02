@@ -96,18 +96,20 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 
 //Log a simple string message
 func (s *GoServer) Log(message string) {
-	if !s.SkipLog {
-		monitorIP, monitorPort := s.GetIP("monitor")
-		conn, err := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
-		if err == nil {
-			monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
-			messageLog := &pbd.MessageLog{Message: message, Entry: s.Registry}
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-			defer cancel()
-			monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
-			s.close(conn)
+	go func() {
+		if !s.SkipLog {
+			monitorIP, monitorPort := s.GetIP("monitor")
+			conn, err := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
+			if err == nil {
+				monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
+				messageLog := &pbd.MessageLog{Message: message, Entry: s.Registry}
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+				defer cancel()
+				monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
+				s.close(conn)
+			}
 		}
-	}
+	}()
 }
 
 //LogFunction logs a function call
