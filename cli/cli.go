@@ -30,6 +30,6 @@ func main() {
 
 	state, _ := check.State(context.Background(), &pb.Empty{})
 	for _, s := range state.GetStates() {
-		log.Printf("%v and %v", s.GetKey(), time.Unix(s.GetTimeValue(), 0))
+		log.Printf("%v and %v (%v)", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue())
 	}
 }
