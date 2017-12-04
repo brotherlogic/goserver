@@ -3,7 +3,6 @@ package goserver
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"strconv"
@@ -185,7 +184,6 @@ func (s *GoServer) Serve() error {
 		go s.run(f)
 	}
 
-	log.Printf("%v is Serving", s.Registry)
 	server.Serve(lis)
 	return nil
 }

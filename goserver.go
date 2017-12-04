@@ -1,7 +1,6 @@
 package goserver
 
 import (
-	"log"
 	"net"
 	"strconv"
 	"time"
@@ -170,16 +169,13 @@ type clientBuilder interface {
 }
 
 func (s *GoServer) sendHeartbeat(dialler dialler, builder monitorBuilder) {
-	log.Printf("HEART")
 	monitorIP, monitorPort := s.GetIP("monitor")
 	conn, err := dialler.Dial(monitorIP+":"+strconv.Itoa(monitorPort), grpc.WithInsecure())
 	if err == nil {
 		monitor := builder.NewMonitorServiceClient(conn)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		log.Printf("Heartbeat1")
 		monitor.ReceiveHeartbeat(ctx, s.Registry, grpc.FailFast(false))
-		log.Printf("Heartbeat2")
 		s.heartbeatCount++
 		s.close(conn)
 	}
@@ -232,7 +228,6 @@ func (s *GoServer) setupHeartbeats() {
 func (s *GoServer) registerServer(IP string, servername string, external bool, dialler dialler, builder clientBuilder, getter hostGetter) int32 {
 	conn, err := dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
 	if err != nil {
-		log.Printf("Failed to register: %v", err)
 		return -1
 	}
 
