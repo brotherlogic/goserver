@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"time"
 
@@ -17,7 +18,6 @@ func main() {
 	var port = flag.String("port", "", "Port")
 	flag.Parse()
 
-	log.Printf("Connection to %v:%v", *host, *port)
 	conn, err := grpc.Dial(*host+":"+*port, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Unable to reach server %v:%v -> %v", *host, *port, err)
@@ -26,10 +26,10 @@ func main() {
 
 	check := pb.NewGoserverServiceClient(conn)
 	health, err := check.IsAlive(context.Background(), &pb.Alive{})
-	log.Printf("%v and %v", health, err)
+	fmt.Printf("%v and %v\n", health, err)
 
 	state, _ := check.State(context.Background(), &pb.Empty{})
 	for _, s := range state.GetStates() {
-		log.Printf("%v and %v (%v)", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue())
+		fmt.Printf("%v and %v (%v)\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue())
 	}
 }
