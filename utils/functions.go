@@ -36,12 +36,18 @@ func doMatch(in, out reflect.Value) bool {
 			return false
 		}
 	case reflect.Bool:
+		if !in.Bool() || out.Bool() {
+			return true
+		}
 		return false
 	case reflect.String:
 		if in.String() != "" && in.String() != out.String() {
 			return false
 		}
 	case reflect.Ptr:
+		if in.IsNil() {
+			return true
+		}
 		return doMatch(in.Elem(), out.Elem())
 	case reflect.Struct:
 		return matchStruct(in, out)
