@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"reflect"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -10,18 +11,28 @@ import (
 	pbdi "github.com/brotherlogic/discovery/proto"
 )
 
-//FuzzyMatch is a loose matcher for two protobufs
+//FuzzyMatch experimental fuzzy match
 func FuzzyMatch(matcher, matchee proto.Message) bool {
+	in := reflect.ValueOf(matcher)
+	out := reflect.ValueOf(matchee)
 
-	matcher1 := proto.Clone(matcher)
-	matcher2 := proto.Clone(matcher)
-	matchee1 := proto.Clone(matchee)
-	matchee2 := proto.Clone(matchee)
-
-	proto.Merge(matcher1, matchee1)
-	proto.Merge(matchee2, matcher2)
-
-	return proto.Equal(matcher1, matchee2)
+	for i := 0; i < in.Elem().NumField(); i++ {
+		switch in.Elem().Field(i).Kind() {
+		case reflect.Int32, reflect.Int64, reflect.Uint32, reflect.Uint64:
+			if in.Elem().Field(i).Int() != 0 && in.Elem().Field(i).Int() != out.Elem().Field(i).Int() {
+				return false
+			}
+		case reflect.Bool:
+			return false
+		case reflect.String:
+			if in.Elem().Field(i).String() != "" && in.Elem().Field(i).String() != out.Elem().Field(i).String() {
+				return false
+			}
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // Resolve resolves out a server
