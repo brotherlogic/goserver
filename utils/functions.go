@@ -45,6 +45,9 @@ func doMatch(in, out reflect.Value) bool {
 		return doMatch(in.Elem(), out.Elem())
 	case reflect.Struct:
 		return matchStruct(in, out)
+	case reflect.Slice:
+		// We ignore slices for now
+		return true
 	default:
 		fmt.Printf("Error in parsing fuzzy match: %v -> %v\n", in.Kind(), out)
 		return false
