@@ -12,6 +12,11 @@ message MoteRequest {
   bool master = 1;
 }
 
+message EmbeddedTest{
+  Alive blah = 1;
+  string test = 2;
+}
+
 message State {
   string key = 1;
   int64 time_value = 2;

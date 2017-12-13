@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -16,22 +17,39 @@ func FuzzyMatch(matcher, matchee proto.Message) bool {
 	in := reflect.ValueOf(matcher)
 	out := reflect.ValueOf(matchee)
 
-	for i := 0; i < in.Elem().NumField(); i++ {
-		switch in.Elem().Field(i).Kind() {
-		case reflect.Int32, reflect.Int64, reflect.Uint32, reflect.Uint64:
-			if in.Elem().Field(i).Int() != 0 && in.Elem().Field(i).Int() != out.Elem().Field(i).Int() {
-				return false
-			}
-		case reflect.Bool:
-			return false
-		case reflect.String:
-			if in.Elem().Field(i).String() != "" && in.Elem().Field(i).String() != out.Elem().Field(i).String() {
-				return false
-			}
-		default:
+	return matchStruct(in.Elem(), out.Elem())
+}
+
+func matchStruct(in, out reflect.Value) bool {
+	for i := 0; i < in.NumField(); i++ {
+		if !(doMatch(in.Field(i), out.Field(i))) {
 			return false
 		}
 	}
+	return true
+}
+
+func doMatch(in, out reflect.Value) bool {
+	switch in.Kind() {
+	case reflect.Int32, reflect.Int64, reflect.Uint32, reflect.Uint64:
+		if in.Int() != 0 && in.Int() != out.Int() {
+			return false
+		}
+	case reflect.Bool:
+		return false
+	case reflect.String:
+		if in.String() != "" && in.String() != out.String() {
+			return false
+		}
+	case reflect.Ptr:
+		return doMatch(in.Elem(), out.Elem())
+	case reflect.Struct:
+		return matchStruct(in, out)
+	default:
+		fmt.Printf("Error in parsing fuzzy match: %v -> %v\n", in.Kind(), out)
+		return false
+	}
+
 	return true
 }
 

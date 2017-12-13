@@ -6,6 +6,13 @@ import (
 	pb "github.com/brotherlogic/goserver/proto"
 )
 
+func TestEmbed(t *testing.T) {
+	a := &pb.EmbeddedTest{Blah: &pb.Alive{Name: "blah"}}
+	if !FuzzyMatch(a, a) {
+		t.Errorf("Failure to match on embedded: %v", a)
+	}
+}
+
 func TestFuzzyMatch(t *testing.T) {
 	a := &pb.State{Key: "blah", Value: 1233}
 	var testData = []struct {
