@@ -172,7 +172,10 @@ func (s *GoServer) Serve() error {
 	if err != nil {
 		return err
 	}
-	server := grpc.NewServer()
+	server := grpc.NewServer(
+		grpc.RPCCompressor(grpc.NewGZIPCompressor()),
+		grpc.RPCDecompressor(grpc.NewGZIPDecompressor()),
+	)
 	s.Register.DoRegister(server)
 	pbl.RegisterGoserverServiceServer(server, s)
 	s.setupHeartbeats()
