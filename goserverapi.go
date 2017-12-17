@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/brotherlogic/goserver/utils"
+	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -15,10 +17,11 @@ import (
 
 	pb "github.com/brotherlogic/discovery/proto"
 	pbl "github.com/brotherlogic/goserver/proto"
-	"github.com/brotherlogic/goserver/utils"
 	pbks "github.com/brotherlogic/keystore/proto"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
-	"github.com/golang/protobuf/proto"
+
+	//Needed to pull in gzip encoding init
+	_ "google.golang.org/grpc/encoding/gzip"
 )
 
 func (s *GoServer) suicideWatch() {

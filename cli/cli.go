@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 
 	pb "github.com/brotherlogic/goserver/proto"
+_ "google.golang.org/grpc/encoding/gzip"
 )
 
 func main() {
