@@ -137,6 +137,10 @@ func (MonitorServiceClient passingMonitorServiceClient) GetStats(ctx context.Con
 	return &pbd.StatsList{}, nil
 }
 
+func (MonitorServiceClient passingMonitorServiceClient) ClearStats(ctx context.Context, in *pbd.Empty, opts ...grpc.CallOption) (*pbd.Empty, error) {
+	return &pbd.Empty{}, nil
+}
+
 type passingMonitorBuilder struct{}
 
 func (monitorBuilder passingMonitorBuilder) NewMonitorServiceClient(conn *grpc.ClientConn) pbd.MonitorServiceClient {
