@@ -98,14 +98,16 @@ func (s *GoServer) Log(message string) {
 	go func() {
 		if !s.SkipLog {
 			monitorIP, monitorPort := s.GetIP("monitor")
-			conn, err := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
-			if err == nil {
-				monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
-				messageLog := &pbd.MessageLog{Message: message, Entry: s.Registry}
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-				defer cancel()
-				monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
-				s.close(conn)
+			if monitorPort > 0 {
+				conn, err := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
+				if err == nil {
+					monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
+					messageLog := &pbd.MessageLog{Message: message, Entry: s.Registry}
+					ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+					defer cancel()
+					monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
+					s.close(conn)
+				}
 			}
 		}
 	}()
@@ -116,14 +118,16 @@ func (s *GoServer) LogFunction(f string, t time.Time) {
 	go func() {
 		if !s.SkipLog {
 			monitorIP, monitorPort := s.GetIP("monitor")
-			conn, err := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
-			if err == nil {
-				monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
-				functionCall := &pbd.FunctionCall{Binary: s.Servername, Name: f, Time: int32(time.Now().Sub(t).Nanoseconds() / 1000000)}
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-				defer cancel()
-				monitor.WriteFunctionCall(ctx, functionCall, grpc.FailFast(false))
-				s.close(conn)
+			if monitorPort > 0 {
+				conn, err := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
+				if err == nil {
+					monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
+					functionCall := &pbd.FunctionCall{Binary: s.Servername, Name: f, Time: int32(time.Now().Sub(t).Nanoseconds() / 1000000)}
+					ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+					defer cancel()
+					monitor.WriteFunctionCall(ctx, functionCall, grpc.FailFast(false))
+					s.close(conn)
+				}
 			}
 		}
 	}()
