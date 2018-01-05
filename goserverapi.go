@@ -174,6 +174,8 @@ func (s *GoServer) Serve() error {
 	server := grpc.NewServer(
 		grpc.RPCCompressor(grpc.NewGZIPCompressor()),
 		grpc.RPCDecompressor(grpc.NewGZIPDecompressor()),
+		grpc.MaxRecvMsgSize(1024*1024*1024),
+		grpc.MaxSendMsgSize(1024*1024*1024),
 	)
 	s.Register.DoRegister(server)
 	pbl.RegisterGoserverServiceServer(server, s)
