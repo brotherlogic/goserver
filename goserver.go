@@ -69,7 +69,6 @@ func (s *GoServer) teardown() {
 func (s *GoServer) heartbeat() {
 	running := true
 	for running {
-		s.sendHeartbeat(s.dialler, s.monitorBuilder)
 		s.reregister(s.dialler, s.clientBuilder)
 		select {
 		case <-s.heartbeatChan:
@@ -174,19 +173,6 @@ type dialler interface {
 
 type clientBuilder interface {
 	NewDiscoveryServiceClient(conn *grpc.ClientConn) pb.DiscoveryServiceClient
-}
-
-func (s *GoServer) sendHeartbeat(dialler dialler, builder monitorBuilder) {
-	monitorIP, monitorPort := s.GetIP("monitor")
-	conn, err := dialler.Dial(monitorIP+":"+strconv.Itoa(monitorPort), grpc.WithInsecure())
-	if err == nil {
-		monitor := builder.NewMonitorServiceClient(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-		monitor.ReceiveHeartbeat(ctx, s.Registry, grpc.FailFast(false))
-		s.heartbeatCount++
-		s.close(conn)
-	}
 }
 
 func getLocalIP() string {
