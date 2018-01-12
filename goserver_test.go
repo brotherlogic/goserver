@@ -248,6 +248,26 @@ func TestRegisterServer(t *testing.T) {
 	}
 }
 
+func TestRegisterDemoteServer(t *testing.T) {
+	server := GoServer{}
+	madeupport := server.registerServer("madeup", "madeup", false, passingDialler{}, passingBuilder{}, basicGetter{})
+
+	if madeupport != 35 {
+		t.Errorf("Port number is wrong: %v", madeupport)
+	}
+
+	//Re-register as Master
+	server.Registry.Master = true
+	server.reregister(passingDialler{}, passingBuilder{})
+
+	//Re-register and fail heartbeatTime
+	server.reregister(passingDialler{}, failingBuilder{})
+
+	if server.Registry.Master {
+		t.Errorf("Registry has not demoted: %v", server.Registry)
+	}
+}
+
 func TestLog(t *testing.T) {
 	server := InitTestServer()
 	server.Log("MadeUpLog")
