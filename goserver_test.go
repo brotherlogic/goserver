@@ -53,6 +53,10 @@ func (DiscoveryServiceClient passingDiscoveryServiceClient) ListAllServices(ctx 
 	return &pb.ServiceList{}, nil
 }
 
+func (DiscoverServiceClient passingDiscoveryServiceClient) State(ctx context.Context, in *pb.StateRequest, opts ...grpc.CallOption) (*pb.StateResponse, error) {
+	return &pb.StateResponse{}, nil
+}
+
 type failPassDiscoveryServiceClient struct {
 	fails int
 }
@@ -75,6 +79,10 @@ func (DiscoveryServiceClient failPassDiscoveryServiceClient) ListAllServices(ctx
 	return &pb.ServiceList{}, nil
 }
 
+func (DiscoverServiceClient failPassDiscoveryServiceClient) State(ctx context.Context, in *pb.StateRequest, opts ...grpc.CallOption) (*pb.StateResponse, error) {
+	return &pb.StateResponse{}, nil
+}
+
 type failingDiscoveryServiceClient struct{}
 
 func (DiscoveryServiceClient failingDiscoveryServiceClient) RegisterService(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
@@ -88,6 +96,9 @@ func (DiscoveryServiceClient failingDiscoveryServiceClient) Discover(ctx context
 
 func (DiscoveryServiceClient failingDiscoveryServiceClient) ListAllServices(ctx context.Context, in *pb.Empty, opts ...grpc.CallOption) (*pb.ServiceList, error) {
 	return &pb.ServiceList{}, nil
+}
+func (DiscoverServiceClient failingDiscoveryServiceClient) State(ctx context.Context, in *pb.StateRequest, opts ...grpc.CallOption) (*pb.StateResponse, error) {
+	return &pb.StateResponse{}, nil
 }
 
 type passingBuilder struct{}
