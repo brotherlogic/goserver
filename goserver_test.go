@@ -53,7 +53,7 @@ func (DiscoveryServiceClient passingDiscoveryServiceClient) ListAllServices(ctx 
 	return &pb.ServiceList{}, nil
 }
 
-func (DiscoverServiceClient passingDiscoveryServiceClient) State(ctx context.Context, in *pb.StateRequest, opts ...grpc.CallOption) (*pb.StateResponse, error) {
+func (DiscoveryServiceClient passingDiscoveryServiceClient) State(ctx context.Context, in *pb.StateRequest, opts ...grpc.CallOption) (*pb.StateResponse, error) {
 	return &pb.StateResponse{}, nil
 }
 
@@ -79,7 +79,7 @@ func (DiscoveryServiceClient failPassDiscoveryServiceClient) ListAllServices(ctx
 	return &pb.ServiceList{}, nil
 }
 
-func (DiscoverServiceClient failPassDiscoveryServiceClient) State(ctx context.Context, in *pb.StateRequest, opts ...grpc.CallOption) (*pb.StateResponse, error) {
+func (DiscoveryServiceClient failPassDiscoveryServiceClient) State(ctx context.Context, in *pb.StateRequest, opts ...grpc.CallOption) (*pb.StateResponse, error) {
 	return &pb.StateResponse{}, nil
 }
 
@@ -97,7 +97,7 @@ func (DiscoveryServiceClient failingDiscoveryServiceClient) Discover(ctx context
 func (DiscoveryServiceClient failingDiscoveryServiceClient) ListAllServices(ctx context.Context, in *pb.Empty, opts ...grpc.CallOption) (*pb.ServiceList, error) {
 	return &pb.ServiceList{}, nil
 }
-func (DiscoverServiceClient failingDiscoveryServiceClient) State(ctx context.Context, in *pb.StateRequest, opts ...grpc.CallOption) (*pb.StateResponse, error) {
+func (DiscoveryServiceClient failingDiscoveryServiceClient) State(ctx context.Context, in *pb.StateRequest, opts ...grpc.CallOption) (*pb.StateResponse, error) {
 	return &pb.StateResponse{}, nil
 }
 
