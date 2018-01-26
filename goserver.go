@@ -87,7 +87,7 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 			r, err := c.RegisterService(ctx, s.Registry, grpc.FailFast(false))
-			if err != nil {
+			if err == nil {
 				s.Registry = r
 			}
 			e, ok := status.FromError(err)
