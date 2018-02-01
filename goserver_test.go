@@ -261,7 +261,7 @@ func TestRegisterServer(t *testing.T) {
 }
 
 func TestRegisterDemoteServer(t *testing.T) {
-	server := GoServer{}
+	server := GoServer{SkipLog: true}
 	madeupport := server.registerServer("madeup", "madeup", false, passingDialler{}, passingBuilder{}, basicGetter{})
 
 	if madeupport != 35 {
@@ -332,6 +332,7 @@ func InitTestServer() TestServer {
 
 func TestHeartbeat(t *testing.T) {
 	server := InitTestServer()
+	server.SkipLog = true
 	go server.Serve()
 	log.Printf("Done Serving")
 
