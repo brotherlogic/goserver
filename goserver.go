@@ -2,7 +2,6 @@ package goserver
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"strconv"
 	"time"
@@ -91,6 +90,8 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 			r, err := c.RegisterService(ctx, s.Registry, grpc.FailFast(false))
 			if err == nil {
 				s.Registry = r
+			} else {
+				s.Log(fmt.Sprintf("ERROR ON REG: %v", err))
 			}
 			e, ok := status.FromError(err)
 			if ok && (e.Code() != codes.DeadlineExceeded && e.Code() != codes.OK) {
