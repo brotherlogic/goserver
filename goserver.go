@@ -2,6 +2,8 @@ package goserver
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net"
 	"strconv"
 	"time"
@@ -10,6 +12,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/status"
 
 	pb "github.com/brotherlogic/discovery/proto"
@@ -61,6 +64,9 @@ func (s *GoServer) PrepServer() {
 	s.clientBuilder = mainBuilder{}
 	s.suicideTime = time.Minute
 	s.Killme = true
+
+	//Turn off grpc logging
+	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
 }
 
 func (s *GoServer) teardown() {
