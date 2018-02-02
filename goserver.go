@@ -85,7 +85,7 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 		conn, err := d.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
 		if err == nil {
 			c := b.NewDiscoveryServiceClient(conn)
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*500)
 			defer cancel()
 			r, err := c.RegisterService(ctx, s.Registry, grpc.FailFast(false))
 			if err == nil {
