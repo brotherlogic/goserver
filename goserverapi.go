@@ -92,7 +92,10 @@ func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, erro
 
 //State gets the state of the server.
 func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, error) {
-	return &pbl.ServerState{States: s.Register.GetState()}, nil
+	states := s.Register.GetState()
+	states = append(states, &pbl.State{Key: "hearts", Value: int64(s.hearts)})
+	states = append(states, &pbl.State{Key: "bad_hearts", Value: int64(s.badHearts)})
+	return &pbl.ServerState{States: states}, nil
 }
 
 // Mote promotes or demotes a server into production

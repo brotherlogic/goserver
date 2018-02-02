@@ -53,6 +53,8 @@ type GoServer struct {
 	KSclient       keystoreclient.Keystoreclient
 	suicideTime    time.Duration
 	Killme         bool
+	hearts         int
+	badHearts      int
 }
 
 // PrepServer builds out the server for use.
@@ -64,6 +66,8 @@ func (s *GoServer) PrepServer() {
 	s.clientBuilder = mainBuilder{}
 	s.suicideTime = time.Minute
 	s.Killme = true
+	s.hearts = 0
+	s.badHearts = 0
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
@@ -93,10 +97,12 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 			c := b.NewDiscoveryServiceClient(conn)
 			ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*500)
 			defer cancel()
+			s.hearts++
 			r, err := c.RegisterService(ctx, s.Registry, grpc.FailFast(false))
 			if err == nil {
 				s.Registry = r
 			} else {
+				s.badHearts++
 				s.Log(fmt.Sprintf("ERROR ON REG: %v", err))
 			}
 			e, ok := status.FromError(err)
