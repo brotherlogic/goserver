@@ -98,9 +98,9 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*500)
 			defer cancel()
 			s.hearts++
-			r, err := c.RegisterService(ctx, s.Registry, grpc.FailFast(false))
+			r, err := c.RegisterService(ctx, &pb.RegisterRequest{Service: s.Registry}, grpc.FailFast(false))
 			if err == nil {
-				s.Registry = r
+				s.Registry = r.GetService()
 			} else {
 				s.badHearts++
 				s.Log(fmt.Sprintf("ERROR ON REG: %v", err))
@@ -163,15 +163,15 @@ func (s *GoServer) GetIP(servername string) (string, int) {
 		entry := &pb.RegistryEntry{Name: servername}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		r, err := registry.Discover(ctx, entry, grpc.FailFast(false))
+		r, err := registry.Discover(ctx, &pb.DiscoverRequest{Request: entry}, grpc.FailFast(false))
 		e, ok := status.FromError(err)
 		if ok && e.Code() == codes.Unavailable {
-			r, err = registry.Discover(ctx, entry, grpc.FailFast(false))
+			r, err = registry.Discover(ctx, &pb.DiscoverRequest{Request: entry}, grpc.FailFast(false))
 		}
 
 		if err == nil {
 			s.close(conn)
-			return r.Ip, int(r.Port)
+			return r.GetService().Ip, int(r.GetService().Port)
 		}
 	}
 	s.close(conn)
@@ -223,14 +223,14 @@ func (s *GoServer) Dial(server string, dialler dialler, builder clientBuilder) (
 	entry := pb.RegistryEntry{Name: server}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := registry.Discover(ctx, &entry, grpc.FailFast(false))
+	r, err := registry.Discover(ctx, &pb.DiscoverRequest{Request: &entry}, grpc.FailFast(false))
 	if err != nil {
 		s.close(conn)
 		return nil, err
 	}
 	s.close(conn)
 
-	return dialler.Dial(r.Ip+":"+strconv.Itoa(int(r.Port)), grpc.WithInsecure())
+	return dialler.Dial(r.GetService().Ip+":"+strconv.Itoa(int(r.GetService().Port)), grpc.WithInsecure())
 }
 
 func (s *GoServer) setupHeartbeats() {
@@ -252,13 +252,13 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, d
 	entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := registry.RegisterService(ctx, &entry, grpc.FailFast(false))
+	r, err := registry.RegisterService(ctx, &pb.RegisterRequest{Service: &entry}, grpc.FailFast(false))
 	if err != nil {
 		s.close(conn)
 		return -1
 	}
-	s.Registry = r
+	s.Registry = r.GetService()
 	s.close(conn)
 
-	return r.Port
+	return r.GetService().Port
 }

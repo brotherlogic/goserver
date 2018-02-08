@@ -147,16 +147,16 @@ func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
 		registry := s.clientBuilder.NewDiscoveryServiceClient(conn)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		r, err := registry.ListAllServices(ctx, &pb.Empty{}, grpc.FailFast(false))
+		r, err := registry.ListAllServices(ctx, &pb.ListRequest{}, grpc.FailFast(false))
 		e, ok := status.FromError(err)
 		if ok && e.Code() == codes.Unavailable {
-			r, err = registry.ListAllServices(ctx, &pb.Empty{}, grpc.FailFast(false))
+			r, err = registry.ListAllServices(ctx, &pb.ListRequest{}, grpc.FailFast(false))
 		}
 
 		if err == nil {
 			s.close(conn)
 			arr := make([]*pb.RegistryEntry, 0)
-			for _, s := range r.GetServices() {
+			for _, s := range r.GetServices().GetServices() {
 				if s.GetName() == servername {
 					arr = append(arr, s)
 				}
