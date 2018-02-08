@@ -41,16 +41,16 @@ func (dialler failingDialler) Dial(host string, opts ...grpc.DialOption) (*grpc.
 
 type passingDiscoveryServiceClient struct{}
 
-func (DiscoveryServiceClient passingDiscoveryServiceClient) RegisterService(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
-	return &pb.RegistryEntry{Port: 35, Identifier: in.Identifier}, nil
+func (DiscoveryServiceClient passingDiscoveryServiceClient) RegisterService(ctx context.Context, in *pb.RegisterRequest, opts ...grpc.CallOption) (*pb.RegisterResponse, error) {
+	return &pb.RegisterResponse{Service: &pb.RegistryEntry{Port: 35, Identifier: in.GetService().Identifier}}, nil
 }
 
-func (DiscoveryServiceClient passingDiscoveryServiceClient) Discover(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
-	return &pb.RegistryEntry{Ip: "10.10.10.10", Port: 23}, nil
+func (DiscoveryServiceClient passingDiscoveryServiceClient) Discover(ctx context.Context, in *pb.DiscoverRequest, opts ...grpc.CallOption) (*pb.DiscoverResponse, error) {
+	return &pb.DiscoverResponse{Service: &pb.RegistryEntry{Ip: "10.10.10.10", Port: 23}}, nil
 }
 
-func (DiscoveryServiceClient passingDiscoveryServiceClient) ListAllServices(ctx context.Context, in *pb.Empty, opts ...grpc.CallOption) (*pb.ServiceList, error) {
-	return &pb.ServiceList{}, nil
+func (DiscoveryServiceClient passingDiscoveryServiceClient) ListAllServices(ctx context.Context, in *pb.ListRequest, opts ...grpc.CallOption) (*pb.ListResponse, error) {
+	return &pb.ListResponse{}, nil
 }
 
 func (DiscoveryServiceClient passingDiscoveryServiceClient) State(ctx context.Context, in *pb.StateRequest, opts ...grpc.CallOption) (*pb.StateResponse, error) {
@@ -61,22 +61,22 @@ type failPassDiscoveryServiceClient struct {
 	fails int
 }
 
-func (DiscoveryServiceClient failPassDiscoveryServiceClient) RegisterService(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
-	return &pb.RegistryEntry{Port: 35, Identifier: in.Identifier}, nil
+func (DiscoveryServiceClient failPassDiscoveryServiceClient) RegisterService(ctx context.Context, in *pb.RegisterRequest, opts ...grpc.CallOption) (*pb.RegisterResponse, error) {
+	return &pb.RegisterResponse{Service: &pb.RegistryEntry{Port: 35, Identifier: in.GetService().Identifier}}, nil
 }
 
-func (DiscoveryServiceClient *failPassDiscoveryServiceClient) Discover(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
+func (DiscoveryServiceClient *failPassDiscoveryServiceClient) Discover(ctx context.Context, in *pb.DiscoverRequest, opts ...grpc.CallOption) (*pb.DiscoverResponse, error) {
 	log.Printf("BUT %p", &DiscoveryServiceClient)
 	if DiscoveryServiceClient.fails > 0 {
 		DiscoveryServiceClient.fails--
 		log.Printf("YEP %v", DiscoveryServiceClient)
 		return nil, grpc.Errorf(codes.Unavailable, "Made up failure %v", 23)
 	}
-	return &pb.RegistryEntry{Ip: "10.10.10.10", Port: 23}, nil
+	return &pb.DiscoverResponse{Service: &pb.RegistryEntry{Ip: "10.10.10.10", Port: 23}}, nil
 }
 
-func (DiscoveryServiceClient failPassDiscoveryServiceClient) ListAllServices(ctx context.Context, in *pb.Empty, opts ...grpc.CallOption) (*pb.ServiceList, error) {
-	return &pb.ServiceList{}, nil
+func (DiscoveryServiceClient failPassDiscoveryServiceClient) ListAllServices(ctx context.Context, in *pb.ListRequest, opts ...grpc.CallOption) (*pb.ListResponse, error) {
+	return &pb.ListResponse{}, nil
 }
 
 func (DiscoveryServiceClient failPassDiscoveryServiceClient) State(ctx context.Context, in *pb.StateRequest, opts ...grpc.CallOption) (*pb.StateResponse, error) {
@@ -85,17 +85,17 @@ func (DiscoveryServiceClient failPassDiscoveryServiceClient) State(ctx context.C
 
 type failingDiscoveryServiceClient struct{}
 
-func (DiscoveryServiceClient failingDiscoveryServiceClient) RegisterService(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
+func (DiscoveryServiceClient failingDiscoveryServiceClient) RegisterService(ctx context.Context, in *pb.RegisterRequest, opts ...grpc.CallOption) (*pb.RegisterResponse, error) {
 	log.Printf("RETURNING ERRRO")
-	return &pb.RegistryEntry{}, grpc.Errorf(codes.Internal, "Built to Fail")
+	return &pb.RegisterResponse{}, grpc.Errorf(codes.Internal, "Built to Fail")
 }
 
-func (DiscoveryServiceClient failingDiscoveryServiceClient) Discover(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pb.RegistryEntry, error) {
-	return &pb.RegistryEntry{}, errors.New("Built to fail")
+func (DiscoveryServiceClient failingDiscoveryServiceClient) Discover(ctx context.Context, in *pb.DiscoverRequest, opts ...grpc.CallOption) (*pb.DiscoverResponse, error) {
+	return &pb.DiscoverResponse{}, errors.New("Built to fail")
 }
 
-func (DiscoveryServiceClient failingDiscoveryServiceClient) ListAllServices(ctx context.Context, in *pb.Empty, opts ...grpc.CallOption) (*pb.ServiceList, error) {
-	return &pb.ServiceList{}, nil
+func (DiscoveryServiceClient failingDiscoveryServiceClient) ListAllServices(ctx context.Context, in *pb.ListRequest, opts ...grpc.CallOption) (*pb.ListResponse, error) {
+	return &pb.ListResponse{}, nil
 }
 func (DiscoveryServiceClient failingDiscoveryServiceClient) State(ctx context.Context, in *pb.StateRequest, opts ...grpc.CallOption) (*pb.StateResponse, error) {
 	return &pb.StateResponse{}, nil
