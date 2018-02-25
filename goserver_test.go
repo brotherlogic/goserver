@@ -121,14 +121,6 @@ func (clientBuilder failingBuilder) NewDiscoveryServiceClient(conn *grpc.ClientC
 
 type passingMonitorServiceClient struct{}
 
-func (MonitorServiceClient passingMonitorServiceClient) ReceiveHeartbeat(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pbd.Heartbeat, error) {
-	return &pbd.Heartbeat{}, nil
-}
-
-func (MonitorServiceClient passingMonitorServiceClient) GetHeartbeats(ctx context.Context, in *pbd.Empty, opts ...grpc.CallOption) (*pbd.HeartbeatList, error) {
-	return &pbd.HeartbeatList{}, nil
-}
-
 func (MonitorServiceClient passingMonitorServiceClient) ReadMessageLogs(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pbd.MessageLogReadResponse, error) {
 	return &pbd.MessageLogReadResponse{}, nil
 }
