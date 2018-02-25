@@ -36,6 +36,10 @@ type sFunc struct {
 	d   time.Duration
 }
 
+const (
+	registerFreq = time.Second * 500
+)
+
 // GoServer The basic server construct
 type GoServer struct {
 	Servername     string
@@ -60,7 +64,7 @@ type GoServer struct {
 // PrepServer builds out the server for use.
 func (s *GoServer) PrepServer() {
 	s.heartbeatChan = make(chan int)
-	s.heartbeatTime = time.Second
+	s.heartbeatTime = registerFreq
 	s.monitorBuilder = mainMonitorBuilder{}
 	s.dialler = grpcDialler{}
 	s.clientBuilder = mainBuilder{}
@@ -95,7 +99,7 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 		conn, err := d.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
 		if err == nil {
 			c := b.NewDiscoveryServiceClient(conn)
-			ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*500)
+			ctx, cancel := context.WithTimeout(context.Background(), registerFreq)
 			defer cancel()
 			s.hearts++
 			r, err := c.RegisterService(ctx, &pb.RegisterRequest{Service: s.Registry}, grpc.FailFast(false))
