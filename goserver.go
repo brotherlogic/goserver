@@ -37,7 +37,7 @@ type sFunc struct {
 }
 
 const (
-	registerFreq = time.Millisecond * 500
+	registerFreq = time.Second
 )
 
 // GoServer The basic server construct
