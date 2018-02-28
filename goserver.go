@@ -59,6 +59,7 @@ type GoServer struct {
 	Killme         bool
 	hearts         int
 	badHearts      int
+	failMaster     int
 }
 
 // PrepServer builds out the server for use.
@@ -72,6 +73,7 @@ func (s *GoServer) PrepServer() {
 	s.Killme = true
 	s.hearts = 0
 	s.badHearts = 0
+	s.failMaster = 0
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
@@ -113,6 +115,7 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 			if ok && (e.Code() != codes.DeadlineExceeded && e.Code() != codes.OK) {
 				s.Log(fmt.Sprintf("DOWNGRADE: %v", err))
 				s.Registry.Master = false
+				s.failMaster++
 			}
 		}
 		s.close(conn)

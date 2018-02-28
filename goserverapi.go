@@ -95,6 +95,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states := s.Register.GetState()
 	states = append(states, &pbl.State{Key: "hearts", Value: int64(s.hearts)})
 	states = append(states, &pbl.State{Key: "bad_hearts", Value: int64(s.badHearts)})
+	states = append(states, &pbl.State{Key: "fail_master", Value: int64(s.failMaster)})
 	return &pbl.ServerState{States: states}, nil
 }
 
