@@ -60,6 +60,7 @@ type GoServer struct {
 	hearts         int
 	badHearts      int
 	failMaster     int
+	milestones     map[string][]*pbd.Milestone
 }
 
 // PrepServer builds out the server for use.
@@ -74,6 +75,7 @@ func (s *GoServer) PrepServer() {
 	s.hearts = 0
 	s.badHearts = 0
 	s.failMaster = 0
+	s.milestones = make(map[string][]*pbd.Milestone)
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
@@ -152,6 +154,10 @@ func (s *GoServer) LogFunction(f string, t time.Time) {
 				if err == nil {
 					monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
 					functionCall := &pbd.FunctionCall{Binary: s.Servername, Name: f, Time: int32(time.Now().Sub(t).Nanoseconds() / 1000000)}
+					if val, ok := s.milestones[f]; ok {
+						functionCall.Milestones = val
+						delete(s.milestones, f)
+					}
 					ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 					defer cancel()
 					monitor.WriteFunctionCall(ctx, functionCall, grpc.FailFast(false))
@@ -160,6 +166,15 @@ func (s *GoServer) LogFunction(f string, t time.Time) {
 			}
 		}
 	}()
+}
+
+// LogMilestone logs out a milestone
+func (s *GoServer) LogMilestone(f string, m string, t time.Time) {
+	if _, ok := s.milestones[f]; !ok {
+		s.milestones[f] = make([]*pbd.Milestone, 0)
+	}
+
+	s.milestones[f] = append(s.milestones[f], &pbd.Milestone{Name: m, Time: int32(time.Now().Sub(t).Nanoseconds() / 1000000)})
 }
 
 //GetIP gets an IP address from the discovery server
