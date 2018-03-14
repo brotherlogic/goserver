@@ -66,10 +66,8 @@ func (DiscoveryServiceClient failPassDiscoveryServiceClient) RegisterService(ctx
 }
 
 func (DiscoveryServiceClient *failPassDiscoveryServiceClient) Discover(ctx context.Context, in *pb.DiscoverRequest, opts ...grpc.CallOption) (*pb.DiscoverResponse, error) {
-	log.Printf("BUT %p", &DiscoveryServiceClient)
 	if DiscoveryServiceClient.fails > 0 {
 		DiscoveryServiceClient.fails--
-		log.Printf("YEP %v", DiscoveryServiceClient)
 		return nil, grpc.Errorf(codes.Unavailable, "Made up failure %v", 23)
 	}
 	return &pb.DiscoverResponse{Service: &pb.RegistryEntry{Ip: "10.10.10.10", Port: 23}}, nil
@@ -86,7 +84,6 @@ func (DiscoveryServiceClient failPassDiscoveryServiceClient) State(ctx context.C
 type failingDiscoveryServiceClient struct{}
 
 func (DiscoveryServiceClient failingDiscoveryServiceClient) RegisterService(ctx context.Context, in *pb.RegisterRequest, opts ...grpc.CallOption) (*pb.RegisterResponse, error) {
-	log.Printf("RETURNING ERRRO")
 	return &pb.RegisterResponse{}, grpc.Errorf(codes.Internal, "Built to Fail")
 }
 
@@ -265,7 +262,6 @@ func TestRegisterDemoteServer(t *testing.T) {
 	server.reregister(passingDialler{}, passingBuilder{})
 
 	//Re-register and fail heartbeatTime
-	log.Printf("SENDING FAIL")
 	server.reregister(passingDialler{}, failingBuilder{})
 
 	if server.Registry.Master {
@@ -281,6 +277,15 @@ func TestLog(t *testing.T) {
 func TestLogFunction(t *testing.T) {
 	server := InitTestServer()
 	server.LogFunction("blah", time.Now())
+}
+
+func TestLogMilestones(t *testing.T) {
+	server := InitTestServer()
+	ti := time.Now()
+	server.LogMilestone("blah", "M1", ti)
+	server.LogFunction("blah", ti)
+
+	time.Sleep(time.Second)
 }
 
 func TestGetIP(t *testing.T) {
