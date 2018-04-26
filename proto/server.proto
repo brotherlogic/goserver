@@ -4,6 +4,11 @@ package goserver;
 
 message Empty {}
 
+enum ContextType {
+  UNKNOWN = 0;
+  REGULAR = 1;
+}
+
 message Alive {
   string name = 1;
 }

@@ -126,10 +126,6 @@ func (MonitorServiceClient passingMonitorServiceClient) WriteMessageLog(ctx cont
 	return &pbd.LogWriteResponse{}, nil
 }
 
-func (MonitorServiceClient passingMonitorServiceClient) WriteValueLog(ctx context.Context, in *pbd.ValueLog, opts ...grpc.CallOption) (*pbd.LogWriteResponse, error) {
-	return &pbd.LogWriteResponse{}, nil
-}
-
 func (MonitorServiceClient passingMonitorServiceClient) WriteFunctionCall(ctx context.Context, in *pbd.FunctionCall, opts ...grpc.CallOption) (*pbd.Empty, error) {
 	return &pbd.Empty{}, nil
 }
@@ -323,6 +319,7 @@ func InitTestServer() TestServer {
 	s.dialler = passingDialler{}
 	s.heartbeatTime = time.Millisecond
 	s.clientBuilder = passingBuilder{}
+	s.Registry = &pb.RegistryEntry{Name: "testserver"}
 	log.Printf("Set heartbeat time")
 	return s
 }
@@ -336,4 +333,15 @@ func TestHeartbeat(t *testing.T) {
 	time.Sleep(20 * time.Millisecond)
 	log.Printf("Tearing Down")
 	server.teardown()
+}
+
+func TestContext(t *testing.T) {
+	server := InitTestServer()
+	ctx, cancel := server.BuildContext(pbg.ContextType_REGULAR)
+	defer cancel()
+
+	v := ctx.Value("trace-id").(string)
+	if len(v) == 0 {
+		t.Errorf("BAD CONTEXT: %v", v)
+	}
 }

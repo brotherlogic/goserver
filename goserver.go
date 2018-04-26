@@ -1,6 +1,7 @@
 package goserver
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	"github.com/brotherlogic/keystore/client"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -290,4 +290,9 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, d
 	s.close(conn)
 
 	return r.GetService().Port
+}
+
+// BuildContext builds a context for use in a server setting
+func (s *GoServer) BuildContext(t pbg.ContextType) (context.Context, context.CancelFunc) {
+	return utils.BuildContext(s.Registry.Name, t)
 }
