@@ -13,6 +13,7 @@ import (
 	pb "github.com/brotherlogic/discovery/proto"
 	pbg "github.com/brotherlogic/goserver/proto"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
+	pbt "github.com/brotherlogic/tracer/proto"
 )
 
 type basicGetter struct{}
@@ -344,4 +345,12 @@ func TestContext(t *testing.T) {
 	if len(v) == 0 {
 		t.Errorf("BAD CONTEXT: %v", v)
 	}
+}
+
+func TestLogContext(t *testing.T) {
+	server := InitTestServer()
+	server.SkipLog = false
+	ctx, cancel := server.BuildContext(pbg.ContextType_REGULAR)
+	defer cancel()
+	server.LogTrace(ctx, "Test", time.Now(), pbt.Milestone_START)
 }

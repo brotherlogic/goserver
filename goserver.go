@@ -20,6 +20,7 @@ import (
 	pbg "github.com/brotherlogic/goserver/proto"
 	utils "github.com/brotherlogic/goserver/utils"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
+	pbt "github.com/brotherlogic/tracer/proto"
 )
 
 // Registerable Allows the system to register itself
@@ -169,6 +170,15 @@ func (s *GoServer) LogFunction(f string, t time.Time) {
 					s.close(conn)
 				}
 			}
+		}
+	}()
+}
+
+//LogTrace logs out a trace
+func (s *GoServer) LogTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType) {
+	go func() {
+		if !s.SkipLog {
+			utils.SendTrace(c, l, t, ty, s.Registry.Name)
 		}
 	}()
 }
