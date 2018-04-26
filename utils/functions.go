@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"reflect"
 	"time"
 
@@ -10,7 +11,18 @@ import (
 	"google.golang.org/grpc"
 
 	pbdi "github.com/brotherlogic/discovery/proto"
+	pb "github.com/brotherlogic/goserver/proto"
 )
+
+// BuildContext builds a context object for use
+func BuildContext(origin string, t pb.ContextType) (context.Context, context.CancelFunc) {
+	baseContext := context.WithValue(context.Background(), "trace-id", fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), rand.Int63()))
+	if t == pb.ContextType_REGULAR {
+		return context.WithTimeout(baseContext, time.Second)
+	}
+
+	return baseContext, func() {}
+}
 
 //FuzzyMatch experimental fuzzy match
 func FuzzyMatch(matcher, matchee proto.Message) bool {

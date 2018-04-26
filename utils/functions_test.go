@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"log"
 	"testing"
 
 	pbgd "github.com/brotherlogic/godiscogs"
@@ -45,4 +46,16 @@ func TestFuzzyMatch(t *testing.T) {
 			t.Errorf("Failure in match %v vs %v", tt.b, a)
 		}
 	}
+}
+
+func TestGetContext(t *testing.T) {
+	ctx, cancel := BuildContext("TestGetContext", pb.ContextType_REGULAR)
+	defer cancel()
+
+	v := ctx.Value("trace-id").(string)
+	if len(v) == 0 {
+		t.Errorf("No value set: %v", v)
+	}
+
+	log.Printf("Value = %v", v)
 }
