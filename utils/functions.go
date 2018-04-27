@@ -12,6 +12,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	pbdi "github.com/brotherlogic/discovery/proto"
 	pb "github.com/brotherlogic/goserver/proto"
@@ -57,10 +58,11 @@ func BuildContext(origin string, t pb.ContextType) (context.Context, context.Can
 }
 
 func generateContext(origin string, t pb.ContextType) (context.Context, context.CancelFunc) {
-	baseContext := context.WithValue(context.Background(), "trace-id", fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), rand.Int63()))
+	tracev := fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), rand.Int63())
+	baseContext := context.WithValue(context.Background(), "trace-id", tracev)
+	mContext := metadata.NewOutgoingContext(baseContext, metadata.Pairs("trace-id", tracev))
 	if t == pb.ContextType_REGULAR {
-
-		return context.WithTimeout(baseContext, time.Second)
+		return context.WithTimeout(mContext, time.Second)
 	}
 
 	return baseContext, func() {}
