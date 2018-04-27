@@ -178,7 +178,8 @@ func (s *GoServer) LogFunction(f string, t time.Time) {
 func (s *GoServer) LogTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType) {
 	go func() {
 		if !s.SkipLog {
-			utils.SendTrace(c, l, t, ty, s.Registry.Name)
+			err := utils.SendTrace(c, l, t, ty, s.Registry.Name)
+			s.Log(fmt.Sprintf("SENT TRACE: %v", err))
 		}
 	}()
 }

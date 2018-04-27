@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"reflect"
@@ -18,12 +19,12 @@ import (
 )
 
 //SendTrace sends out a tracer trace
-func SendTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType, o string) {
+func SendTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType, o string) error {
 	idt := c.Value("trace-id")
 	if idt != nil {
 		id := idt.(string)
 		if strings.HasPrefix(id, "test") {
-			return
+			return errors.New("Test trace")
 		}
 		traceIP, tracePort, _ := Resolve("tracer")
 		if tracePort > 0 {
@@ -39,10 +40,13 @@ func SendTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_Milest
 				if ty == pbt.Milestone_START {
 					p.Label = l
 				}
-				client.Record(ctx, &pbt.RecordRequest{Milestone: m, Properties: p})
+				_, err := client.Record(ctx, &pbt.RecordRequest{Milestone: m, Properties: p})
+				return err
 			}
 		}
 	}
+
+	return fmt.Errorf("Unable to trace - maybe because of %v", idt)
 }
 
 // BuildContext builds a context object for use
