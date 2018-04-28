@@ -50,7 +50,7 @@ func SendTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_Milest
 			}
 		}
 
-		return fmt.Errorf("Unable to trace - maybe because of %v", idt)
+		return fmt.Errorf("Unable to trace - maybe because of %v", md)
 	}
 	return fmt.Errorf("Unable to trace - context: %v", c)
 }
