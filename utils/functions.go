@@ -21,33 +21,38 @@ import (
 
 //SendTrace sends out a tracer trace
 func SendTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType, o string) error {
-	idt := c.Value("trace-id")
-	if idt != nil {
-		id := idt.(string)
-		if strings.HasPrefix(id, "test") {
-			return errors.New("Test trace")
-		}
-		traceIP, tracePort, _ := Resolve("tracer")
-		if tracePort > 0 {
-			conn, err := grpc.Dial(traceIP+":"+strconv.Itoa(int(tracePort)), grpc.WithInsecure())
-			defer conn.Close()
-			if err == nil {
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-				defer cancel()
-				client := pbt.NewTracerServiceClient(conn)
+	md, found := metadata.FromIncomingContext(c)
+	if found {
+		idt := md["trace-id"][0]
 
-				m := &pbt.Milestone{Label: l, Timestamp: time.Now().UnixNano(), Origin: o, Type: ty}
-				p := &pbt.ContextProperties{Id: id}
-				if ty == pbt.Milestone_START {
-					p.Label = l
+		if idt != "" {
+			id := idt
+			if strings.HasPrefix(id, "test") {
+				return errors.New("Test trace")
+			}
+			traceIP, tracePort, _ := Resolve("tracer")
+			if tracePort > 0 {
+				conn, err := grpc.Dial(traceIP+":"+strconv.Itoa(int(tracePort)), grpc.WithInsecure())
+				defer conn.Close()
+				if err == nil {
+					ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+					defer cancel()
+					client := pbt.NewTracerServiceClient(conn)
+
+					m := &pbt.Milestone{Label: l, Timestamp: time.Now().UnixNano(), Origin: o, Type: ty}
+					p := &pbt.ContextProperties{Id: id}
+					if ty == pbt.Milestone_START {
+						p.Label = l
+					}
+					_, err := client.Record(ctx, &pbt.RecordRequest{Milestone: m, Properties: p})
+					return err
 				}
-				_, err := client.Record(ctx, &pbt.RecordRequest{Milestone: m, Properties: p})
-				return err
 			}
 		}
-	}
 
-	return fmt.Errorf("Unable to trace - maybe because of %v", idt)
+		return fmt.Errorf("Unable to trace - maybe because of %v", idt)
+	}
+	return fmt.Errorf("Unable to trace - context: %v", c)
 }
 
 // BuildContext builds a context object for use
@@ -60,7 +65,7 @@ func BuildContext(origin string, t pb.ContextType) (context.Context, context.Can
 func generateContext(origin string, t pb.ContextType) (context.Context, context.CancelFunc) {
 	tracev := fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), rand.Int63())
 	baseContext := context.WithValue(context.Background(), "trace-id", tracev)
-	mContext := metadata.NewIncomingContext(baseContext, metadata.Pairs("trace-id", tracev))
+	mContext := metadata.NewOutgoingContext(baseContext, metadata.Pairs("trace-id", tracev))
 	if t == pb.ContextType_REGULAR {
 		return context.WithTimeout(mContext, time.Second)
 	}
