@@ -60,7 +60,7 @@ func BuildContext(origin string, t pb.ContextType) (context.Context, context.Can
 func generateContext(origin string, t pb.ContextType) (context.Context, context.CancelFunc) {
 	tracev := fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), rand.Int63())
 	baseContext := context.WithValue(context.Background(), "trace-id", tracev)
-	mContext := metadata.NewOutgoingContext(baseContext, metadata.Pairs("trace-id", tracev))
+	mContext := metadata.NewIncomingContext(baseContext, metadata.Pairs("trace-id", tracev))
 	if t == pb.ContextType_REGULAR {
 		return context.WithTimeout(mContext, time.Second)
 	}
