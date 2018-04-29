@@ -1,7 +1,6 @@
 package goserver
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/brotherlogic/keystore/client"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -34,7 +34,7 @@ type Registerable interface {
 type baseRegistrable struct{ Registerable }
 
 type sFunc struct {
-	fun func()
+	fun func(ctx context.Context)
 	d   time.Duration
 }
 

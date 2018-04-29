@@ -353,4 +353,5 @@ func TestLogContext(t *testing.T) {
 	ctx, cancel := server.BuildContext(pbg.ContextType_REGULAR)
 	defer cancel()
 	server.LogTrace(ctx, "Test", time.Now(), pbt.Milestone_START)
+	time.Sleep(20 * time.Millisecond)
 }
