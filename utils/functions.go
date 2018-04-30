@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
@@ -70,7 +70,11 @@ func generateContext(origin string, t pb.ContextType) (context.Context, context.
 		return context.WithTimeout(mContext, time.Second)
 	}
 
-	return baseContext, func() {}
+	if t == pb.ContextType_LONG {
+		return context.WithTimeout(mContext, time.Hour)
+	}
+
+	return mContext, func() {}
 }
 
 //FuzzyMatch experimental fuzzy match
