@@ -146,3 +146,28 @@ func Resolve(name string) (string, int32, error) {
 	}
 	return val.GetService().GetIp(), val.GetService().GetPort(), err
 }
+
+// ResolveAll gets all servers
+func ResolveAll(name string) ([]*pbdi.RegistryEntry, error) {
+	entries := make([]*pbdi.RegistryEntry, 0)
+	conn, err := grpc.Dial(Discover, grpc.WithInsecure())
+	if err != nil {
+		return entries, err
+	}
+	defer conn.Close()
+
+	registry := pbdi.NewDiscoveryServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	val, err := registry.ListAllServices(ctx, &pbdi.ListRequest{})
+	if err != nil {
+		return entries, err
+	}
+	for _, entry := range val.GetServices().Services {
+		if entry.Name == name {
+			entries = append(entries, entry)
+		}
+	}
+
+	return entries, nil
+}
