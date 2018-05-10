@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	pb "github.com/brotherlogic/discovery/proto"
@@ -175,13 +176,17 @@ func (s *GoServer) LogFunction(f string, t time.Time) {
 }
 
 //LogTrace logs out a trace
-func (s *GoServer) LogTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType) {
+func (s *GoServer) LogTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType) context.Context {
 	go func() {
 		if !s.SkipLog {
 			err := utils.SendTrace(c, l, t, ty, s.Registry.Name)
 			s.Log(fmt.Sprintf("SENT TRACE: %v", err))
 		}
 	}()
+
+	// Add in the context
+	md, _ := metadata.FromIncomingContext(c)
+	return metadata.NewOutgoingContext(c, md)
 }
 
 // LogMilestone logs out a milestone
