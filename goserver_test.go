@@ -2,6 +2,7 @@ package goserver
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"testing"
 	"time"
@@ -117,13 +118,18 @@ func (clientBuilder failingBuilder) NewDiscoveryServiceClient(conn *grpc.ClientC
 	return failingDiscoveryServiceClient{}
 }
 
-type passingMonitorServiceClient struct{}
+type passingMonitorServiceClient struct {
+	failLog bool
+}
 
 func (MonitorServiceClient passingMonitorServiceClient) ReadMessageLogs(ctx context.Context, in *pb.RegistryEntry, opts ...grpc.CallOption) (*pbd.MessageLogReadResponse, error) {
 	return &pbd.MessageLogReadResponse{}, nil
 }
 
 func (MonitorServiceClient passingMonitorServiceClient) WriteMessageLog(ctx context.Context, in *pbd.MessageLog, opts ...grpc.CallOption) (*pbd.LogWriteResponse, error) {
+	if MonitorServiceClient.failLog {
+		return &pbd.LogWriteResponse{}, fmt.Errorf("Built to fail")
+	}
 	return &pbd.LogWriteResponse{}, nil
 }
 
@@ -139,10 +145,12 @@ func (MonitorServiceClient passingMonitorServiceClient) ClearStats(ctx context.C
 	return &pbd.Empty{}, nil
 }
 
-type passingMonitorBuilder struct{}
+type passingMonitorBuilder struct {
+	failLog bool
+}
 
 func (monitorBuilder passingMonitorBuilder) NewMonitorServiceClient(conn *grpc.ClientConn) pbd.MonitorServiceClient {
-	return passingMonitorServiceClient{}
+	return passingMonitorServiceClient{failLog: monitorBuilder.failLog}
 }
 
 func TestFailToDial(t *testing.T) {
@@ -269,6 +277,17 @@ func TestRegisterDemoteServer(t *testing.T) {
 func TestLog(t *testing.T) {
 	server := InitTestServer()
 	server.Log("MadeUpLog")
+}
+
+func TestLogFail(t *testing.T) {
+	server := InitTestServer()
+	server.monitorBuilder = &passingMonitorBuilder{failLog: true}
+	server.Log("MadeUpLog")
+	time.Sleep(time.Second)
+
+	if server.failLogs != 1 {
+		t.Errorf("Log has not failed: %v", server.failLogs)
+	}
 }
 
 func TestLogFunction(t *testing.T) {
