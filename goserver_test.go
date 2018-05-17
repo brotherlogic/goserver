@@ -2,7 +2,6 @@ package goserver
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"testing"
 	"time"
@@ -128,7 +127,7 @@ func (MonitorServiceClient passingMonitorServiceClient) ReadMessageLogs(ctx cont
 
 func (MonitorServiceClient passingMonitorServiceClient) WriteMessageLog(ctx context.Context, in *pbd.MessageLog, opts ...grpc.CallOption) (*pbd.LogWriteResponse, error) {
 	if MonitorServiceClient.failLog {
-		return &pbd.LogWriteResponse{}, fmt.Errorf("Built to fail")
+		return &pbd.LogWriteResponse{}, grpc.Errorf(codes.Internal, "Built to fail")
 	}
 	return &pbd.LogWriteResponse{}, nil
 }
