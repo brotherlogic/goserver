@@ -20,6 +20,7 @@ func main() {
 	var host = flag.String("host", "", "Host")
 	var port = flag.String("port", "", "Port")
 	var name = flag.String("name", "", "Name")
+	var all = flag.String("all", "", "All")
 	flag.Parse()
 
 	if len(*host) > 0 {
@@ -37,8 +38,8 @@ func main() {
 		for _, s := range state.GetStates() {
 			fmt.Printf("%v and %v (%v) with %v\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue(), s.GetText())
 		}
-	} else {
-		ip, port, _ := utils.Resolve(*name)
+	} else if len(*name) > 0 {
+		ip, port, err := utils.Resolve(*name)
 		fmt.Printf("DIAL: %v\n", ip)
 		conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
 		if err != nil {
@@ -53,6 +54,28 @@ func main() {
 		state, _ := check.State(context.Background(), &pb.Empty{})
 		for _, s := range state.GetStates() {
 			fmt.Printf("%v and %v (%v) with %v\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue(), s.GetText())
+		}
+	} else {
+		servers, err := utils.ResolveAll(*all)
+		if err != nil {
+			log.Fatalf("Error: %v", err)
+		}
+		for _, s := range servers {
+			fmt.Printf("SERVER: %v\n", s)
+			conn, err := grpc.Dial(s.Ip+":"+strconv.Itoa(int(s.Port)), grpc.WithInsecure())
+			if err != nil {
+				log.Fatalf("Unable to reach server %v", s)
+			}
+			defer conn.Close()
+
+			check := pb.NewGoserverServiceClient(conn)
+			health, err := check.IsAlive(context.Background(), &pb.Alive{})
+			fmt.Printf("%v and %v\n", health, err)
+
+			state, _ := check.State(context.Background(), &pb.Empty{})
+			for _, s := range state.GetStates() {
+				fmt.Printf("%v and %v (%v) with %v\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue(), s.GetText())
+			}
 		}
 	}
 }

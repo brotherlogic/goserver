@@ -146,7 +146,8 @@ func (s *GoServer) Log(message string) {
 					ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 					defer cancel()
 					_, err := monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
-					if err != nil {
+					e, ok := status.FromError(err)
+					if ok && err != nil && e.Code() != codes.DeadlineExceeded {
 						s.failLogs++
 						s.failMessage = fmt.Sprintf("%v", err)
 					}
