@@ -65,6 +65,8 @@ type GoServer struct {
 	failMaster     int
 	milestoneMutex *sync.Mutex
 	milestones     map[string][]*pbd.Milestone
+	failLogs       int
+	failMessage    string
 }
 
 // PrepServer builds out the server for use.
@@ -81,6 +83,8 @@ func (s *GoServer) PrepServer() {
 	s.failMaster = 0
 	s.milestoneMutex = &sync.Mutex{}
 	s.milestones = make(map[string][]*pbd.Milestone)
+	s.failLogs = 0
+	s.failMessage = ""
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
@@ -141,7 +145,11 @@ func (s *GoServer) Log(message string) {
 					messageLog := &pbd.MessageLog{Message: message, Entry: s.Registry}
 					ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 					defer cancel()
-					monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
+					_, err := monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
+					if err != nil {
+						s.failLogs++
+						s.failMessage = fmt.Sprintf("%v", err)
+					}
 					s.close(conn)
 				}
 			}
