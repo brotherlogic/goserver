@@ -149,7 +149,7 @@ func (s *GoServer) Log(message string) {
 					e, ok := status.FromError(err)
 					if ok && err != nil && e.Code() != codes.DeadlineExceeded {
 						s.failLogs++
-						s.failMessage = fmt.Sprintf("%v", err)
+						s.failMessage = fmt.Sprintf("%v", message)
 					}
 					s.close(conn)
 				}
