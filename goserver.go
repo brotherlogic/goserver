@@ -37,6 +37,7 @@ type baseRegistrable struct{ Registerable }
 type sFunc struct {
 	fun func(ctx context.Context)
 	d   time.Duration
+	nm  bool
 }
 
 const (
