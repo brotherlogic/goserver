@@ -82,6 +82,11 @@ func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context), freq ti
 	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq})
 }
 
+// RegisterRepeatingTaskNonMaster registers a repeating task with a given frequency
+func (s *GoServer) RegisterRepeatingTaskNonMaster(task func(ctx context.Context), freq time.Duration) {
+	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, nm: true})
+}
+
 // IsAlive Reports liveness of the server
 func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, error) {
 	if s.Register.ReportHealth() {
@@ -132,7 +137,7 @@ func (s *GoServer) run(t sFunc) {
 		t.fun(ctx)
 	} else {
 		for true {
-			if s.Registry.GetMaster() {
+			if s.Registry.GetMaster() || t.nm {
 				ctx, cancel := utils.BuildContext(fmt.Sprintf("%v-Repeat-%v", s.Registry.Name, t.d), pbl.ContextType_LONG)
 				defer cancel()
 				t.fun(ctx)
