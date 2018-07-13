@@ -164,7 +164,7 @@ func ResolveAll(name string) ([]*pbdi.RegistryEntry, error) {
 		return entries, err
 	}
 	for _, entry := range val.GetServices().Services {
-		if entry.Name == name {
+		if len(name) == 0 || entry.Name == name {
 			entries = append(entries, entry)
 		}
 	}

@@ -61,20 +61,22 @@ func main() {
 			log.Fatalf("Error: %v", err)
 		}
 		for _, s := range servers {
-			fmt.Printf("SERVER: %v\n", s)
-			conn, err := grpc.Dial(s.Ip+":"+strconv.Itoa(int(s.Port)), grpc.WithInsecure())
-			if err != nil {
-				log.Fatalf("Unable to reach server %v", s)
-			}
-			defer conn.Close()
+			if !s.IgnoresMaster {
+				fmt.Printf("SERVER: %v\n", s)
+				conn, err := grpc.Dial(s.Ip+":"+strconv.Itoa(int(s.Port)), grpc.WithInsecure())
+				if err != nil {
+					log.Fatalf("Unable to reach server %v", s)
+				}
+				defer conn.Close()
 
-			check := pb.NewGoserverServiceClient(conn)
-			health, err := check.IsAlive(context.Background(), &pb.Alive{})
-			fmt.Printf("%v and %v\n", health, err)
+				check := pb.NewGoserverServiceClient(conn)
+				health, err := check.IsAlive(context.Background(), &pb.Alive{})
+				fmt.Printf("%v and %v\n", health, err)
 
-			state, _ := check.State(context.Background(), &pb.Empty{})
-			for _, s := range state.GetStates() {
-				fmt.Printf("%v and %v (%v) with %v\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue(), s.GetText())
+				state, _ := check.State(context.Background(), &pb.Empty{})
+				for _, s := range state.GetStates() {
+					fmt.Printf("%v and %v (%v) with %v\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue(), s.GetText())
+				}
 			}
 		}
 	}
