@@ -130,7 +130,6 @@ func (s *GoServer) Save(key string, p proto.Message) error {
 
 func (s *GoServer) run(t sFunc) {
 	time.Sleep(time.Minute)
-	s.Log(fmt.Sprintf("Running %v -> %v", t.d, s.Registry.GetMaster()))
 	if t.d == 0 {
 		ctx, cancel := utils.BuildContext(fmt.Sprintf("%v-NoD-Repeat", s.Registry.Name), pbl.ContextType_INFINITE)
 		defer cancel()
