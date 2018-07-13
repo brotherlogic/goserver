@@ -121,11 +121,9 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 				s.Registry = r.GetService()
 			} else {
 				s.badHearts++
-				s.Log(fmt.Sprintf("ERROR ON REG: %v", err))
 			}
 			e, ok := status.FromError(err)
 			if ok && (e.Code() != codes.DeadlineExceeded && e.Code() != codes.OK) {
-				s.Log(fmt.Sprintf("DOWNGRADE: %v", err))
 				s.Registry.Master = false
 				s.failMaster++
 			}
