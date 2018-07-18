@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	pb "github.com/brotherlogic/discovery/proto"
+	pbgh "github.com/brotherlogic/githubcard/proto"
 	pbg "github.com/brotherlogic/goserver/proto"
 	utils "github.com/brotherlogic/goserver/utils"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
@@ -151,6 +152,23 @@ func (s *GoServer) Log(message string) {
 						s.failMessage = fmt.Sprintf("%v", message)
 					}
 					s.close(conn)
+				}
+			}
+		}
+	}()
+}
+
+//RaiseIssue raises an issue
+func (s *GoServer) RaiseIssue(ctx context.Context, title, body string) {
+	go func() {
+		if !s.SkipLog {
+			ip, port, _ := utils.Resolve("githubcard")
+			if port > 0 {
+				conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
+				if err == nil {
+					defer conn.Close()
+					client := pbgh.NewGithubClient(conn)
+					client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body}, grpc.FailFast(false))
 				}
 			}
 		}
