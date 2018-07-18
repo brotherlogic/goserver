@@ -294,6 +294,11 @@ func TestLogFunction(t *testing.T) {
 	server.LogFunction("blah", time.Now())
 }
 
+func TestRaiseIssue(t *testing.T) {
+	server := InitTestServer()
+	server.RaiseIssue(context.Background(), "blah", "blah")
+}
+
 func TestLogMilestones(t *testing.T) {
 	server := InitTestServer()
 	ti := time.Now()
