@@ -168,8 +168,13 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string) {
 				if err == nil {
 					defer conn.Close()
 					client := pbgh.NewGithubClient(conn)
-					client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body}, grpc.FailFast(false))
+					_, err := client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body}, grpc.FailFast(false))
+					if err != nil {
+						s.Log(fmt.Sprintf("Failure to add issue: %v", err))
+					}
 				}
+			} else {
+				s.Log("Cannot locate githubcard!")
 			}
 		}
 	}()
