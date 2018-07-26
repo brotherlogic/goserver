@@ -25,6 +25,15 @@ func TestFuzzyMatchDetailed(t *testing.T) {
 	}
 }
 
+func TestFuzzyMatchDetailedEmpty(t *testing.T) {
+	a := &pbrc.Record{Release: &pbgd.Release{Id: 1234, FolderId: 1, Title: "Bonkers"}, Metadata: &pbrc.ReleaseMetadata{}}
+	b := &pbrc.Record{Metadata: &pbrc.ReleaseMetadata{}}
+
+	if !FuzzyMatch(b, a) {
+		t.Errorf("Failed to match on detailed: %v != %v", b, a)
+	}
+}
+
 func TestFuzzyMatch(t *testing.T) {
 	a := &pb.State{Key: "blah", Value: 1233}
 	var testData = []struct {

@@ -102,6 +102,10 @@ func doMatch(in, out reflect.Value) bool {
 		if in.Int() != 0 && in.Int() != out.Int() {
 			return false
 		}
+	case reflect.Float32, reflect.Float64:
+		if in.Float() != 0 && in.Float() != out.Float() {
+			return false
+		}
 	case reflect.Bool:
 		if !in.Bool() || out.Bool() {
 			return true
