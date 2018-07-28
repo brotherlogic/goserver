@@ -19,6 +19,17 @@ import (
 	pbt "github.com/brotherlogic/tracer/proto"
 )
 
+//LogTrace logs out a trace
+func Trace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType, name string) context.Context {
+	go func() {
+		SendTrace(c, l, t, ty, name)
+	}()
+
+	// Add in the context
+	md, _ := metadata.FromIncomingContext(c)
+	return metadata.NewOutgoingContext(c, md)
+}
+
 //SendTrace sends out a tracer trace
 func SendTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType, o string) error {
 	md, found := metadata.FromIncomingContext(c)
