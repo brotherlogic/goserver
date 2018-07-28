@@ -72,6 +72,10 @@ func generateContext(origin string, t pb.ContextType) (context.Context, context.
 		return context.WithTimeout(mContext, time.Second)
 	}
 
+	if t == pb.ContextType_MEDIUM {
+		return context.WithTimeout(mContext, time.Minute*5)
+	}
+
 	if t == pb.ContextType_LONG {
 		return context.WithTimeout(mContext, time.Hour)
 	}
