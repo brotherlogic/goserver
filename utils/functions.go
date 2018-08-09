@@ -19,6 +19,17 @@ import (
 	pbt "github.com/brotherlogic/tracer/proto"
 )
 
+//LogTrace logs out a trace
+func Trace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType, name string) context.Context {
+	go func() {
+		SendTrace(c, l, t, ty, name)
+	}()
+
+	// Add in the context
+	md, _ := metadata.FromIncomingContext(c)
+	return metadata.NewOutgoingContext(c, md)
+}
+
 //SendTrace sends out a tracer trace
 func SendTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType, o string) error {
 	md, found := metadata.FromIncomingContext(c)
@@ -72,6 +83,10 @@ func generateContext(origin string, t pb.ContextType) (context.Context, context.
 		return context.WithTimeout(mContext, time.Second)
 	}
 
+	if t == pb.ContextType_MEDIUM {
+		return context.WithTimeout(mContext, time.Minute*5)
+	}
+
 	if t == pb.ContextType_LONG {
 		return context.WithTimeout(mContext, time.Hour)
 	}
@@ -100,6 +115,10 @@ func doMatch(in, out reflect.Value) bool {
 	switch in.Kind() {
 	case reflect.Int32, reflect.Int64, reflect.Uint32, reflect.Uint64:
 		if in.Int() != 0 && in.Int() != out.Int() {
+			return false
+		}
+	case reflect.Float32, reflect.Float64:
+		if in.Float() != 0 && in.Float() != out.Float() {
 			return false
 		}
 	case reflect.Bool:
