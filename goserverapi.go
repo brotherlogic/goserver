@@ -108,7 +108,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 
 // Mote promotes or demotes a server into production
 func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, error) {
-	err := s.Register.Mote(in.Master)
+	err := s.Register.Mote(ctx, in.Master)
 
 	// If we were able to mote then we should inform discovery
 	if err == nil {

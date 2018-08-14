@@ -29,7 +29,7 @@ import (
 type Registerable interface {
 	DoRegister(server *grpc.Server)
 	ReportHealth() bool
-	Mote(master bool) error
+	Mote(ctx context.Context, master bool) error
 	GetState() []*pbg.State
 }
 
