@@ -131,13 +131,13 @@ func (s *GoServer) Save(key string, p proto.Message) error {
 func (s *GoServer) run(t sFunc) {
 	time.Sleep(time.Minute)
 	if t.d == 0 {
-		ctx, cancel := utils.BuildContext(fmt.Sprintf("%v-NoD-Repeat", s.Registry.Name), pbl.ContextType_INFINITE)
+		ctx, cancel := utils.BuildContext(fmt.Sprintf("%v-NoD-Repeat", s.Registry.Name), s.Registry.Name, pbl.ContextType_INFINITE)
 		defer cancel()
 		t.fun(ctx)
 	} else {
 		for true {
 			if s.Registry.GetMaster() || t.nm {
-				ctx, cancel := utils.BuildContext(fmt.Sprintf("%v-Repeat-%v", s.Registry.Name, t.d), pbl.ContextType_LONG)
+				ctx, cancel := utils.BuildContext(fmt.Sprintf("%v-Repeat-%v", s.Registry.Name, t.d), s.Registry.Name, pbl.ContextType_LONG)
 				defer cancel()
 				t.fun(ctx)
 			}

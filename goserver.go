@@ -338,8 +338,3 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, d
 
 	return r.GetService().Port
 }
-
-// BuildContext builds a context for use in a server setting
-func (s *GoServer) BuildContext(t pbg.ContextType) (context.Context, context.CancelFunc) {
-	return utils.BuildContext(s.Registry.Name, t)
-}
