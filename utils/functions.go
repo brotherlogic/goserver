@@ -69,9 +69,9 @@ func SendTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_Milest
 }
 
 // BuildContext builds a context object for use
-func BuildContext(origin string, t pb.ContextType) (context.Context, context.CancelFunc) {
+func BuildContext(label, origin string, t pb.ContextType) (context.Context, context.CancelFunc) {
 	con, can := generateContext(origin, t)
-	SendTrace(con, "Generate", time.Now(), pbt.Milestone_START, origin)
+	SendTrace(con, label, time.Now(), pbt.Milestone_START, origin)
 	return con, can
 }
 
