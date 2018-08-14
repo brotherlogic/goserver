@@ -124,8 +124,8 @@ func (s *GoServer) getRegisteredServerPort(IP string, servername string, externa
 }
 
 //Save a protobuf
-func (s *GoServer) Save(key string, p proto.Message) error {
-	return s.KSclient.Save(key, p)
+func (s *GoServer) Save(ctx context.Context, key string, p proto.Message) error {
+	return s.KSclient.Save(ctx, key, p)
 }
 
 func (s *GoServer) run(t sFunc) {
@@ -147,8 +147,8 @@ func (s *GoServer) run(t sFunc) {
 }
 
 //Read a protobuf
-func (s *GoServer) Read(key string, typ proto.Message) (proto.Message, *pbks.ReadResponse, error) {
-	return s.KSclient.Read(key, typ)
+func (s *GoServer) Read(ctx context.Context, key string, typ proto.Message) (proto.Message, *pbks.ReadResponse, error) {
+	return s.KSclient.Read(ctx, key, typ)
 }
 
 //GetServers gets an IP address from the discovery server
