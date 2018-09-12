@@ -13,7 +13,6 @@ import (
 	pb "github.com/brotherlogic/discovery/proto"
 	pbg "github.com/brotherlogic/goserver/proto"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
-	pbt "github.com/brotherlogic/tracer/proto"
 )
 
 type basicGetter struct{}
@@ -327,7 +326,7 @@ func (s TestServer) ReportHealth() bool {
 	return true
 }
 
-func (s TestServer) Mote(master bool) error {
+func (s TestServer) Mote(ctx context.Context, master bool) error {
 	return nil
 }
 
@@ -357,24 +356,4 @@ func TestHeartbeat(t *testing.T) {
 	time.Sleep(20 * time.Millisecond)
 	log.Printf("Tearing Down")
 	server.teardown()
-}
-
-func TestContext(t *testing.T) {
-	server := InitTestServer()
-	ctx, cancel := server.BuildContext(pbg.ContextType_REGULAR)
-	defer cancel()
-
-	v := ctx.Value("trace-id").(string)
-	if len(v) == 0 {
-		t.Errorf("BAD CONTEXT: %v", v)
-	}
-}
-
-func TestLogContext(t *testing.T) {
-	server := InitTestServer()
-	server.SkipLog = false
-	ctx, cancel := server.BuildContext(pbg.ContextType_REGULAR)
-	defer cancel()
-	server.LogTrace(ctx, "Test", time.Now(), pbt.Milestone_START)
-	time.Sleep(20 * time.Millisecond)
 }

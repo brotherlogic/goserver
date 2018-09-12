@@ -69,6 +69,7 @@ type GoServer struct {
 	milestones     map[string][]*pbd.Milestone
 	failLogs       int
 	failMessage    string
+	startup        time.Time
 }
 
 // PrepServer builds out the server for use.
@@ -150,7 +151,6 @@ func (s *GoServer) Log(message string) {
 					if ok && err != nil && e.Code() != codes.DeadlineExceeded {
 						s.failLogs++
 						s.failMessage = fmt.Sprintf("%v", message)
-						panic(fmt.Sprintf("Failed to log %v because of %v", message, err))
 					}
 					s.close(conn)
 				}
