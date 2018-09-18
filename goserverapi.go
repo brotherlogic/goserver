@@ -13,12 +13,15 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	pb "github.com/brotherlogic/discovery/proto"
+	pbgh "github.com/brotherlogic/githubcard/proto"
 	pbl "github.com/brotherlogic/goserver/proto"
 	pbks "github.com/brotherlogic/keystore/proto"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
+	pbt "github.com/brotherlogic/tracer/proto"
 
 	//Needed to pull in gzip encoding init
 	_ "google.golang.org/grpc/encoding/gzip"
@@ -207,4 +210,39 @@ func (s *GoServer) Serve() error {
 
 	server.Serve(lis)
 	return nil
+}
+
+//RaiseIssue raises an issue
+func (s *GoServer) RaiseIssue(ctx context.Context, title, body string) {
+	go func() {
+		if !s.SkipLog {
+			ip, port, _ := utils.Resolve("githubcard")
+			if port > 0 {
+				conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
+				if err == nil {
+					defer conn.Close()
+					client := pbgh.NewGithubClient(conn)
+					_, err := client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body}, grpc.FailFast(false))
+					if err != nil {
+						s.Log(fmt.Sprintf("Failure to add issue: %v", err))
+					}
+				}
+			} else {
+				s.Log("Cannot locate githubcard!")
+			}
+		}
+	}()
+}
+
+//LogTrace logs out a trace
+func (s *GoServer) LogTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType) context.Context {
+	go func() {
+		if !s.SkipLog {
+			utils.SendTrace(c, l, t, ty, s.Registry.Name)
+		}
+	}()
+
+	// Add in the context
+	md, _ := metadata.FromIncomingContext(c)
+	return metadata.NewOutgoingContext(c, md)
 }
