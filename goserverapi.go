@@ -213,7 +213,7 @@ func (s *GoServer) Serve() error {
 }
 
 //RaiseIssue raises an issue
-func (s *GoServer) RaiseIssue(ctx context.Context, title, body string) {
+func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bool) {
 	go func() {
 		if !s.SkipLog {
 			ip, port, _ := utils.Resolve("githubcard")
@@ -222,7 +222,7 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string) {
 				if err == nil {
 					defer conn.Close()
 					client := pbgh.NewGithubClient(conn)
-					_, err := client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body}, grpc.FailFast(false))
+					_, err := client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: sticky}, grpc.FailFast(false))
 					if err != nil {
 						s.Log(fmt.Sprintf("Failure to add issue: %v", err))
 					}

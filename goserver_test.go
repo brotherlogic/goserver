@@ -295,7 +295,7 @@ func TestLogFunction(t *testing.T) {
 
 func TestRaiseIssue(t *testing.T) {
 	server := InitTestServer()
-	server.RaiseIssue(context.Background(), "blah", "blah")
+	server.RaiseIssue(context.Background(), "blah", "blah", false)
 }
 
 func TestLogMilestones(t *testing.T) {
