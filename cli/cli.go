@@ -36,7 +36,7 @@ func main() {
 
 		state, _ := check.State(context.Background(), &pb.Empty{})
 		for _, s := range state.GetStates() {
-			fmt.Printf("%v and %v (%v) with %v\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue(), s.GetText())
+			fmt.Printf("%v and %v (%v, %v) with %v\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue(), s.GetFraction(), s.GetText())
 		}
 	} else if len(*name) > 0 {
 		ip, port, err := utils.Resolve(*name)
@@ -53,7 +53,8 @@ func main() {
 
 		state, _ := check.State(context.Background(), &pb.Empty{})
 		for _, s := range state.GetStates() {
-			fmt.Printf("%v and %v (%v) with %v\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue(), s.GetText())
+			fmt.Printf("%v and %v (%v, %v) with %v\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue(), s.GetFraction(), s.GetText())
+
 		}
 	} else {
 		servers, err := utils.ResolveAll(*all)
@@ -75,7 +76,8 @@ func main() {
 
 				state, _ := check.State(context.Background(), &pb.Empty{})
 				for _, s := range state.GetStates() {
-					fmt.Printf("%v and %v (%v) with %v\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue(), s.GetText())
+					fmt.Printf("%v and %v (%v, %v) with %v\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue(), s.GetFraction(), s.GetText())
+
 				}
 			}
 		}
