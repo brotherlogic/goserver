@@ -30,6 +30,7 @@ message State {
   int64 time_value = 2;
   int64 value = 3;
   string text = 4;
+  double fraction = 5;
 }
 
 message ServerState {

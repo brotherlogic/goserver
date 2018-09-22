@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -20,6 +21,8 @@ import (
 	pbg "github.com/brotherlogic/goserver/proto"
 	utils "github.com/brotherlogic/goserver/utils"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
+
+	pid "github.com/struCoder/pidusage"
 )
 
 // Registerable Allows the system to register itself
@@ -67,6 +70,12 @@ type GoServer struct {
 	failLogs       int
 	failMessage    string
 	startup        time.Time
+}
+
+
+func (s *GoServer) getCPUUsage() float64 {
+	v, _ := pid.GetStat(os.Getpid())
+	return v.CPU
 }
 
 // PrepServer builds out the server for use.

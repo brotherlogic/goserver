@@ -151,6 +151,11 @@ func (monitorBuilder passingMonitorBuilder) NewMonitorServiceClient(conn *grpc.C
 	return passingMonitorServiceClient{failLog: monitorBuilder.failLog}
 }
 
+func TestCPUGet(t *testing.T) {
+	server := GoServer{}
+	log.Printf("HERE %v", server.getCPUUsage())
+}
+
 func TestFailToDial(t *testing.T) {
 	server := GoServer{}
 	madeupport := server.registerServer("madeup", "madeup", false, failingDialler{}, passingBuilder{}, basicGetter{})

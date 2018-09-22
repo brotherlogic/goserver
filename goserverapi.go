@@ -107,6 +107,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "fail_log", Value: int64(s.failLogs)})
 	states = append(states, &pbl.State{Key: "fail_message", Text: s.failMessage})
 	states = append(states, &pbl.State{Key: "startup_time", TimeValue: s.startup.Unix()})
+	states = append(states, &pbl.State{Key: "cpu", Fraction: s.getCPUUsage()})
 	return &pbl.ServerState{States: states}, nil
 }
 
