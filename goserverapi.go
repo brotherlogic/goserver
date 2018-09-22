@@ -81,13 +81,34 @@ func (s *GoServer) RegisterServingTask(task func(ctx context.Context)) {
 }
 
 // RegisterRepeatingTask registers a repeating task with a given frequency
-func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context), freq time.Duration) {
+func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context), key string, freq time.Duration) {
 	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq})
+	found := false
+	for _, c := range s.config.Periods {
+		if c.Key == key {
+			found = true
+		}
+	}
+
+	if !found {
+		s.config.Periods = append(s.config.Periods, &pbl.TaskPeriod{Key: key, Period: int64(freq)})
+	}
 }
 
 // RegisterRepeatingTaskNonMaster registers a repeating task with a given frequency
-func (s *GoServer) RegisterRepeatingTaskNonMaster(task func(ctx context.Context), freq time.Duration) {
+func (s *GoServer) RegisterRepeatingTaskNonMaster(task func(ctx context.Context), key string, freq time.Duration) {
 	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, nm: true})
+	found := false
+	for _, c := range s.config.Periods {
+		if c.Key == key {
+			found = true
+		}
+	}
+
+	if !found {
+		s.config.Periods = append(s.config.Periods, &pbl.TaskPeriod{Key: key, Period: int64(freq)})
+	}
+
 }
 
 // IsAlive Reports liveness of the server
@@ -108,6 +129,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "fail_message", Text: s.failMessage})
 	states = append(states, &pbl.State{Key: "startup_time", TimeValue: s.startup.Unix()})
 	states = append(states, &pbl.State{Key: "cpu", Fraction: s.getCPUUsage()})
+	states = append(states, &pbl.State{Key: "periods", Value: int64(len(s.config.Periods))})
 	return &pbl.ServerState{States: states}, nil
 }
 

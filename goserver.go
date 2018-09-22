@@ -70,8 +70,8 @@ type GoServer struct {
 	failLogs       int
 	failMessage    string
 	startup        time.Time
+	config         *pbg.ServerConfig
 }
-
 
 func (s *GoServer) getCPUUsage() float64 {
 	v, _ := pid.GetStat(os.Getpid())
