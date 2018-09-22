@@ -151,6 +151,16 @@ func (monitorBuilder passingMonitorBuilder) NewMonitorServiceClient(conn *grpc.C
 	return passingMonitorServiceClient{failLog: monitorBuilder.failLog}
 }
 
+func run(ctx context.Context) {
+	log.Printf("Run")
+}
+
+func TestRegister(t *testing.T) {
+	server := GoServer{}
+	server.PrepServer()
+	server.RegisterRepeatingTask(run, "test_task", time.Second)
+}
+
 func TestCPUGet(t *testing.T) {
 	server := GoServer{}
 	log.Printf("HERE %v", server.getCPUUsage())

@@ -94,6 +94,7 @@ func (s *GoServer) PrepServer() {
 	s.milestones = make(map[string][]*pbd.Milestone)
 	s.failLogs = 0
 	s.failMessage = ""
+	s.config = &pbg.ServerConfig{}
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
