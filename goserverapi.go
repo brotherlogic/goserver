@@ -128,7 +128,9 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "fail_log", Value: int64(s.failLogs)})
 	states = append(states, &pbl.State{Key: "fail_message", Text: s.failMessage})
 	states = append(states, &pbl.State{Key: "startup_time", TimeValue: s.startup.Unix()})
+	s.cpuMutex.Lock()
 	states = append(states, &pbl.State{Key: "cpu", Fraction: s.getCPUUsage()})
+	s.cpuMutex.Unlock()
 	states = append(states, &pbl.State{Key: "periods", Value: int64(len(s.config.Periods))})
 	return &pbl.ServerState{States: states}, nil
 }

@@ -71,6 +71,7 @@ type GoServer struct {
 	failMessage    string
 	startup        time.Time
 	config         *pbg.ServerConfig
+	cpuMutex       *sync.Mutex
 }
 
 func (s *GoServer) getCPUUsage() float64 {
@@ -95,6 +96,7 @@ func (s *GoServer) PrepServer() {
 	s.failLogs = 0
 	s.failMessage = ""
 	s.config = &pbg.ServerConfig{}
+	s.cpuMutex = &sync.Mutex{}
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
