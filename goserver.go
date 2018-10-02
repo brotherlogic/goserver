@@ -72,7 +72,7 @@ type GoServer struct {
 	startup        time.Time
 	config         *pbg.ServerConfig
 	cpuMutex       *sync.Mutex
-	alertsFired    int
+	AlertsFired    int
 }
 
 func (s *GoServer) getCPUUsage() float64 {
@@ -98,7 +98,7 @@ func (s *GoServer) PrepServer() {
 	s.failMessage = ""
 	s.config = &pbg.ServerConfig{}
 	s.cpuMutex = &sync.Mutex{}
-	s.alertsFired = 0
+	s.AlertsFired = 0
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
