@@ -132,6 +132,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "cpu", Fraction: s.getCPUUsage()})
 	s.cpuMutex.Unlock()
 	states = append(states, &pbl.State{Key: "periods", Value: int64(len(s.config.Periods))})
+	states = append(states, &pbl.State{Key: "alerts_sent", Value: int64(s.alertsFired)})
 	return &pbl.ServerState{States: states}, nil
 }
 
@@ -239,6 +240,7 @@ func (s *GoServer) Serve() error {
 
 //RaiseIssue raises an issue
 func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bool) {
+	s.alertsFired++
 	go func() {
 		if !s.SkipLog {
 			ip, port, _ := utils.Resolve("githubcard")
