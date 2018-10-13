@@ -131,18 +131,6 @@ func (MonitorServiceClient passingMonitorServiceClient) WriteMessageLog(ctx cont
 	return &pbd.LogWriteResponse{}, nil
 }
 
-func (MonitorServiceClient passingMonitorServiceClient) WriteFunctionCall(ctx context.Context, in *pbd.FunctionCall, opts ...grpc.CallOption) (*pbd.Empty, error) {
-	return &pbd.Empty{}, nil
-}
-
-func (MonitorServiceClient passingMonitorServiceClient) GetStats(ctx context.Context, in *pbd.FunctionCall, opts ...grpc.CallOption) (*pbd.StatsList, error) {
-	return &pbd.StatsList{}, nil
-}
-
-func (MonitorServiceClient passingMonitorServiceClient) ClearStats(ctx context.Context, in *pbd.Empty, opts ...grpc.CallOption) (*pbd.Empty, error) {
-	return &pbd.Empty{}, nil
-}
-
 type passingMonitorBuilder struct {
 	failLog bool
 }
@@ -301,25 +289,6 @@ func TestLogFail(t *testing.T) {
 	if server.failLogs != 1 {
 		t.Errorf("Log has not failed: %v", server.failLogs)
 	}
-}
-
-func TestLogFunction(t *testing.T) {
-	server := InitTestServer()
-	server.LogFunction("blah", time.Now())
-}
-
-func TestRaiseIssue(t *testing.T) {
-	server := InitTestServer()
-	server.RaiseIssue(context.Background(), "blah", "blah", false)
-}
-
-func TestLogMilestones(t *testing.T) {
-	server := InitTestServer()
-	ti := time.Now()
-	server.LogMilestone("blah", "M1", ti)
-	server.LogFunction("blah", ti)
-
-	time.Sleep(time.Second)
 }
 
 func TestGetIP(t *testing.T) {
