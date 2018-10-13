@@ -32,7 +32,6 @@ func (s *GoServer) suicideWatch() {
 		time.Sleep(s.suicideTime)
 		//commit suicide if we're detached from the parent
 		if os.Getppid() == 1 && s.Killme {
-			s.LogFunction("death-"+strconv.Itoa(os.Getppid()), time.Now())
 			os.Exit(1)
 		}
 	}
