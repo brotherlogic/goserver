@@ -10,6 +10,7 @@ enum ContextType {
   MEDIUM = 4;
   LONG = 2;
   INFINITE = 3;
+  NO_TRACE = 5;
 }
 
 message Alive {
