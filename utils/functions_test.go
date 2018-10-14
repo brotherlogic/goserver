@@ -58,7 +58,7 @@ func TestFuzzyMatch(t *testing.T) {
 }
 
 func TestGetContext(t *testing.T) {
-	ctx, cancel := BuildContext("TestGetContext", pb.ContextType_REGULAR)
+	ctx, cancel := BuildContext("TestGetContext", "testing", pb.ContextType_REGULAR)
 	defer cancel()
 
 	v := ctx.Value("trace-id").(string)

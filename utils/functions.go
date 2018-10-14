@@ -92,6 +92,10 @@ func generateContext(origin string, t pb.ContextType) (context.Context, context.
 		return context.WithTimeout(mContext, time.Hour)
 	}
 
+	if t == pb.ContextType_NO_TRACE {
+		return context.WithTimeout(context.Background(), time.Minute*5)
+	}
+
 	return mContext, func() {}
 }
 
