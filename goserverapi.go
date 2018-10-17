@@ -23,6 +23,8 @@ import (
 	pbd "github.com/brotherlogic/monitor/monitorproto"
 	pbt "github.com/brotherlogic/tracer/proto"
 
+	ps "github.com/mitchellh/go-ps"
+
 	//Needed to pull in gzip encoding init
 	_ "google.golang.org/grpc/encoding/gzip"
 )
@@ -30,9 +32,19 @@ import (
 func (s *GoServer) suicideWatch() {
 	for true && s.Killme {
 		time.Sleep(s.suicideTime)
-		//commit suicide if we're detached from the parent
-		if os.Getppid() == 1 && s.Killme {
-			os.Exit(1)
+
+		//commit suicide if we're detached from the parent and we're not sudoing
+		if s.Killme {
+			if s.Sudo {
+				p, err := ps.FindProcess(os.Getppid())
+				if err != nil && p.PPid() == 1 {
+					os.Exit(1)
+				}
+			} else {
+				if os.Getppid() == 1 && s.Killme {
+					os.Exit(1)
+				}
+			}
 		}
 	}
 }

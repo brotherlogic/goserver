@@ -72,11 +72,16 @@ type GoServer struct {
 	config         *pbg.ServerConfig
 	cpuMutex       *sync.Mutex
 	AlertsFired    int
+	Sudo           bool
 }
 
 func (s *GoServer) getCPUUsage() float64 {
 	v, _ := pid.GetStat(os.Getpid())
 	return v.CPU
+}
+
+func (s *GoServer) runSudo() {
+	s.Sudo = true
 }
 
 // PrepServer builds out the server for use.
