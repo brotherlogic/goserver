@@ -80,7 +80,8 @@ func (s *GoServer) getCPUUsage() float64 {
 	return v.CPU
 }
 
-func (s *GoServer) runSudo() {
+//RunSudo runs as sudo
+func (s *GoServer) RunSudo() {
 	s.Sudo = true
 }
 
