@@ -144,6 +144,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	s.cpuMutex.Unlock()
 	states = append(states, &pbl.State{Key: "periods", Value: int64(len(s.config.Periods))})
 	states = append(states, &pbl.State{Key: "alerts_sent", Value: int64(s.AlertsFired)})
+	states = append(states, &pbl.State{Key: "alerts_error", Text: s.alertError})
 	return &pbl.ServerState{States: states}, nil
 }
 
@@ -262,12 +263,14 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bo
 					client := pbgh.NewGithubClient(conn)
 					_, err := client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: sticky}, grpc.FailFast(false))
 					if err != nil {
-						s.Log(fmt.Sprintf("Failure to add issue: %v", err))
+						s.alertError = fmt.Sprintf("Failure to add issue: %v", err)
 					}
 				}
 			} else {
-				s.Log("Cannot locate githubcard!")
+				s.alertError = fmt.Sprintf("Cannot locate githubcard")
 			}
+		} else {
+			s.alertError = "Skip log enabled"
 		}
 	}()
 }

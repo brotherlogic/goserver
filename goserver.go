@@ -73,6 +73,7 @@ type GoServer struct {
 	cpuMutex       *sync.Mutex
 	AlertsFired    int
 	Sudo           bool
+	alertError     string
 }
 
 func (s *GoServer) getCPUUsage() float64 {
@@ -102,6 +103,7 @@ func (s *GoServer) PrepServer() {
 	s.config = &pbg.ServerConfig{}
 	s.cpuMutex = &sync.Mutex{}
 	s.AlertsFired = 0
+	s.alertError = ""
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
