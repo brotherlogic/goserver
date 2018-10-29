@@ -261,6 +261,9 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bo
 				if err == nil {
 					defer conn.Close()
 					client := pbgh.NewGithubClient(conn)
+					ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+					defer cancel()
+
 					_, err := client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: sticky}, grpc.FailFast(false))
 					if err != nil {
 						s.alertError = fmt.Sprintf("Failure to add issue: %v", err)
