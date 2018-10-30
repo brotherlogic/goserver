@@ -145,6 +145,14 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "periods", Value: int64(len(s.config.Periods))})
 	states = append(states, &pbl.State{Key: "alerts_sent", Value: int64(s.AlertsFired)})
 	states = append(states, &pbl.State{Key: "alerts_error", Text: s.alertError})
+	if s.Sudo {
+		p, err := ps.FindProcess(os.Getppid())
+		if err != nil {
+			states = append(states, &pbl.State{Key: "parent", Value: int64(p.PPid())})
+		} else {
+			states = append(states, &pbl.State{Key: "parent_error", Text: fmt.Sprintf("%v", err)})
+		}
+	}
 	return &pbl.ServerState{States: states}, nil
 }
 
