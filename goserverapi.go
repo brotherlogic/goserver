@@ -37,7 +37,7 @@ func (s *GoServer) suicideWatch() {
 		if s.Killme {
 			if s.Sudo {
 				p, err := ps.FindProcess(os.Getppid())
-				if err != nil && p.PPid() == 1 {
+				if err == nil && p.PPid() == 1 {
 					os.Exit(1)
 				}
 			} else {
@@ -147,7 +147,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "alerts_error", Text: s.alertError})
 	if s.Sudo {
 		p, err := ps.FindProcess(os.Getppid())
-		if err != nil {
+		if err == nil {
 			states = append(states, &pbl.State{Key: "parent", Value: int64(p.PPid())})
 		} else {
 			states = append(states, &pbl.State{Key: "parent_error", Text: fmt.Sprintf("%v", err)})
