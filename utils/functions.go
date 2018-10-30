@@ -181,7 +181,7 @@ func ResolveAll(name string) ([]*pbdi.RegistryEntry, error) {
 	defer conn.Close()
 
 	registry := pbdi.NewDiscoveryServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	val, err := registry.ListAllServices(ctx, &pbdi.ListRequest{})
 	if err != nil {
