@@ -286,6 +286,34 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bo
 	}()
 }
 
+//BounceIssue raises an issue for a different source
+func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job string) {
+	s.AlertsFired++
+	go func() {
+		if !s.SkipLog {
+			ip, port, _ := utils.Resolve("githubcard")
+			if port > 0 {
+				conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
+				if err == nil {
+					defer conn.Close()
+					client := pbgh.NewGithubClient(conn)
+					ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+					defer cancel()
+
+					_, err := client.AddIssue(ctx, &pbgh.Issue{Service: job, Title: title, Body: body}, grpc.FailFast(false))
+					if err != nil {
+						s.alertError = fmt.Sprintf("Failure to add issue: %v", err)
+					}
+				}
+			} else {
+				s.alertError = fmt.Sprintf("Cannot locate githubcard")
+			}
+		} else {
+			s.alertError = "Skip log enabled"
+		}
+	}()
+}
+
 //LogTrace logs out a trace
 func (s *GoServer) LogTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType) context.Context {
 	go func() {
