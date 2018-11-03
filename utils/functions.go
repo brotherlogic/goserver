@@ -171,6 +171,21 @@ func Resolve(name string) (string, int32, error) {
 	return val.GetService().GetIp(), val.GetService().GetPort(), err
 }
 
+// GetMaster resolves out a server
+func GetMaster(name string) (*pbdi.RegistryEntry, error) {
+	conn, err := grpc.Dial(Discover, grpc.WithInsecure())
+	if err != nil {
+		return &pbdi.RegistryEntry{}, err
+	}
+	defer conn.Close()
+
+	registry := pbdi.NewDiscoveryServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	val, err := registry.Discover(ctx, &pbdi.DiscoverRequest{Request: &pbdi.RegistryEntry{Name: name}})
+	return val.GetService(), err
+}
+
 // ResolveAll gets all servers
 func ResolveAll(name string) ([]*pbdi.RegistryEntry, error) {
 	entries := make([]*pbdi.RegistryEntry, 0)
