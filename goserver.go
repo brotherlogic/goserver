@@ -74,6 +74,7 @@ type GoServer struct {
 	AlertsFired    int
 	Sudo           bool
 	alertError     string
+	runningFile    string
 }
 
 func (s *GoServer) getCPUUsage() float64 {
