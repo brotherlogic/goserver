@@ -1,8 +1,10 @@
 package goserver
 
 import (
+	"crypto/md5"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
@@ -233,8 +235,9 @@ func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
 // Serve Runs the server
 func (s *GoServer) Serve() error {
 	// Set the file details
-	ex, err := os.Executable()
-	s.runningFile = fmt.Sprintf("%v - %v", ex, err)
+	ex, _ := os.Executable()
+	data, _ := ioutil.ReadFile(ex)
+	s.runningFile = fmt.Sprintf("%x", md5.Sum(data))
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.Port)))
 	if err != nil {
