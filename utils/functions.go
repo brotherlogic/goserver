@@ -76,7 +76,8 @@ func BuildContext(label, origin string, t pb.ContextType) (context.Context, cont
 }
 
 func generateContext(origin string, t pb.ContextType) (context.Context, context.CancelFunc) {
-	tracev := fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), rand.Int63())
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	tracev := fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), r.Int63())
 	baseContext := context.WithValue(context.Background(), "trace-id", tracev)
 	mContext := metadata.NewOutgoingContext(baseContext, metadata.Pairs("trace-id", tracev))
 	mContext = metadata.NewIncomingContext(mContext, metadata.Pairs("trace-id", tracev))
