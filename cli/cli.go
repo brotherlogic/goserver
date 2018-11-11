@@ -20,6 +20,7 @@ func main() {
 	var host = flag.String("host", "", "Host")
 	var port = flag.String("port", "", "Port")
 	var name = flag.String("name", "", "Name")
+	var server = flag.String("server", "", "Server")
 	var all = flag.String("all", "", "All")
 	flag.Parse()
 
@@ -62,7 +63,7 @@ func main() {
 			log.Fatalf("Error: %v", err)
 		}
 		for _, s := range servers {
-			if !s.IgnoresMaster {
+			if !s.IgnoresMaster && (*server == "" || *server == s.Identifier) {
 				fmt.Printf("SERVER: %v\n", s)
 				conn, err := grpc.Dial(s.Ip+":"+strconv.Itoa(int(s.Port)), grpc.WithInsecure())
 				if err != nil {

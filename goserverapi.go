@@ -190,9 +190,11 @@ func (s *GoServer) run(t sFunc) {
 	} else {
 		for true {
 			if s.Registry.GetMaster() || t.nm {
-				ctx, cancel := utils.BuildContext(fmt.Sprintf("%v-Repeat-%v", s.Registry.Name, t.d), s.Registry.Name, pbl.ContextType_LONG)
+				name := fmt.Sprintf("%v-Repeat-%v", s.Registry.Name, t.d)
+				ctx, cancel := utils.BuildContext(name, s.Registry.Name, pbl.ContextType_LONG)
 				defer cancel()
 				t.fun(ctx)
+				utils.SendTrace(ctx, name, time.Now(), pbt.Milestone_END, s.Registry.Name)
 			}
 			time.Sleep(t.d)
 		}

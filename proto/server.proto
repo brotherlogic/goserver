@@ -33,7 +33,6 @@ message State {
   string text = 4;
   double fraction = 5;
 }
-
 message ServerState {
   repeated State states = 1;
 }
