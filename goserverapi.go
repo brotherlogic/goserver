@@ -95,7 +95,7 @@ func (s *GoServer) RegisterServingTask(task func(ctx context.Context)) {
 
 // RegisterRepeatingTask registers a repeating task with a given frequency
 func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context), key string, freq time.Duration) {
-	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq})
+	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, key: key})
 	found := false
 	for _, c := range s.config.Periods {
 		if c.Key == key {
@@ -110,7 +110,7 @@ func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context), key str
 
 // RegisterRepeatingTaskNonMaster registers a repeating task with a given frequency
 func (s *GoServer) RegisterRepeatingTaskNonMaster(task func(ctx context.Context), key string, freq time.Duration) {
-	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, nm: true})
+	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, nm: true, key: key})
 	found := false
 	for _, c := range s.config.Periods {
 		if c.Key == key {
@@ -190,7 +190,7 @@ func (s *GoServer) run(t sFunc) {
 	} else {
 		for true {
 			if s.Registry.GetMaster() || t.nm {
-				name := fmt.Sprintf("%v-Repeat-%v", s.Registry.Name, t.d)
+				name := fmt.Sprintf("%v-Repeat-(%v)-%v", s.Registry.Name, t.key, t.d)
 				ctx, cancel := utils.BuildContext(name, s.Registry.Name, pbl.ContextType_LONG)
 				defer cancel()
 				t.fun(ctx)

@@ -39,6 +39,7 @@ type sFunc struct {
 	fun func(ctx context.Context)
 	d   time.Duration
 	nm  bool
+	key string
 }
 
 const (
