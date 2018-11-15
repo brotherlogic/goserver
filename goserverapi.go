@@ -89,8 +89,8 @@ func (s *GoServer) close(conn *grpc.ClientConn) {
 }
 
 // RegisterServingTask registers tasks to run when serving
-func (s *GoServer) RegisterServingTask(task func(ctx context.Context)) {
-	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: 0})
+func (s *GoServer) RegisterServingTask(task func(ctx context.Context), key string) {
+	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: 0, key: key})
 }
 
 // RegisterRepeatingTask registers a repeating task with a given frequency
@@ -184,11 +184,7 @@ func (s *GoServer) Save(ctx context.Context, key string, p proto.Message) error 
 func (s *GoServer) run(t sFunc) {
 	time.Sleep(time.Minute)
 	if t.d == 0 {
-		name := fmt.Sprintf("%v-NoD-Repeat", s.Registry.Name)
-		ctx, cancel := utils.BuildContext(name, s.Registry.Name, pbl.ContextType_INFINITE)
-		defer cancel()
-		t.fun(ctx)
-		utils.SendTrace(ctx, name, time.Now(), pbt.Milestone_END, s.Registry.Name)
+		t.fun(context.Background())
 	} else {
 		for true {
 			if s.Registry.GetMaster() || t.nm {
