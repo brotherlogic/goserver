@@ -184,9 +184,11 @@ func (s *GoServer) Save(ctx context.Context, key string, p proto.Message) error 
 func (s *GoServer) run(t sFunc) {
 	time.Sleep(time.Minute)
 	if t.d == 0 {
-		ctx, cancel := utils.BuildContext(fmt.Sprintf("%v-NoD-Repeat", s.Registry.Name), s.Registry.Name, pbl.ContextType_INFINITE)
+		name := fmt.Sprintf("%v-NoD-Repeat", s.Registry.Name)
+		ctx, cancel := utils.BuildContext(name, s.Registry.Name, pbl.ContextType_INFINITE)
 		defer cancel()
 		t.fun(ctx)
+		utils.SendTrace(ctx, name, time.Now(), pbt.Milestone_END, s.Registry.Name)
 	} else {
 		for true {
 			if s.Registry.GetMaster() || t.nm {

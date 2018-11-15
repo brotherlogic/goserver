@@ -52,7 +52,9 @@ func main() {
 		health, err := check.IsAlive(context.Background(), &pb.Alive{})
 		fmt.Printf("%v and %v\n", health, err)
 
-		state, _ := check.State(context.Background(), &pb.Empty{})
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+		state, _ := check.State(ctx, &pb.Empty{})
 		for _, s := range state.GetStates() {
 			fmt.Printf("%v and %v (%v, %v) with %v\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue(), s.GetFraction(), s.GetText())
 
