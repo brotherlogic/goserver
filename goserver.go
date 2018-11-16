@@ -142,11 +142,11 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 			if err == nil {
 				s.Registry = r.GetService()
 			} else {
-				s.badHeartMessage = fmt.Sprintf("%v", err)
 				s.badHearts++
 			}
 			e, ok := status.FromError(err)
 			if ok && (e.Code() != codes.DeadlineExceeded && e.Code() != codes.OK) {
+				s.badHeartMessage = fmt.Sprintf("%v", err)
 				s.Registry.Master = false
 				s.failMaster++
 			}
