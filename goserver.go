@@ -48,34 +48,35 @@ const (
 
 // GoServer The basic server construct
 type GoServer struct {
-	Servername     string
-	Port           int32
-	Registry       *pb.RegistryEntry
-	dialler        dialler
-	monitorBuilder monitorBuilder
-	clientBuilder  clientBuilder
-	heartbeatChan  chan int
-	heartbeatCount int
-	heartbeatTime  time.Duration
-	Register       Registerable
-	SkipLog        bool
-	servingFuncs   []sFunc
-	KSclient       keystoreclient.Keystoreclient
-	suicideTime    time.Duration
-	Killme         bool
-	hearts         int
-	badHearts      int
-	failMaster     int
-	milestoneMutex *sync.Mutex
-	failLogs       int
-	failMessage    string
-	startup        time.Time
-	config         *pbg.ServerConfig
-	cpuMutex       *sync.Mutex
-	AlertsFired    int
-	Sudo           bool
-	alertError     string
-	runningFile    string
+	Servername      string
+	Port            int32
+	Registry        *pb.RegistryEntry
+	dialler         dialler
+	monitorBuilder  monitorBuilder
+	clientBuilder   clientBuilder
+	heartbeatChan   chan int
+	heartbeatCount  int
+	heartbeatTime   time.Duration
+	Register        Registerable
+	SkipLog         bool
+	servingFuncs    []sFunc
+	KSclient        keystoreclient.Keystoreclient
+	suicideTime     time.Duration
+	Killme          bool
+	hearts          int
+	badHearts       int
+	failMaster      int
+	milestoneMutex  *sync.Mutex
+	failLogs        int
+	failMessage     string
+	startup         time.Time
+	config          *pbg.ServerConfig
+	cpuMutex        *sync.Mutex
+	AlertsFired     int
+	Sudo            bool
+	alertError      string
+	runningFile     string
+	badHeartMessage string
 }
 
 func (s *GoServer) getCPUUsage() float64 {
@@ -106,6 +107,7 @@ func (s *GoServer) PrepServer() {
 	s.cpuMutex = &sync.Mutex{}
 	s.AlertsFired = 0
 	s.alertError = ""
+	s.badHeartMessage = ""
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
@@ -140,6 +142,7 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 			if err == nil {
 				s.Registry = r.GetService()
 			} else {
+				s.badHeartMessage = fmt.Sprintf("%v", err)
 				s.badHearts++
 			}
 			e, ok := status.FromError(err)
