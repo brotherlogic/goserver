@@ -328,7 +328,12 @@ func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job stri
 func (s *GoServer) LogTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType) context.Context {
 	go func() {
 		if !s.SkipLog {
-			utils.SendTrace(c, l, t, ty, s.Registry.Name)
+			s.traces++
+			err := utils.SendTrace(c, l, t, ty, s.Registry.Name)
+			if err != nil {
+				s.traceFails++
+				s.traceFailMessage = fmt.Sprintf("%v", err)
+			}
 		}
 	}()
 

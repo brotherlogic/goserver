@@ -15,6 +15,26 @@ import (
 	_ "google.golang.org/grpc/encoding/gzip"
 )
 
+func buildState(s *pb.State) string {
+	if len(s.Text) > 0 {
+		return fmt.Sprintf("%v", s.Text)
+	}
+
+	if s.Value > 0 {
+		return fmt.Sprintf("%v", s.Value)
+	}
+
+	if s.TimeValue > 0 {
+		return fmt.Sprintf("%v", time.Unix(s.TimeValue, 0))
+	}
+
+	if s.TimeDuration > 0 {
+		return fmt.Sprintf("%v", time.Duration(s.TimeDuration).Round(time.Second))
+	}
+
+	return ""
+}
+
 func main() {
 
 	var host = flag.String("host", "", "Host")
@@ -55,9 +75,11 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
 		state, _ := check.State(ctx, &pb.Empty{})
-		for _, s := range state.GetStates() {
-			fmt.Printf("%v and %v (%v, %v) with %v\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue(), s.GetFraction(), s.GetText())
-
+		for _, st := range state.GetStates() {
+			state := buildState(st)
+			if len(state) > 0 {
+				fmt.Printf("%v: %v -> %v\n", ip, st.GetKey(), state)
+			}
 		}
 	} else {
 		servers, err := utils.ResolveAll(*all)
@@ -78,8 +100,8 @@ func main() {
 				fmt.Printf("%v and %v\n", health, err)
 
 				state, _ := check.State(context.Background(), &pb.Empty{})
-				for _, s := range state.GetStates() {
-					fmt.Printf("%v and %v (%v, %v) with %v\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue(), s.GetFraction(), s.GetText())
+				for _, st := range state.GetStates() {
+					fmt.Printf("%v (%v): %v -> %v\n", s.Identifier, s.Name, st.GetKey(), buildState(st))
 
 				}
 			}

@@ -48,35 +48,38 @@ const (
 
 // GoServer The basic server construct
 type GoServer struct {
-	Servername      string
-	Port            int32
-	Registry        *pb.RegistryEntry
-	dialler         dialler
-	monitorBuilder  monitorBuilder
-	clientBuilder   clientBuilder
-	heartbeatChan   chan int
-	heartbeatCount  int
-	heartbeatTime   time.Duration
-	Register        Registerable
-	SkipLog         bool
-	servingFuncs    []sFunc
-	KSclient        keystoreclient.Keystoreclient
-	suicideTime     time.Duration
-	Killme          bool
-	hearts          int
-	badHearts       int
-	failMaster      int
-	milestoneMutex  *sync.Mutex
-	failLogs        int
-	failMessage     string
-	startup         time.Time
-	config          *pbg.ServerConfig
-	cpuMutex        *sync.Mutex
-	AlertsFired     int
-	Sudo            bool
-	alertError      string
-	runningFile     string
-	badHeartMessage string
+	Servername       string
+	Port             int32
+	Registry         *pb.RegistryEntry
+	dialler          dialler
+	monitorBuilder   monitorBuilder
+	clientBuilder    clientBuilder
+	heartbeatChan    chan int
+	heartbeatCount   int
+	heartbeatTime    time.Duration
+	Register         Registerable
+	SkipLog          bool
+	servingFuncs     []sFunc
+	KSclient         keystoreclient.Keystoreclient
+	suicideTime      time.Duration
+	Killme           bool
+	hearts           int
+	badHearts        int
+	failMaster       int
+	milestoneMutex   *sync.Mutex
+	failLogs         int
+	failMessage      string
+	startup          time.Time
+	config           *pbg.ServerConfig
+	cpuMutex         *sync.Mutex
+	AlertsFired      int
+	Sudo             bool
+	alertError       string
+	runningFile      string
+	badHeartMessage  string
+	traces           int
+	traceFails       int
+	traceFailMessage string
 }
 
 func (s *GoServer) getCPUUsage() float64 {
@@ -108,6 +111,9 @@ func (s *GoServer) PrepServer() {
 	s.AlertsFired = 0
 	s.alertError = ""
 	s.badHeartMessage = ""
+	s.traces = 0
+	s.traceFails = 0
+	s.traceFailMessage = ""
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
