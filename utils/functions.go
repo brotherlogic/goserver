@@ -70,34 +70,45 @@ func SendTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_Milest
 
 // BuildContext builds a context object for use
 func BuildContext(label, origin string, t pb.ContextType) (context.Context, context.CancelFunc) {
-	con, can := generateContext(origin, t)
-	SendTrace(con, label, time.Now(), pbt.Milestone_START, origin)
-	return con, can
+	con, can, orig, canorig := generateContext(origin, t)
+	err := SendTrace(con, label, time.Now(), pbt.Milestone_START, origin)
+	if err == nil {
+		return con, can
+	}
+	return orig, canorig
 }
 
-func generateContext(origin string, t pb.ContextType) (context.Context, context.CancelFunc) {
+func generateContext(origin string, t pb.ContextType) (context.Context, context.CancelFunc, context.Context, context.CancelFunc) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	tracev := fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), r.Int63())
 	baseContext := context.WithValue(context.Background(), "trace-id", tracev)
 	mContext := metadata.NewOutgoingContext(baseContext, metadata.Pairs("trace-id", tracev))
 	mContext = metadata.NewIncomingContext(mContext, metadata.Pairs("trace-id", tracev))
 	if t == pb.ContextType_REGULAR {
-		return context.WithTimeout(mContext, time.Second)
+		a, b := context.WithTimeout(mContext, time.Second)
+		c, d := context.WithTimeout(context.Background(), time.Second)
+		return a, b, c, d
 	}
 
 	if t == pb.ContextType_MEDIUM {
-		return context.WithTimeout(mContext, time.Minute*5)
+		a, b := context.WithTimeout(mContext, time.Minute*5)
+		c, d := context.WithTimeout(context.Background(), time.Minute*5)
+		return a, b, c, d
 	}
 
 	if t == pb.ContextType_LONG {
-		return context.WithTimeout(mContext, time.Hour)
+		a, b := context.WithTimeout(mContext, time.Hour)
+		c, d := context.WithTimeout(context.Background(), time.Hour)
+		return a, b, c, d
 	}
 
 	if t == pb.ContextType_NO_TRACE {
-		return context.WithTimeout(context.Background(), time.Minute*5)
+		a, b := context.WithTimeout(context.Background(), time.Minute*5)
+		c, d := context.WithTimeout(context.Background(), time.Minute*5)
+		return a, b, c, d
 	}
 
-	return mContext, func() {}
+	return mContext, func() {}, context.Background(), func() {}
 }
 
 //FuzzyMatch experimental fuzzy match
