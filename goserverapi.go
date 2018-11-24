@@ -150,6 +150,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "periods", Value: int64(len(s.config.Periods))})
 	states = append(states, &pbl.State{Key: "alerts_sent", Value: int64(s.AlertsFired)})
 	states = append(states, &pbl.State{Key: "alerts_error", Text: s.alertError})
+	states = append(states, &pbl.State{Key: "mote_count", Value: int64(s.moteCount)})
 	if s.Sudo {
 		p, err := ps.FindProcess(os.Getppid())
 		if err == nil {
@@ -163,6 +164,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 
 // Mote promotes or demotes a server into production
 func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, error) {
+	s.moteCount++
 	err := s.Register.Mote(ctx, in.Master)
 
 	// If we were able to mote then we should inform discovery

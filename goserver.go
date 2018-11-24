@@ -80,6 +80,7 @@ type GoServer struct {
 	traces           int
 	traceFails       int
 	traceFailMessage string
+	moteCount        int
 }
 
 func (s *GoServer) getCPUUsage() float64 {
@@ -114,6 +115,7 @@ func (s *GoServer) PrepServer() {
 	s.traces = 0
 	s.traceFails = 0
 	s.traceFailMessage = ""
+	s.moteCount = 0
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
