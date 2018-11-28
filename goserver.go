@@ -1,6 +1,7 @@
 package goserver
 
 import (
+	"crypto/md5"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -75,7 +76,7 @@ type GoServer struct {
 	AlertsFired      int
 	Sudo             bool
 	alertError       string
-	runningFile      string
+	RunningFile      string
 	badHeartMessage  string
 	traces           int
 	traceFails       int
@@ -119,6 +120,12 @@ func (s *GoServer) PrepServer() {
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
+
+	// Set the file details
+	ex, _ := os.Executable()
+	data, _ := ioutil.ReadFile(ex)
+	s.RunningFile = fmt.Sprintf("%x", md5.Sum(data))
+
 }
 
 func (s *GoServer) teardown() {

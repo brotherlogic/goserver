@@ -1,10 +1,8 @@
 package goserver
 
 import (
-	"crypto/md5"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
@@ -135,7 +133,7 @@ func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, erro
 //State gets the state of the server.
 func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, error) {
 	states := s.Register.GetState()
-	states = append(states, &pbl.State{Key: "running_binary", Text: s.runningFile})
+	states = append(states, &pbl.State{Key: "running_binary", Text: s.RunningFile})
 	states = append(states, &pbl.State{Key: "hearts", Value: int64(s.hearts)})
 	states = append(states, &pbl.State{Key: "bad_hearts", Value: int64(s.badHearts)})
 	states = append(states, &pbl.State{Key: "bad_heart_message", Text: s.badHeartMessage})
@@ -238,11 +236,6 @@ func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
 
 // Serve Runs the server
 func (s *GoServer) Serve() error {
-	// Set the file details
-	ex, _ := os.Executable()
-	data, _ := ioutil.ReadFile(ex)
-	s.runningFile = fmt.Sprintf("%x", md5.Sum(data))
-
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.Port)))
 	if err != nil {
 		return err
