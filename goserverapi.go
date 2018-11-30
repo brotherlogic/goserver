@@ -236,6 +236,8 @@ func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
 
 // Serve Runs the server
 func (s *GoServer) Serve() error {
+	s.Log(fmt.Sprintf("Starting %v", s.RunningFile))
+
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.Port)))
 	if err != nil {
 		return err

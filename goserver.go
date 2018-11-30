@@ -125,7 +125,6 @@ func (s *GoServer) PrepServer() {
 	ex, _ := os.Executable()
 	data, _ := ioutil.ReadFile(ex)
 	s.RunningFile = fmt.Sprintf("%x", md5.Sum(data))
-
 }
 
 func (s *GoServer) teardown() {
