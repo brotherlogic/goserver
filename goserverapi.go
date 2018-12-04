@@ -149,6 +149,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "alerts_sent", Value: int64(s.AlertsFired)})
 	states = append(states, &pbl.State{Key: "alerts_error", Text: s.alertError})
 	states = append(states, &pbl.State{Key: "mote_count", Value: int64(s.moteCount)})
+	states = append(states, &pbl.State{Key: "last_mote_time", Text: fmt.Sprintf("%v", s.lastMoteTime)})
 	if s.Sudo {
 		p, err := ps.FindProcess(os.Getppid())
 		if err == nil {
@@ -162,6 +163,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 
 // Mote promotes or demotes a server into production
 func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, error) {
+	st := time.Now()
 	s.moteCount++
 	err := s.Register.Mote(ctx, in.Master)
 
@@ -171,6 +173,7 @@ func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, e
 		s.reregister(s.dialler, s.clientBuilder)
 	}
 
+	s.lastMoteTime = time.Now().Sub(st)
 	return &pbl.Empty{}, err
 }
 

@@ -82,6 +82,7 @@ type GoServer struct {
 	traceFails       int
 	traceFailMessage string
 	moteCount        int
+	lastMoteTime     time.Duration
 }
 
 func (s *GoServer) getCPUUsage() float64 {
