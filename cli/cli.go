@@ -101,7 +101,11 @@ func main() {
 
 				state, _ := check.State(context.Background(), &pb.Empty{})
 				for _, st := range state.GetStates() {
-					fmt.Printf("%v (%v): %v -> %v\n", s.Identifier, s.Name, st.GetKey(), buildState(st))
+					state := buildState(st)
+					if len(state) > 0 {
+
+						fmt.Printf("%v (%v): %v -> %v\n", s.Identifier, s.Name, st.GetKey(), state)
+					}
 
 				}
 			}

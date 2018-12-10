@@ -272,7 +272,7 @@ func (s *GoServer) Serve() error {
 func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bool) {
 	s.AlertsFired++
 	go func() {
-		if !s.SkipLog {
+		if !s.SkipLog || len(body) == 0 {
 			ip, port, _ := utils.Resolve("githubcard")
 			if port > 0 {
 				conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
