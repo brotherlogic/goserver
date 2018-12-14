@@ -150,6 +150,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "alerts_error", Text: s.alertError})
 	states = append(states, &pbl.State{Key: "mote_count", Value: int64(s.moteCount)})
 	states = append(states, &pbl.State{Key: "last_mote_time", Text: fmt.Sprintf("%v", s.lastMoteTime)})
+	states = append(states, &pbl.State{Key: "last_mote_fail", Text: s.lastMoteFail})
 	if s.Sudo {
 		p, err := ps.FindProcess(os.Getppid())
 		if err == nil {
