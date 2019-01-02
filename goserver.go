@@ -86,9 +86,9 @@ type GoServer struct {
 	lastMoteFail     string
 }
 
-func (s *GoServer) getCPUUsage() float64 {
+func (s *GoServer) getCPUUsage() (float64, float64) {
 	v, _ := pid.GetStat(os.Getpid())
-	return v.CPU
+	return v.CPU, v.Memory
 }
 
 //RunSudo runs as sudo
