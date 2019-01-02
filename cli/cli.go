@@ -24,6 +24,10 @@ func buildState(s *pb.State) string {
 		return fmt.Sprintf("%v", s.Value)
 	}
 
+	if s.Fraction > 0 {
+		return fmt.Sprintf("%2.2f", s.Fraction)
+	}
+
 	if s.TimeValue > 0 {
 		return fmt.Sprintf("%v", time.Unix(s.TimeValue, 0))
 	}

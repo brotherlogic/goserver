@@ -151,7 +151,11 @@ func TestRegister(t *testing.T) {
 
 func TestCPUGet(t *testing.T) {
 	server := GoServer{}
-	log.Printf("HERE %v", server.getCPUUsage())
+	cpu, mem := server.getCPUUsage()
+
+	if cpu <= 0 || mem <= 0 {
+		t.Errorf("Bad pull from cpu or mem: %v and %v", cpu, mem)
+	}
 }
 
 func TestFailToDial(t *testing.T) {
