@@ -29,7 +29,7 @@ func buildState(s *pb.State) string {
 	}
 
 	if s.TimeDuration > 0 {
-		return fmt.Sprintf("%v", time.Duration(s.TimeDuration).Round(time.Second))
+		return fmt.Sprintf("%v", time.Duration(s.TimeDuration).Round(time.Millisecond))
 	}
 
 	return ""
