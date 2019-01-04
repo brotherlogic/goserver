@@ -51,7 +51,7 @@ func SendTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_Milest
 						defer cancel()
 						client := pbt.NewTracerServiceClient(conn)
 
-						m := &pbt.Milestone{Label: l, Timestamp: time.Now().UnixNano(), Origin: o, Type: ty}
+						m := &pbt.Milestone{Label: l, Timestamp: t.UnixNano(), Origin: o, Type: ty}
 						p := &pbt.ContextProperties{Id: id, Origin: o}
 						if ty == pbt.Milestone_START {
 							p.Label = l
