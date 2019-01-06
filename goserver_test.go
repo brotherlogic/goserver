@@ -158,6 +158,14 @@ func TestCPUGet(t *testing.T) {
 	}
 }
 
+func TestToggleSudo(t *testing.T) {
+	server := GoServer{}
+	server.RunSudo()
+	if !server.Sudo {
+		t.Errorf("Sudo not enabled")
+	}
+}
+
 func TestFailToDial(t *testing.T) {
 	server := GoServer{}
 	madeupport := server.registerServer("madeup", "madeup", false, failingDialler{}, passingBuilder{}, basicGetter{})
