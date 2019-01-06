@@ -51,6 +51,11 @@ func SendTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_Milest
 						defer cancel()
 						client := pbt.NewTracerServiceClient(conn)
 
+						// Adjust the time if necessary
+						if t.IsZero() {
+							t = time.Now()
+						}
+
 						m := &pbt.Milestone{Label: l, Timestamp: t.UnixNano(), Origin: o, Type: ty}
 						p := &pbt.ContextProperties{Id: id, Origin: o}
 						if ty == pbt.Milestone_START {
@@ -71,7 +76,7 @@ func SendTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_Milest
 // BuildContext builds a context object for use
 func BuildContext(label, origin string, t pb.ContextType) (context.Context, context.CancelFunc) {
 	con, can, orig, canorig := generateContext(origin, t)
-	err := SendTrace(con, label, time.Now(), pbt.Milestone_START, origin)
+	err := SendTrace(con, label, time.Unix(0, 0), pbt.Milestone_START, origin)
 	if err == nil {
 		return con, can
 	}
