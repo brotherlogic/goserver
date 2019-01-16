@@ -84,6 +84,7 @@ type GoServer struct {
 	moteCount        int
 	lastMoteTime     time.Duration
 	lastMoteFail     string
+	badPorts         int64
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
@@ -156,6 +157,9 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 			s.hearts++
 			r, err := c.RegisterService(ctx, &pb.RegisterRequest{Service: s.Registry}, grpc.FailFast(false))
 			if err == nil {
+				if s.Registry.Port > 0 && s.Registry.Port != r.GetService().Port {
+					s.badPorts++
+				}
 				s.Registry = r.GetService()
 			} else {
 				s.badHearts++

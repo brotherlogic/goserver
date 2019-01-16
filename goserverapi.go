@@ -161,6 +161,8 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 			states = append(states, &pbl.State{Key: "parent_error", Text: fmt.Sprintf("%v", err)})
 		}
 	}
+
+	states = append(states, &pbl.State{Key: "bad_ports", Value: s.badPorts})
 	return &pbl.ServerState{States: states}, nil
 }
 
