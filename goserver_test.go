@@ -39,10 +39,12 @@ func (dialler failingDialler) Dial(host string, opts ...grpc.DialOption) (*grpc.
 	return nil, errors.New("Built to fail")
 }
 
-type passingDiscoveryServiceClient struct{}
+type passingDiscoveryServiceClient struct {
+	upreregister int32
+}
 
 func (DiscoveryServiceClient passingDiscoveryServiceClient) RegisterService(ctx context.Context, in *pb.RegisterRequest, opts ...grpc.CallOption) (*pb.RegisterResponse, error) {
-	return &pb.RegisterResponse{Service: &pb.RegistryEntry{Port: 35, Identifier: in.GetService().Identifier}}, nil
+	return &pb.RegisterResponse{Service: &pb.RegistryEntry{Port: 35 + DiscoveryServiceClient.upreregister, Identifier: in.GetService().Identifier}}, nil
 }
 
 func (DiscoveryServiceClient passingDiscoveryServiceClient) Discover(ctx context.Context, in *pb.DiscoverRequest, opts ...grpc.CallOption) (*pb.DiscoverResponse, error) {
@@ -252,6 +254,15 @@ func TestBadRegister(t *testing.T) {
 	server.reregister(failingDialler{}, passingBuilder{})
 }
 
+func TestBadReregister(t *testing.T) {
+	server := GoServer{}
+	server.Registry = &pb.RegistryEntry{Port: 23}
+	server.reregister(passingDialler{}, passingBuilder{})
+
+	if server.badPorts != 1 {
+		t.Errorf("Port failed: %v", server.Registry)
+	}
+}
 func TestRegisterServer(t *testing.T) {
 	server := GoServer{}
 	madeupport := server.registerServer("madeup", "madeup", false, passingDialler{}, passingBuilder{}, basicGetter{})
