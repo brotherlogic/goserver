@@ -74,10 +74,11 @@ func (clientBuilder mainBuilder) NewDiscoveryServiceClient(conn *grpc.ClientConn
 }
 
 // RegisterServer registers this server
-func (s *GoServer) RegisterServer(servername string, external bool) bool {
+func (s *GoServer) RegisterServer(servername string, external bool) error {
 	s.Servername = servername
-	s.Port = s.getRegisteredServerPort(getLocalIP(), s.Servername, external)
-	return s.Port > 0
+	port, err := s.getRegisteredServerPort(getLocalIP(), s.Servername, external)
+	s.Port = port
+	return err
 }
 
 func (s *GoServer) close(conn *grpc.ClientConn) {
@@ -183,7 +184,7 @@ func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, e
 	return &pbl.Empty{}, err
 }
 
-func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool) int32 {
+func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool) (int32, error) {
 	return s.registerServer(IP, servername, external, grpcDialler{}, mainBuilder{}, osHostGetter{})
 }
 
