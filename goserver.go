@@ -283,10 +283,10 @@ func (s *GoServer) setupHeartbeats() {
 }
 
 // RegisterServer Registers a server with the system and gets the port number it should use
-func (s *GoServer) registerServer(IP string, servername string, external bool, dialler dialler, builder clientBuilder, getter hostGetter) int32 {
+func (s *GoServer) registerServer(IP string, servername string, external bool, dialler dialler, builder clientBuilder, getter hostGetter) (int32, error) {
 	conn, err := dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
 	if err != nil {
-		return -1
+		return -1, err
 	}
 
 	registry := builder.NewDiscoveryServiceClient(conn)
@@ -300,10 +300,10 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, d
 	r, err := registry.RegisterService(ctx, &pb.RegisterRequest{Service: &entry}, grpc.FailFast(false))
 	if err != nil {
 		s.close(conn)
-		return -1
+		return -1, err
 	}
 	s.Registry = r.GetService()
 	s.close(conn)
 
-	return r.GetService().Port
+	return r.GetService().Port, nil
 }

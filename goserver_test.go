@@ -170,7 +170,7 @@ func TestToggleSudo(t *testing.T) {
 
 func TestFailToDial(t *testing.T) {
 	server := GoServer{}
-	madeupport := server.registerServer("madeup", "madeup", false, failingDialler{}, passingBuilder{}, basicGetter{})
+	madeupport, _ := server.registerServer("madeup", "madeup", false, failingDialler{}, passingBuilder{}, basicGetter{})
 
 	if madeupport > 0 {
 		t.Errorf("Dial failure did not lead to bad port")
@@ -179,7 +179,7 @@ func TestFailToDial(t *testing.T) {
 
 func TestFailToRegister(t *testing.T) {
 	server := GoServer{}
-	madeupport := server.registerServer("madeup", "madeup", false, passingDialler{}, failingBuilder{}, basicGetter{})
+	madeupport, _ := server.registerServer("madeup", "madeup", false, passingDialler{}, failingBuilder{}, basicGetter{})
 
 	if madeupport > 0 {
 		t.Errorf("Dial failure did not lead to bad port")
@@ -265,7 +265,7 @@ func TestBadReregister(t *testing.T) {
 }
 func TestRegisterServer(t *testing.T) {
 	server := GoServer{}
-	madeupport := server.registerServer("madeup", "madeup", false, passingDialler{}, passingBuilder{}, basicGetter{})
+	madeupport, _ := server.registerServer("madeup", "madeup", false, passingDialler{}, passingBuilder{}, basicGetter{})
 
 	if madeupport != 35 {
 		t.Errorf("Port number is wrong: %v", madeupport)
@@ -280,7 +280,7 @@ func TestRegisterServer(t *testing.T) {
 
 func TestRegisterDemoteServer(t *testing.T) {
 	server := GoServer{SkipLog: true}
-	madeupport := server.registerServer("madeup", "madeup", false, passingDialler{}, passingBuilder{}, basicGetter{})
+	madeupport, _ := server.registerServer("madeup", "madeup", false, passingDialler{}, passingBuilder{}, basicGetter{})
 
 	if madeupport != 35 {
 		t.Errorf("Port number is wrong: %v", madeupport)
