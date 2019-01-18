@@ -165,7 +165,7 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 				s.badHearts++
 			}
 			e, ok := status.FromError(err)
-			if ok && (e.Code() != codes.DeadlineExceeded && e.Code() != codes.OK) {
+			if ok && (e.Code() != codes.DeadlineExceeded && e.Code() != codes.OK && e.Code() != codes.Unavailable) {
 				s.badHeartMessage = fmt.Sprintf("%v", err)
 				s.Registry.Master = false
 				s.failMaster++
