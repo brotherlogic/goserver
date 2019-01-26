@@ -85,6 +85,7 @@ type GoServer struct {
 	lastMoteTime     time.Duration
 	lastMoteFail     string
 	badPorts         int64
+	regTime          time.Duration
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
@@ -295,9 +296,11 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, d
 		hostname = "Server-" + IP
 	}
 	entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname, TimeToClean: 5000}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
+	t := time.Now()
 	r, err := registry.RegisterService(ctx, &pb.RegisterRequest{Service: &entry}, grpc.FailFast(false))
+	s.regTime = time.Now().Sub(t)
 	if err != nil {
 		s.close(conn)
 		return -1, err

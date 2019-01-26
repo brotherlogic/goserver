@@ -164,6 +164,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	}
 
 	states = append(states, &pbl.State{Key: "bad_ports", Value: s.badPorts})
+	states = append(states, &pbl.State{Key: "reg_time", TimeDuration: s.regTime.Nanoseconds()})
 	return &pbl.ServerState{States: states}, nil
 }
 
