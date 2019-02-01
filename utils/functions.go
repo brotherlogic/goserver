@@ -78,8 +78,10 @@ func BuildContext(label, origin string, t pb.ContextType) (context.Context, cont
 	con, can, orig, canorig := generateContext(origin, t)
 	err := SendTrace(con, label, time.Unix(0, 0), pbt.Milestone_START, origin)
 	if err == nil {
+		canorig()
 		return con, can
 	}
+	can()
 	return orig, canorig
 }
 
