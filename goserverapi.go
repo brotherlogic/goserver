@@ -33,6 +33,14 @@ func (s *GoServer) suicideWatch() {
 	for true && s.Killme {
 		time.Sleep(s.suicideTime)
 
+		// Commit suicide if our memory usage is high
+		_, mem := s.getCPUUsage()
+		if mem > 80000000 {
+			s.RaiseIssue(context.Background(), fmt.Sprintf("Memory Pressue (%v)", s.Registry.Name), fmt.Sprintf("Memory usage is too damn high: %v", mem), false)
+			time.Sleep(time.Second * 5)
+			os.Exit(1)
+		}
+
 		//commit suicide if we're detached from the parent and we're not sudoing
 		if s.Killme {
 			if s.Sudo {
