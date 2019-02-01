@@ -35,7 +35,7 @@ func (s *GoServer) suicideWatch() {
 
 		// Commit suicide if our memory usage is high
 		_, mem := s.getCPUUsage()
-		if mem > float64(s.memCap) {
+		if mem > float64(s.MemCap) {
 			s.RaiseIssue(context.Background(), fmt.Sprintf("Memory Pressue (%v)", s.Registry.Name), fmt.Sprintf("Memory usage is too damn high: %v", mem), false)
 			time.Sleep(time.Second * 5)
 			os.Exit(1)
@@ -156,7 +156,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "cpu", Fraction: cpu})
 	states = append(states, &pbl.State{Key: "mem", Fraction: mem})
 	s.cpuMutex.Unlock()
-	states = append(states, &pbl.State{Key: "mem_cap", Value: int64(s.memCap)})
+	states = append(states, &pbl.State{Key: "mem_cap", Value: int64(s.MemCap)})
 	states = append(states, &pbl.State{Key: "periods", Value: int64(len(s.config.Periods))})
 	states = append(states, &pbl.State{Key: "alerts_sent", Value: int64(s.AlertsFired)})
 	states = append(states, &pbl.State{Key: "alerts_error", Text: s.alertError})
