@@ -86,6 +86,7 @@ type GoServer struct {
 	lastMoteFail     string
 	badPorts         int64
 	regTime          time.Duration
+	memCap           int
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
@@ -121,6 +122,7 @@ func (s *GoServer) PrepServer() {
 	s.traceFails = 0
 	s.traceFailMessage = ""
 	s.moteCount = 0
+	s.memCap = 80000000
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
