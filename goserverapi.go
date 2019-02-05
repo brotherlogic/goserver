@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"strconv"
 	"time"
 
@@ -36,7 +37,9 @@ func (s *GoServer) suicideWatch() {
 		// Commit suicide if our memory usage is high
 		_, mem := s.getCPUUsage()
 		if mem > float64(s.MemCap) {
-			s.RaiseIssue(context.Background(), fmt.Sprintf("Memory Pressue (%v)", s.Registry.Name), fmt.Sprintf("Memory usage is too damn high: %v", mem), false)
+			cmd := exec.Command("curl", "http://127.0.0.1:8089/debug/profile/heap", ">", "/home/simon/heap.pprof")
+			err := cmd.Run()
+			s.RaiseIssue(context.Background(), fmt.Sprintf("Memory Pressue (%v)", s.Registry.Name), fmt.Sprintf("Memory usage is too damn high: %v (%v)", mem, err), false)
 			time.Sleep(time.Second * 5)
 			os.Exit(1)
 		}
