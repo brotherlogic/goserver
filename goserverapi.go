@@ -58,7 +58,7 @@ func (s *GoServer) suicideWatch() {
 		if mem > float64(s.MemCap) {
 			cmd := exec.Command("curl", fmt.Sprintf("http://127.0.0.1:%v/debug/profile/heap", s.Registry.Port+1), ">", fmt.Sprintf("/home/simon/heap-%v-%v.pprof", s.Registry.Name, time.Now().Unix()))
 			err := cmd.Run()
-			s.RaiseIssue(context.Background(), fmt.Sprintf("Memory Pressue (%v)", s.Registry.Name), fmt.Sprintf("Memory usage is too damn high on %v: %v (%v)", s.Registry.Identifier, mem, err), false)
+			s.RaiseIssue(context.Background(), fmt.Sprintf("Memory Pressue (%v)", s.Registry.Name), fmt.Sprintf("Memory usage is too damn high on %v:%v %v (%v)", s.Registry.Identifier, s.Registry.Port, mem, err), false)
 			time.Sleep(time.Second * 5)
 			os.Exit(1)
 		}
