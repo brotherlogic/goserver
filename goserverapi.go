@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
@@ -26,6 +27,9 @@ import (
 
 	ps "github.com/mitchellh/go-ps"
 
+	// This enables pprof
+	_ "net/http/pprof"
+
 	//Needed to pull in gzip encoding init
 	_ "google.golang.org/grpc/encoding/gzip"
 )
@@ -46,13 +50,13 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 }
 
 func (s *GoServer) suicideWatch() {
-	for true && s.Killme {
+	for true {
 		time.Sleep(s.suicideTime)
 
 		// Commit suicide if our memory usage is high
 		_, mem := s.getCPUUsage()
 		if mem > float64(s.MemCap) {
-			cmd := exec.Command("curl", "http://127.0.0.1:8089/debug/profile/heap", ">", "/home/simon/heap.pprof")
+			cmd := exec.Command("curl", fmt.Sprintf("http://127.0.0.1:%v/debug/profile/heap", s.Registry.Port+1), ">", fmt.Sprintf("/home/simon/heap-%v-%v.pprof", s.Registry.Name, time.Now().Unix()))
 			err := cmd.Run()
 			s.RaiseIssue(context.Background(), fmt.Sprintf("Memory Pressue (%v)", s.Registry.Name), fmt.Sprintf("Memory usage is too damn high: %v (%v)", mem, err), false)
 			time.Sleep(time.Second * 5)
@@ -292,6 +296,9 @@ func (s *GoServer) Serve() error {
 	s.setupHeartbeats()
 
 	go s.suicideWatch()
+
+	// Enable profiling
+	go http.ListenAndServe(fmt.Sprintf(":%v", s.Port+1), nil)
 
 	// Background all the serving funcs
 	for _, f := range s.servingFuncs {
