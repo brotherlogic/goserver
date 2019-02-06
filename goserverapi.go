@@ -30,6 +30,21 @@ import (
 	_ "google.golang.org/grpc/encoding/gzip"
 )
 
+func (s *GoServer) serverInterceptor(ctx context.Context,
+	req interface{},
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler) (interface{}, error) {
+
+	// Calls the handler
+	h, err := handler(ctx, req)
+
+	if s.Registry.Name == "recordmover" {
+		s.Log(fmt.Sprintf("Called %v", info.FullMethod))
+	}
+
+	return h, err
+}
+
 func (s *GoServer) suicideWatch() {
 	for true && s.Killme {
 		time.Sleep(s.suicideTime)
@@ -270,6 +285,7 @@ func (s *GoServer) Serve() error {
 		grpc.RPCDecompressor(grpc.NewGZIPDecompressor()),
 		grpc.MaxRecvMsgSize(1024*1024*1024),
 		grpc.MaxSendMsgSize(1024*1024*1024),
+		grpc.UnaryInterceptor(s.serverInterceptor),
 	)
 	s.Register.DoRegister(server)
 	pbl.RegisterGoserverServiceServer(server, s)
