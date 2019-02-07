@@ -36,7 +36,8 @@ import (
 
 type rpcTrace struct {
 	rpcName string
-	count   int
+	count   int64
+	timeIn  time.Duration
 }
 
 func (s *GoServer) serverInterceptor(ctx context.Context,
@@ -59,10 +60,12 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	}
 
 	// Calls the handler
+	t := time.Now()
 	h, err := handler(ctx, req)
 
 	if s.RPCTracing {
 		tracer.count++
+		tracer.timeIn += time.Now().Sub(t)
 	}
 
 	return h, err
@@ -217,7 +220,8 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "reg_time", TimeDuration: s.regTime.Nanoseconds()})
 
 	for _, trace := range s.traces {
-		states = append(states, &pbl.State{Key: "rpc_" + trace.rpcName + "_count", Value: int64(trace.count)})
+		states = append(states, &pbl.State{Key: "rpc_" + trace.rpcName + "_count", Value: trace.count})
+		states = append(states, &pbl.State{Key: "rpc_" + trace.rpcName + "_abvTime", TimeDuration: trace.timeIn.Nanoseconds() / trace.count})
 	}
 
 	return &pbl.ServerState{States: states}, nil
