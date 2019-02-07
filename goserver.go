@@ -78,7 +78,7 @@ type GoServer struct {
 	alertError       string
 	RunningFile      string
 	badHeartMessage  string
-	traces           int
+	traceCount       int
 	traceFails       int
 	traceFailMessage string
 	moteCount        int
@@ -87,6 +87,8 @@ type GoServer struct {
 	badPorts         int64
 	regTime          time.Duration
 	MemCap           int
+	traces           []*rpcTrace
+	RPCTracing       bool
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
@@ -118,11 +120,12 @@ func (s *GoServer) PrepServer() {
 	s.AlertsFired = 0
 	s.alertError = ""
 	s.badHeartMessage = ""
-	s.traces = 0
+	s.traceCount = 0
 	s.traceFails = 0
 	s.traceFailMessage = ""
 	s.moteCount = 0
 	s.MemCap = 80000000
+	s.traces = []*rpcTrace{}
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
