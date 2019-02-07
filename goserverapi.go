@@ -1,8 +1,10 @@
 package goserver
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -78,8 +80,18 @@ func (s *GoServer) suicideWatch() {
 		// Commit suicide if our memory usage is high
 		_, mem := s.getCPUUsage()
 		if mem > float64(s.MemCap) {
-			cmd := exec.Command("curl", fmt.Sprintf("http://127.0.0.1:%v/debug/profile/heap", s.Registry.Port+1), ">", fmt.Sprintf("/home/simon/heap-%v-%v.pprof", s.Registry.Name, time.Now().Unix()))
-			err := cmd.Run()
+			cmd := exec.Command("curl", fmt.Sprintf("http://127.0.0.1:%v/debug/profile/heap", s.Registry.Port+1))
+			filename := fmt.Sprintf("/home/simon/heap-%v-%v.pprof", s.Registry.Name, time.Now().Unix())
+			outfile, err := os.Create(filename)
+			defer outfile.Close()
+
+			stdoutPipe, _ := cmd.StdoutPipe()
+			writer := bufio.NewWriter(outfile)
+
+			err = cmd.Start()
+			go io.Copy(writer, stdoutPipe)
+			cmd.Wait()
+
 			s.RaiseIssue(context.Background(), fmt.Sprintf("Memory Pressue (%v)", s.Registry.Name), fmt.Sprintf("Memory usage is too damn high on %v:%v %v (%v)", s.Registry.Identifier, s.Registry.Port, mem, err), false)
 			time.Sleep(time.Second * 5)
 			os.Exit(1)
