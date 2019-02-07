@@ -221,7 +221,9 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 
 	for _, trace := range s.traces {
 		states = append(states, &pbl.State{Key: "rpc_" + trace.rpcName + "_count", Value: trace.count})
-		states = append(states, &pbl.State{Key: "rpc_" + trace.rpcName + "_abvTime", TimeDuration: trace.timeIn.Nanoseconds() / trace.count})
+		if trace.count > 0 {
+			states = append(states, &pbl.State{Key: "rpc_" + trace.rpcName + "_abvTime", TimeDuration: trace.timeIn.Nanoseconds() / trace.count})
+		}
 	}
 
 	return &pbl.ServerState{States: states}, nil
