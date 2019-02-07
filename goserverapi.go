@@ -34,16 +34,35 @@ import (
 	_ "google.golang.org/grpc/encoding/gzip"
 )
 
+type rpcTrace struct {
+	rpcName string
+	count   int
+}
+
 func (s *GoServer) serverInterceptor(ctx context.Context,
 	req interface{},
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (interface{}, error) {
 
+	var tracer *rpcTrace
+	if s.RPCTracing {
+		for _, trace := range s.traces {
+			if trace.rpcName == info.FullMethod {
+				tracer = trace
+			}
+		}
+
+		if tracer == nil {
+			tracer = &rpcTrace{rpcName: info.FullMethod, count: 0}
+			s.traces = append(s.traces, tracer)
+		}
+	}
+
 	// Calls the handler
 	h, err := handler(ctx, req)
 
-	if s.Registry.Name == "recordmover" {
-		s.Log(fmt.Sprintf("Called %v", info.FullMethod))
+	if s.RPCTracing {
+		tracer.count++
 	}
 
 	return h, err
@@ -196,6 +215,11 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 
 	states = append(states, &pbl.State{Key: "bad_ports", Value: s.badPorts})
 	states = append(states, &pbl.State{Key: "reg_time", TimeDuration: s.regTime.Nanoseconds()})
+
+	for _, trace := range s.traces {
+		states = append(states, &pbl.State{Key: "rpc_" + trace.rpcName + "_count", Value: int64(trace.count)})
+	}
+
 	return &pbl.ServerState{States: states}, nil
 }
 
@@ -371,7 +395,7 @@ func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job stri
 func (s *GoServer) LogTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType) context.Context {
 	go func() {
 		if !s.SkipLog {
-			s.traces++
+			s.traceCount++
 			err := utils.SendTrace(c, l, t, ty, s.Registry.Name)
 			if err != nil {
 				s.traceFails++
