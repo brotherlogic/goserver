@@ -236,9 +236,9 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "reg_time", TimeDuration: s.regTime.Nanoseconds()})
 
 	for _, trace := range s.traces {
-		states = append(states, &pbl.State{Key: "rpc_" + trace.rpcName + "_count", Value: trace.count})
+		states = append(states, &pbl.State{Key: "rpc_server" + trace.rpcName + "_count", Value: trace.count})
 		if trace.count > 0 {
-			states = append(states, &pbl.State{Key: "rpc_" + trace.rpcName + "_abvTime", TimeDuration: trace.timeIn.Nanoseconds() / trace.count})
+			states = append(states, &pbl.State{Key: "rpc_server" + trace.rpcName + "_abvTime", TimeDuration: trace.timeIn.Nanoseconds() / trace.count})
 		}
 
 		arrCopy := []time.Duration{}
@@ -254,9 +254,9 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 			return arrCopy[i] < arrCopy[j]
 		})
 		if ind > 0 {
-			states = append(states, &pbl.State{Key: "rpc_" + trace.rpcName + "_maxTime", TimeDuration: arrCopy[ind].Nanoseconds()})
-			states = append(states, &pbl.State{Key: "rpc_" + trace.rpcName + "_minTime", TimeDuration: arrCopy[0].Nanoseconds()})
-			states = append(states, &pbl.State{Key: "rpc_" + trace.rpcName + "_counts", Value: int64(len(arrCopy))})
+			states = append(states, &pbl.State{Key: "rpc_server" + trace.rpcName + "_maxTime", TimeDuration: arrCopy[ind].Nanoseconds()})
+			states = append(states, &pbl.State{Key: "rpc_server" + trace.rpcName + "_minTime", TimeDuration: arrCopy[0].Nanoseconds()})
+			states = append(states, &pbl.State{Key: "rpc_server" + trace.rpcName + "_counts", Value: int64(len(arrCopy))})
 		}
 	}
 
