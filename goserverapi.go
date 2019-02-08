@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"sort"
 	"strconv"
 	"time"
 
@@ -37,9 +38,11 @@ import (
 )
 
 type rpcTrace struct {
-	rpcName string
-	count   int64
-	timeIn  time.Duration
+	rpcName        string
+	count          int64
+	timeIn         time.Duration
+	latencyPointer int
+	latencies      []time.Duration
 }
 
 func (s *GoServer) serverInterceptor(ctx context.Context,
@@ -56,7 +59,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 		}
 
 		if tracer == nil {
-			tracer = &rpcTrace{rpcName: info.FullMethod, count: 0}
+			tracer = &rpcTrace{rpcName: info.FullMethod, count: 0, latencyPointer: 0, latencies: make([]time.Duration, 100)}
 			s.traces = append(s.traces, tracer)
 		}
 	}
@@ -68,6 +71,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	if s.RPCTracing {
 		tracer.count++
 		tracer.timeIn += time.Now().Sub(t)
+		tracer.latencies[tracer.latencyPointer%100] = time.Now().Sub(t)
 	}
 
 	return h, err
@@ -237,6 +241,20 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 		if trace.count > 0 {
 			states = append(states, &pbl.State{Key: "rpc_" + trace.rpcName + "_abvTime", TimeDuration: trace.timeIn.Nanoseconds() / trace.count})
 		}
+
+		arrCopy := make([]time.Duration, 100)
+		ind := 0
+		for i, v := range trace.latencies {
+			if v > 0 {
+				arrCopy = append(arrCopy, v)
+				ind = i
+			}
+		}
+
+		sort.SliceStable(arrCopy, func(i, j int) bool {
+			return arrCopy[i] < arrCopy[j]
+		})
+		states = append(states, &pbl.State{Key: "rpc_" + trace.rpcName + "_maxTime", TimeDuration: arrCopy[ind].Nanoseconds()})
 	}
 
 	return &pbl.ServerState{States: states}, nil
