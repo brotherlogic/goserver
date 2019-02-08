@@ -38,11 +38,10 @@ import (
 )
 
 type rpcTrace struct {
-	rpcName        string
-	count          int64
-	timeIn         time.Duration
-	latencyPointer int
-	latencies      []time.Duration
+	rpcName   string
+	count     int64
+	timeIn    time.Duration
+	latencies []time.Duration
 }
 
 func (s *GoServer) serverInterceptor(ctx context.Context,
@@ -59,7 +58,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 		}
 
 		if tracer == nil {
-			tracer = &rpcTrace{rpcName: info.FullMethod, count: 0, latencyPointer: 0, latencies: make([]time.Duration, 100)}
+			tracer = &rpcTrace{rpcName: info.FullMethod, count: 0, latencies: make([]time.Duration, 100)}
 			s.traces = append(s.traces, tracer)
 		}
 	}
@@ -69,9 +68,9 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	h, err := handler(ctx, req)
 
 	if s.RPCTracing {
+		tracer.latencies[tracer.count%100] = time.Now().Sub(t)
 		tracer.count++
 		tracer.timeIn += time.Now().Sub(t)
-		tracer.latencies[tracer.latencyPointer%100] = time.Now().Sub(t)
 	}
 
 	return h, err
@@ -255,6 +254,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 			return arrCopy[i] < arrCopy[j]
 		})
 		states = append(states, &pbl.State{Key: "rpc_" + trace.rpcName + "_maxTime", TimeDuration: arrCopy[ind].Nanoseconds()})
+		states = append(states, &pbl.State{Key: "rpc_" + trace.rpcName + "_minTime", TimeDuration: arrCopy[0].Nanoseconds()})
 	}
 
 	return &pbl.ServerState{States: states}, nil
