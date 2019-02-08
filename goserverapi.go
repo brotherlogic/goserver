@@ -85,8 +85,9 @@ func (s *GoServer) suicideWatch() {
 			outfile, err := os.Create(filename)
 			defer outfile.Close()
 
-			stdoutPipe, _ := cmd.StderrPipe()
+			stdoutPipe, _ := cmd.StdoutPipe()
 			writer := bufio.NewWriter(outfile)
+			defer writer.Flush()
 
 			err = cmd.Start()
 			go io.Copy(writer, stdoutPipe)
