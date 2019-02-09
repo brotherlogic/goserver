@@ -87,7 +87,7 @@ type GoServer struct {
 	badPorts         int64
 	regTime          time.Duration
 	MemCap           int
-	traces           []*rpcTrace
+	traces           []*rpcStats
 	RPCTracing       bool
 }
 
@@ -125,7 +125,7 @@ func (s *GoServer) PrepServer() {
 	s.traceFailMessage = ""
 	s.moteCount = 0
 	s.MemCap = 80000000
-	s.traces = []*rpcTrace{}
+	s.traces = []*rpcStats{}
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
