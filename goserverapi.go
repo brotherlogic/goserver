@@ -37,11 +37,60 @@ import (
 	_ "google.golang.org/grpc/encoding/gzip"
 )
 
-type rpcTrace struct {
+type rpcStats struct {
+	source    string
 	rpcName   string
 	count     int64
 	timeIn    time.Duration
 	latencies []time.Duration
+}
+
+func (s *GoServer) DialMaster(server string) (*grpc.ClientConn, error) {
+	ip, port, err := utils.Resolve(server)
+	if err != nil {
+		return nil, err
+	}
+
+	return grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure(), s.withClientUnaryInterceptor())
+}
+
+func (s *GoServer) withClientUnaryInterceptor() grpc.DialOption {
+	return grpc.WithUnaryInterceptor(s.clientInterceptor)
+}
+
+func (s *GoServer) clientInterceptor(ctx context.Context,
+	method string,
+	req interface{},
+	reply interface{},
+	cc *grpc.ClientConn,
+	invoker grpc.UnaryInvoker,
+	opts ...grpc.CallOption,
+) error {
+
+	var tracer *rpcStats
+	if s.RPCTracing {
+		for _, trace := range s.traces {
+			if trace.rpcName == method {
+				tracer = trace
+			}
+		}
+
+		if tracer == nil {
+			tracer = &rpcStats{rpcName: method, count: 0, latencies: make([]time.Duration, 100), source: "client"}
+			s.traces = append(s.traces, tracer)
+		}
+	}
+
+	// Calls the handler
+	t := time.Now()
+	err := invoker(ctx, method, req, reply, cc, opts...)
+	if s.RPCTracing {
+		tracer.latencies[tracer.count%100] = time.Now().Sub(t)
+		tracer.count++
+		tracer.timeIn += time.Now().Sub(t)
+	}
+
+	return err
 }
 
 func (s *GoServer) serverInterceptor(ctx context.Context,
@@ -49,7 +98,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (interface{}, error) {
 
-	var tracer *rpcTrace
+	var tracer *rpcStats
 	if s.RPCTracing {
 		for _, trace := range s.traces {
 			if trace.rpcName == info.FullMethod {
@@ -58,7 +107,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 		}
 
 		if tracer == nil {
-			tracer = &rpcTrace{rpcName: info.FullMethod, count: 0, latencies: make([]time.Duration, 100)}
+			tracer = &rpcStats{rpcName: info.FullMethod, count: 0, latencies: make([]time.Duration, 100), source: "server"}
 			s.traces = append(s.traces, tracer)
 		}
 	}
@@ -236,9 +285,9 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "reg_time", TimeDuration: s.regTime.Nanoseconds()})
 
 	for _, trace := range s.traces {
-		states = append(states, &pbl.State{Key: "rpc_server" + trace.rpcName + "_count", Value: trace.count})
+		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_count", Value: trace.count})
 		if trace.count > 0 {
-			states = append(states, &pbl.State{Key: "rpc_server" + trace.rpcName + "_abvTime", TimeDuration: trace.timeIn.Nanoseconds() / trace.count})
+			states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_abvTime", TimeDuration: trace.timeIn.Nanoseconds() / trace.count})
 		}
 
 		arrCopy := []time.Duration{}
@@ -254,9 +303,8 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 			return arrCopy[i] < arrCopy[j]
 		})
 		if ind > 0 {
-			states = append(states, &pbl.State{Key: "rpc_server" + trace.rpcName + "_maxTime", TimeDuration: arrCopy[ind].Nanoseconds()})
-			states = append(states, &pbl.State{Key: "rpc_server" + trace.rpcName + "_minTime", TimeDuration: arrCopy[0].Nanoseconds()})
-			states = append(states, &pbl.State{Key: "rpc_server" + trace.rpcName + "_counts", Value: int64(len(arrCopy))})
+			states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_maxTime", TimeDuration: arrCopy[ind].Nanoseconds()})
+			states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_minTime", TimeDuration: arrCopy[0].Nanoseconds()})
 		}
 	}
 
