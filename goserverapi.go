@@ -41,6 +41,7 @@ type rpcStats struct {
 	source    string
 	rpcName   string
 	count     int64
+	errors    int64
 	timeIn    time.Duration
 	latencies []time.Duration
 }
@@ -89,6 +90,9 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 		tracer.latencies[tracer.count%100] = time.Now().Sub(t)
 		tracer.count++
 		tracer.timeIn += time.Now().Sub(t)
+		if err != nil {
+			tracer.errors++
+		}
 	}
 
 	return err
@@ -121,6 +125,10 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 		tracer.latencies[tracer.count%100] = time.Now().Sub(t)
 		tracer.count++
 		tracer.timeIn += time.Now().Sub(t)
+
+		if err != nil {
+			tracer.errors++
+		}
 	}
 
 	return h, err
@@ -287,6 +295,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 
 	for _, trace := range s.traces {
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_count", Value: trace.count})
+		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_errors", Value: trace.errors})
 		if trace.count > 0 {
 			states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_abvTime", TimeDuration: trace.timeIn.Nanoseconds() / trace.count})
 		}
