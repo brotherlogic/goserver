@@ -135,6 +135,9 @@ func (s *GoServer) PrepServer() {
 	ex, _ := os.Executable()
 	data, _ := ioutil.ReadFile(ex)
 	s.RunningFile = fmt.Sprintf("%x", md5.Sum(data))
+
+	// Enable RPC tracing
+	s.RPCTracing = true
 }
 
 func (s *GoServer) teardown() {
