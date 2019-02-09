@@ -45,6 +45,7 @@ type rpcStats struct {
 	latencies []time.Duration
 }
 
+// DialMaster dials the master server
 func (s *GoServer) DialMaster(server string) (*grpc.ClientConn, error) {
 	ip, port, err := utils.Resolve(server)
 	if err != nil {
