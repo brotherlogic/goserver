@@ -254,6 +254,19 @@ func TestBadRegister(t *testing.T) {
 	server.reregister(failingDialler{}, passingBuilder{})
 }
 
+func TestLameDuckRegister(t *testing.T) {
+	server := GoServer{}
+	server.PrepServer()
+
+	server.Registry = &pb.RegistryEntry{Port: 23, Master: true}
+	server.LameDuck = true
+	server.reregister(passingDialler{}, passingBuilder{})
+
+	if server.Registry.Master {
+		t.Errorf("Server is still master")
+	}
+}
+
 func TestBadReregister(t *testing.T) {
 	server := GoServer{}
 	server.Registry = &pb.RegistryEntry{Port: 23}

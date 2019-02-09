@@ -89,6 +89,7 @@ type GoServer struct {
 	MemCap           int
 	traces           []*rpcStats
 	RPCTracing       bool
+	LameDuck         bool
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
@@ -155,6 +156,11 @@ func (s *GoServer) heartbeat() {
 
 func (s *GoServer) reregister(d dialler, b clientBuilder) {
 	if s.Registry != nil {
+		//We can't be master if we're lame ducking
+		if s.LameDuck {
+			s.Registry.Master = false
+		}
+
 		conn, err := d.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
 		if err == nil {
 			c := b.NewDiscoveryServiceClient(conn)
