@@ -85,7 +85,14 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 
 	// Calls the handler
 	t := time.Now()
-	err := invoker(ctx, method, req, reply, cc, opts...)
+
+	var err error
+	if s.LameDuck {
+		err = fmt.Errorf("Server is lameducking")
+	} else {
+		err = invoker(ctx, method, req, reply, cc, opts...)
+	}
+
 	if s.RPCTracing {
 		tracer.latencies[tracer.count%100] = time.Now().Sub(t)
 		tracer.count++
@@ -325,7 +332,9 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, error) {
 	st := time.Now()
 	s.moteCount++
-	err := s.Register.Mote(ctx, in.Master)
+
+	// We can't mote to master if we're lame ducking
+	err := s.Register.Mote(ctx, in.Master && !s.LameDuck)
 
 	// If we were able to mote then we should inform discovery
 	if err == nil {
