@@ -65,7 +65,7 @@ func main() {
 		}
 	} else if len(*name) > 0 {
 		ip, port, err := utils.Resolve(*name)
-		fmt.Printf("DIAL: %v\n", ip)
+		fmt.Printf("DIAL: %v - %v\n", ip, port)
 		conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
 		if err != nil {
 			log.Fatalf("Unable to reach server %v:%v -> %v", ip, port, err)
