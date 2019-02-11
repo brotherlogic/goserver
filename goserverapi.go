@@ -328,6 +328,11 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	return &pbl.ServerState{States: states}, nil
 }
 
+// Shutdown brings the server down
+func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.ShutdownResponse, error) {
+	return &pbl.ShutdownResponse{}, nil
+}
+
 // Mote promotes or demotes a server into production
 func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, error) {
 	st := time.Now()

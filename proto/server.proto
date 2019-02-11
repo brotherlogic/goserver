@@ -47,8 +47,13 @@ message ServerConfig {
   repeated TaskPeriod periods = 1;
 }
 
+message ShutdownRequest{}
+
+message ShutdownResponse{}
+
 service goserverService {
   rpc IsAlive (Alive) returns (Alive) {};
   rpc Mote(MoteRequest) returns (Empty) {};
   rpc State(Empty) returns (ServerState) {};
+  rpc Shutdown(ShutdownRequest) returns (ShutdownResponse) {};
 }
