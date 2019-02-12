@@ -32,6 +32,7 @@ type Registerable interface {
 	ReportHealth() bool
 	Mote(ctx context.Context, master bool) error
 	GetState() []*pbg.State
+	Shutdown(ctx context.Context) error
 }
 
 type baseRegistrable struct{ Registerable }

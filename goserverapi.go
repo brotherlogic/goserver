@@ -330,6 +330,16 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 
 // Shutdown brings the server down
 func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.ShutdownResponse, error) {
+	s.LameDuck = true
+	go func() {
+		time.Sleep(time.Minute)
+		err := s.Register.Shutdown(ctx)
+		if err != nil {
+			s.Log(fmt.Sprintf("Shutdown cancelled: %v", err))
+		} else {
+			os.Exit(1)
+		}
+	}()
 	return &pbl.ShutdownResponse{}, nil
 }
 

@@ -350,6 +350,10 @@ func (s TestServer) Mote(ctx context.Context, master bool) error {
 	return nil
 }
 
+func (s TestServer) Shutdown(ctx context.Context) error {
+	return nil
+}
+
 func (s TestServer) GetState() []*pbg.State {
 	return []*pbg.State{}
 }
