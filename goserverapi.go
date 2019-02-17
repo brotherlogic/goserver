@@ -46,6 +46,26 @@ type rpcStats struct {
 	latencies []time.Duration
 }
 
+func (s *GoServer) doDial(entry *pb.RegistryEntry) (*grpc.ClientConn, error) {
+	return grpc.Dial(entry.Ip+":"+strconv.Itoa(int(entry.Port)), grpc.WithInsecure(), s.withClientUnaryInterceptor())
+}
+
+// DialServer dials a given server
+func (s *GoServer) DialServer(server, host string) (*grpc.ClientConn, error) {
+	entries, err := utils.ResolveAll(server)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		if entry.Identifier == host {
+			return s.doDial(entry)
+		}
+	}
+
+	return nil, fmt.Errorf("Unable to locate server called %v", server)
+}
+
 // DialMaster dials the master server
 func (s *GoServer) DialMaster(server string) (*grpc.ClientConn, error) {
 	ip, port, err := utils.Resolve(server)
@@ -53,7 +73,7 @@ func (s *GoServer) DialMaster(server string) (*grpc.ClientConn, error) {
 		return nil, err
 	}
 
-	return grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure(), s.withClientUnaryInterceptor())
+	return s.doDial(&pb.RegistryEntry{Ip: ip, Port: port})
 }
 
 func (s *GoServer) withClientUnaryInterceptor() grpc.DialOption {
