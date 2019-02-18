@@ -3,6 +3,7 @@ package goserver
 import (
 	"errors"
 	"log"
+	"sync"
 	"testing"
 	"time"
 
@@ -153,6 +154,7 @@ func TestRegister(t *testing.T) {
 
 func TestCPUGet(t *testing.T) {
 	server := GoServer{}
+	server.cpuMutex = &sync.Mutex{}
 	cpu, mem := server.getCPUUsage()
 
 	if cpu <= 0 || mem <= 0 {

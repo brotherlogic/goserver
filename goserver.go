@@ -94,6 +94,8 @@ type GoServer struct {
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
+	s.cpuMutex.Lock()
+	defer s.cpuMutex.Unlock()
 	v, _ := pid.GetStat(os.Getpid())
 	return v.CPU, v.Memory
 }
