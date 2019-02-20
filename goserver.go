@@ -91,6 +91,7 @@ type GoServer struct {
 	traces           []*rpcStats
 	RPCTracing       bool
 	LameDuck         bool
+	SendTrace        bool
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
