@@ -18,7 +18,6 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	pb "github.com/brotherlogic/discovery/proto"
@@ -26,7 +25,6 @@ import (
 	pbl "github.com/brotherlogic/goserver/proto"
 	pbks "github.com/brotherlogic/keystore/proto"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
-	pbt "github.com/brotherlogic/tracer/proto"
 
 	ps "github.com/mitchellh/go-ps"
 
@@ -407,10 +405,9 @@ func (s *GoServer) run(t sFunc) {
 		for true {
 			if s.Registry.GetMaster() || t.nm {
 				name := fmt.Sprintf("%v-Repeat-(%v)-%v", s.Registry.Name, t.key, t.d)
-				ctx, cancel := utils.BuildContext(name, s.Registry.Name, pbl.ContextType_LONG)
+				ctx, cancel := utils.BuildContext(name, s.Registry.Name)
 				defer cancel()
 				t.fun(ctx)
-				utils.SendTrace(ctx, name, time.Now(), pbt.Milestone_END, s.Registry.Name)
 			}
 			time.Sleep(t.d)
 		}
@@ -539,22 +536,4 @@ func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job stri
 			s.alertError = "Skip log enabled"
 		}
 	}()
-}
-
-//LogTrace logs out a trace
-func (s *GoServer) LogTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType) context.Context {
-	go func() {
-		if !s.SkipLog {
-			s.traceCount++
-			err := utils.SendTrace(c, l, t, ty, s.Registry.Name)
-			if err != nil {
-				s.traceFails++
-				s.traceFailMessage = fmt.Sprintf("%v", err)
-			}
-		}
-	}()
-
-	// Add in the context
-	md, _ := metadata.FromIncomingContext(c)
-	return metadata.NewOutgoingContext(c, md)
 }
