@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/brotherlogic/goserver/utils"
@@ -18,6 +19,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	pb "github.com/brotherlogic/discovery/proto"
@@ -25,6 +27,7 @@ import (
 	pbl "github.com/brotherlogic/goserver/proto"
 	pbks "github.com/brotherlogic/keystore/proto"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
+	pbt "github.com/brotherlogic/tracer/proto"
 
 	ps "github.com/mitchellh/go-ps"
 
@@ -43,6 +46,52 @@ type rpcStats struct {
 	lastError string
 	timeIn    time.Duration
 	latencies []time.Duration
+}
+
+func (s *GoServer) trace(c context.Context, name string) context.Context {
+	go func() {
+		s.sendTrace(c, name, time.Now())
+	}()
+
+	// Add in the context
+	md, _ := metadata.FromIncomingContext(c)
+	return metadata.NewOutgoingContext(c, md)
+}
+
+func (s *GoServer) sendTrace(c context.Context, name string, t time.Time) error {
+	md, found := metadata.FromIncomingContext(c)
+	if found {
+		if _, ok := md["trace-id"]; ok {
+			idt := md["trace-id"][0]
+
+			if idt != "" {
+				id := idt
+				if strings.HasPrefix(id, "test") {
+					return errors.New("Test trace")
+				}
+
+				conn, err := s.DialMaster("tracer")
+				defer conn.Close()
+				if err == nil {
+					ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+					defer cancel()
+					client := pbt.NewTracerServiceClient(conn)
+
+					// Adjust the time if necessary
+					if t.IsZero() {
+						t = time.Now()
+					}
+
+					m := &pbt.Event{Id: id, Call: name, Timestamp: t.UnixNano()}
+					_, err := client.Record(ctx, &pbt.RecordRequest{Event: m})
+					return err
+				}
+			}
+
+			return fmt.Errorf("Unable to trace - maybe because of %v", md)
+		}
+	}
+	return fmt.Errorf("Unable to trace - context: %v", c)
 }
 
 // DoDial dials a server
@@ -147,6 +196,9 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 
 	// Calls the handler
 	t := time.Now()
+	if s.SendTrace {
+		ctx = s.trace(ctx, info.FullMethod)
+	}
 	h, err := handler(ctx, req)
 
 	if s.RPCTracing {
