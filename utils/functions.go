@@ -1,12 +1,9 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
 	"reflect"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -15,107 +12,21 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	pbdi "github.com/brotherlogic/discovery/proto"
-	pb "github.com/brotherlogic/goserver/proto"
-	pbt "github.com/brotherlogic/tracer/proto"
 )
 
-//LogTrace logs out a trace
-func Trace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType, name string) context.Context {
-	go func() {
-		SendTrace(c, l, t, ty, name)
-	}()
-
-	// Add in the context
-	md, _ := metadata.FromIncomingContext(c)
-	return metadata.NewOutgoingContext(c, md)
-}
-
-//SendTrace sends out a tracer trace
-func SendTrace(c context.Context, l string, t time.Time, ty pbt.Milestone_MilestoneType, o string) error {
-	md, found := metadata.FromIncomingContext(c)
-	if found {
-		if _, ok := md["trace-id"]; ok {
-			idt := md["trace-id"][0]
-
-			if idt != "" {
-				id := idt
-				if strings.HasPrefix(id, "test") {
-					return errors.New("Test trace")
-				}
-				traceIP, tracePort, _ := Resolve("tracer")
-				if tracePort > 0 {
-					conn, err := grpc.Dial(traceIP+":"+strconv.Itoa(int(tracePort)), grpc.WithInsecure())
-					defer conn.Close()
-					if err == nil {
-						ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-						defer cancel()
-						client := pbt.NewTracerServiceClient(conn)
-
-						// Adjust the time if necessary
-						if t.IsZero() {
-							t = time.Now()
-						}
-
-						m := &pbt.Milestone{Label: l, Timestamp: t.UnixNano(), Origin: o, Type: ty}
-						p := &pbt.ContextProperties{Id: id, Origin: o}
-						if ty == pbt.Milestone_START {
-							p.Label = l
-						}
-						_, err := client.Record(ctx, &pbt.RecordRequest{Milestone: m, Properties: p})
-						return err
-					}
-				}
-			}
-
-			return fmt.Errorf("Unable to trace - maybe because of %v", md)
-		}
-	}
-	return fmt.Errorf("Unable to trace - context: %v", c)
-}
-
 // BuildContext builds a context object for use
-func BuildContext(label, origin string, t pb.ContextType) (context.Context, context.CancelFunc) {
-	con, can, orig, canorig := generateContext(origin, t)
-	err := SendTrace(con, label, time.Unix(0, 0), pbt.Milestone_START, origin)
-	if err == nil {
-		canorig()
-		return con, can
-	}
-	can()
-	return orig, canorig
+func BuildContext(label, origin string) (context.Context, context.CancelFunc) {
+	con, can := generateContext(origin)
+	return con, can
 }
 
-func generateContext(origin string, t pb.ContextType) (context.Context, context.CancelFunc, context.Context, context.CancelFunc) {
+func generateContext(origin string) (context.Context, context.CancelFunc) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	tracev := fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), r.Int63())
 	baseContext := context.WithValue(context.Background(), "trace-id", tracev)
 	mContext := metadata.NewOutgoingContext(baseContext, metadata.Pairs("trace-id", tracev))
 	mContext = metadata.NewIncomingContext(mContext, metadata.Pairs("trace-id", tracev))
-	if t == pb.ContextType_REGULAR {
-		a, b := context.WithTimeout(mContext, time.Second)
-		c, d := context.WithTimeout(context.Background(), time.Second)
-		return a, b, c, d
-	}
-
-	if t == pb.ContextType_MEDIUM {
-		a, b := context.WithTimeout(mContext, time.Minute*5)
-		c, d := context.WithTimeout(context.Background(), time.Minute*5)
-		return a, b, c, d
-	}
-
-	if t == pb.ContextType_LONG {
-		a, b := context.WithTimeout(mContext, time.Hour)
-		c, d := context.WithTimeout(context.Background(), time.Hour)
-		return a, b, c, d
-	}
-
-	if t == pb.ContextType_NO_TRACE {
-		a, b := context.WithTimeout(context.Background(), time.Minute*5)
-		c, d := context.WithTimeout(context.Background(), time.Minute*5)
-		return a, b, c, d
-	}
-
-	return mContext, func() {}, context.Background(), func() {}
+	return context.WithTimeout(mContext, time.Hour)
 }
 
 //FuzzyMatch experimental fuzzy match
