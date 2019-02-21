@@ -72,8 +72,8 @@ func (s *GoServer) sendTrace(c context.Context, name string, t time.Time) error 
 				}
 
 				conn, err := s.DialMaster("tracer")
-				defer conn.Close()
 				if err == nil {
+					defer conn.Close()
 					ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 					defer cancel()
 					client := pbt.NewTracerServiceClient(conn)
