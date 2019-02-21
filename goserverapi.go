@@ -240,7 +240,7 @@ func (s *GoServer) suicideWatch() {
 			go io.Copy(writer, stdoutPipe)
 			cmd.Wait()
 
-			s.RaiseIssue(context.Background(), fmt.Sprintf("Memory Pressue (%v)", s.Registry.Name), fmt.Sprintf("Memory usage is too damn high on %v:%v %v (%v)", s.Registry.Identifier, s.Registry.Port, mem, err), false)
+			s.RaiseIssue(context.Background(), fmt.Sprintf("Memory Pressure"), fmt.Sprintf("Memory usage is too damn high for %v on %v:%v %v (%v)", s.Registry.Name, s.Registry.Identifier, s.Registry.Port, mem, err), false)
 			time.Sleep(time.Second * 5)
 			os.Exit(1)
 		}
