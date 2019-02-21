@@ -45,6 +45,7 @@ type rpcStats struct {
 	errors    int64
 	lastError string
 	timeIn    time.Duration
+	memChange int64
 	latencies []time.Duration
 }
 
@@ -199,12 +200,15 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	if s.SendTrace {
 		ctx = s.trace(ctx, info.FullMethod)
 	}
+	_, memBefore := s.getCPUUsage()
 	h, err := handler(ctx, req)
+	_, memAfter := s.getCPUUsage()
 
 	if s.RPCTracing {
 		tracer.latencies[tracer.count%100] = time.Now().Sub(t)
 		tracer.count++
 		tracer.timeIn += time.Now().Sub(t)
+		tracer.memChange += int64(memAfter - memBefore)
 
 		if err != nil {
 			tracer.errors++
@@ -381,8 +385,9 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_count", Value: trace.count})
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_errors", Value: trace.errors})
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_lasterror", Text: trace.lastError})
+		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_mem", Value: trace.memChange})
 		if trace.count > 0 {
-			states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_abvTime", TimeDuration: trace.timeIn.Nanoseconds() / trace.count})
+			states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_avgTime", TimeDuration: trace.timeIn.Nanoseconds() / trace.count})
 		}
 
 		arrCopy := []time.Duration{}
