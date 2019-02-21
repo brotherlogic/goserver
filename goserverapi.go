@@ -141,7 +141,7 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	var tracer *rpcStats
 	if s.RPCTracing {
 		for _, trace := range s.traces {
-			if trace.rpcName == method {
+			if trace.rpcName == method && trace.source == "client" {
 				tracer = trace
 			}
 		}
@@ -183,7 +183,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	var tracer *rpcStats
 	if s.RPCTracing {
 		for _, trace := range s.traces {
-			if trace.rpcName == info.FullMethod {
+			if trace.rpcName == info.FullMethod && trace.source == "server" {
 				tracer = trace
 			}
 		}
