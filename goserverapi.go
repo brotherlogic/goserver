@@ -85,6 +85,7 @@ func (s *GoServer) sendTrace(c context.Context, name string, t time.Time) error 
 					}
 
 					m := &pbt.Event{Id: id, Call: name, Timestamp: t.UnixNano()}
+					panic(fmt.Errorf("Trying to trace: %v", s.Registry))
 					_, err := client.Record(ctx, &pbt.RecordRequest{Event: m})
 					return err
 				}
