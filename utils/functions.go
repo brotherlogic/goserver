@@ -21,6 +21,7 @@ func BuildContext(label, origin string) (context.Context, context.CancelFunc) {
 }
 
 func generateContext(origin string) (context.Context, context.CancelFunc) {
+	panic(fmt.Errorf("Trying to build a context"))
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	tracev := fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), r.Int63())
 	baseContext := context.WithValue(context.Background(), "trace-id", tracev)
