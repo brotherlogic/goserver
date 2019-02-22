@@ -46,6 +46,7 @@ type rpcStats struct {
 	lastError string
 	timeIn    time.Duration
 	memChange int64
+	origin    string
 	latencies []time.Duration
 }
 
@@ -198,6 +199,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	// Calls the handler
 	t := time.Now()
 	if s.SendTrace {
+		s.Log(fmt.Sprintf("Sending Trace"))
 		ctx = s.trace(ctx, info.FullMethod)
 	}
 	_, memBefore := s.getCPUUsage()
