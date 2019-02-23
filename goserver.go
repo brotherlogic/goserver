@@ -142,6 +142,7 @@ func (s *GoServer) PrepServer() {
 
 	// Enable RPC tracing
 	s.RPCTracing = true
+	s.SendTrace = true
 }
 
 func (s *GoServer) teardown() {
