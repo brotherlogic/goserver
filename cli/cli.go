@@ -56,8 +56,6 @@ func main() {
 		defer conn.Close()
 
 		check := pb.NewGoserverServiceClient(conn)
-		health, err := check.IsAlive(context.Background(), &pb.Alive{})
-		fmt.Printf("%v and %v\n", health, err)
 
 		state, _ := check.State(context.Background(), &pb.Empty{})
 		for _, s := range state.GetStates() {
@@ -73,8 +71,6 @@ func main() {
 		defer conn.Close()
 
 		check := pb.NewGoserverServiceClient(conn)
-		health, err := check.IsAlive(context.Background(), &pb.Alive{})
-		fmt.Printf("%v and %v\n", health, err)
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
@@ -100,8 +96,6 @@ func main() {
 				defer conn.Close()
 
 				check := pb.NewGoserverServiceClient(conn)
-				health, err := check.IsAlive(context.Background(), &pb.Alive{})
-				fmt.Printf("%v and %v\n", health, err)
 
 				state, _ := check.State(context.Background(), &pb.Empty{})
 				for _, st := range state.GetStates() {
