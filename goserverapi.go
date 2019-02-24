@@ -199,7 +199,6 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	// Calls the handler
 	t := time.Now()
 	if s.SendTrace {
-		s.Log(fmt.Sprintf("Sending Trace"))
 		ctx = s.trace(ctx, info.FullMethod)
 	}
 	_, memBefore := s.getCPUUsage()
