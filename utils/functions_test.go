@@ -9,6 +9,13 @@ import (
 	pbrc "github.com/brotherlogic/recordcollection/proto"
 )
 
+func BenchmarkBuildContext(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, cancel := generateContext("blah")
+		cancel()
+	}
+}
+
 func TestEmbed(t *testing.T) {
 	a := &pb.EmbeddedTest{Blah: &pb.Alive{Name: "blah"}}
 	if !FuzzyMatch(a, a) {
@@ -58,7 +65,7 @@ func TestFuzzyMatch(t *testing.T) {
 }
 
 func TestGetContext(t *testing.T) {
-	ctx, cancel := BuildContext("TestGetContext", "testing", pb.ContextType_REGULAR)
+	ctx, cancel := BuildContext("TestGetContext", "testing")
 	defer cancel()
 
 	v := ctx.Value("trace-id").(string)
