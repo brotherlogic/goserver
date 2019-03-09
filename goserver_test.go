@@ -42,10 +42,11 @@ func (dialler failingDialler) Dial(host string, opts ...grpc.DialOption) (*grpc.
 
 type passingDiscoveryServiceClient struct {
 	upreregister int32
+	returnMaster bool
 }
 
 func (DiscoveryServiceClient passingDiscoveryServiceClient) RegisterService(ctx context.Context, in *pb.RegisterRequest, opts ...grpc.CallOption) (*pb.RegisterResponse, error) {
-	return &pb.RegisterResponse{Service: &pb.RegistryEntry{Port: 35 + DiscoveryServiceClient.upreregister, Identifier: in.GetService().Identifier}}, nil
+	return &pb.RegisterResponse{Service: &pb.RegistryEntry{Port: 35 + DiscoveryServiceClient.upreregister, Identifier: in.GetService().Identifier, Master: DiscoveryServiceClient.returnMaster}}, nil
 }
 
 func (DiscoveryServiceClient passingDiscoveryServiceClient) Discover(ctx context.Context, in *pb.DiscoverRequest, opts ...grpc.CallOption) (*pb.DiscoverResponse, error) {
@@ -101,10 +102,12 @@ func (DiscoveryServiceClient failingDiscoveryServiceClient) State(ctx context.Co
 	return &pb.StateResponse{}, nil
 }
 
-type passingBuilder struct{}
+type passingBuilder struct {
+	returnMaster bool
+}
 
 func (clientBuilder passingBuilder) NewDiscoveryServiceClient(conn *grpc.ClientConn) pb.DiscoveryServiceClient {
-	return passingDiscoveryServiceClient{}
+	return passingDiscoveryServiceClient{returnMaster: clientBuilder.returnMaster}
 }
 
 type passingFailBuilder struct{}
@@ -254,6 +257,18 @@ func TestGetIPFail(t *testing.T) {
 func TestBadRegister(t *testing.T) {
 	server := GoServer{}
 	server.reregister(failingDialler{}, passingBuilder{})
+}
+
+func TestMasterRegister(t *testing.T) {
+	server := GoServer{}
+	server.PrepServer()
+	server.Registry = &pb.RegistryEntry{Port: 23, Master: false}
+
+	server.reregister(passingDialler{}, passingBuilder{returnMaster: true})
+
+	if server.Registry.Master {
+		t.Errorf("Master has been recorded")
+	}
 }
 
 func TestLameDuckRegister(t *testing.T) {
