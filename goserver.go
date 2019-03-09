@@ -92,6 +92,7 @@ type GoServer struct {
 	RPCTracing       bool
 	LameDuck         bool
 	SendTrace        bool
+	masterRequests   int64
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
@@ -179,6 +180,10 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 			if err == nil {
 				if s.Registry.Port > 0 && s.Registry.Port != r.GetService().Port {
 					s.badPorts++
+				}
+				if !s.Registry.Master && r.GetService().Master {
+					s.masterRequests++
+					r.GetService().Master = false
 				}
 				s.Registry = r.GetService()
 			} else {
