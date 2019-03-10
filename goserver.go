@@ -66,7 +66,7 @@ type GoServer struct {
 	suicideTime      time.Duration
 	Killme           bool
 	hearts           int
-	badHearts        int
+	BadHearts        int
 	failMaster       int
 	milestoneMutex   *sync.Mutex
 	failLogs         int
@@ -117,7 +117,7 @@ func (s *GoServer) PrepServer() {
 	s.suicideTime = time.Minute
 	s.Killme = true
 	s.hearts = 0
-	s.badHearts = 0
+	s.BadHearts = 0
 	s.failMaster = 0
 	s.failLogs = 0
 	s.failMessage = ""
@@ -187,7 +187,7 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 				}
 				s.Registry = r.GetService()
 			} else {
-				s.badHearts++
+				s.BadHearts++
 			}
 			e, ok := status.FromError(err)
 			if ok && (e.Code() != codes.DeadlineExceeded && e.Code() != codes.OK && e.Code() != codes.Unavailable) {
