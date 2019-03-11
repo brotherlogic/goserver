@@ -1,12 +1,12 @@
 package utils
 
 import (
-	"log"
 	"testing"
 
 	pbgd "github.com/brotherlogic/godiscogs"
 	pb "github.com/brotherlogic/goserver/proto"
 	pbrc "github.com/brotherlogic/recordcollection/proto"
+	"google.golang.org/grpc/metadata"
 )
 
 func BenchmarkBuildContext(b *testing.B) {
@@ -68,10 +68,8 @@ func TestGetContext(t *testing.T) {
 	ctx, cancel := BuildContext("TestGetContext", "testing")
 	defer cancel()
 
-	v := ctx.Value("trace-id").(string)
-	if len(v) == 0 {
-		t.Errorf("No value set: %v", v)
+	md, found := metadata.FromOutgoingContext(ctx)
+	if !found {
+		t.Fatalf("No context: %v", md)
 	}
-
-	log.Printf("Value = %v", v)
 }
