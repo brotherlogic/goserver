@@ -23,8 +23,7 @@ func BuildContext(label, origin string) (context.Context, context.CancelFunc) {
 func generateContext(origin string) (context.Context, context.CancelFunc) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	tracev := fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), r.Int63())
-	baseContext := context.WithValue(context.Background(), "trace-id", tracev)
-	mContext := metadata.AppendToOutgoingContext(baseContext, "trace-id", tracev)
+	mContext := metadata.AppendToOutgoingContext(context.Background(), "trace-id", tracev)
 	return context.WithTimeout(mContext, time.Hour)
 }
 
