@@ -60,6 +60,12 @@ func (s *GoServer) trace(c context.Context, name string) context.Context {
 	return metadata.NewOutgoingContext(c, md)
 }
 
+func (s *GoServer) mark(c context.Context) {
+	go func() {
+		s.sendMark(c)
+	}()
+}
+
 func (s *GoServer) sendTrace(c context.Context, name string, t time.Time) error {
 	md, found := metadata.FromIncomingContext(c)
 	if found {
@@ -86,6 +92,36 @@ func (s *GoServer) sendTrace(c context.Context, name string, t time.Time) error 
 
 					m := &pbt.Event{Id: id, Call: name, Timestamp: t.UnixNano()}
 					_, err := client.Record(ctx, &pbt.RecordRequest{Event: m})
+					return err
+				}
+			}
+
+			return fmt.Errorf("Unable to trace - maybe because of %v", md)
+		}
+	}
+	return fmt.Errorf("Unable to trace - context: %v", c)
+}
+
+func (s *GoServer) sendMark(c context.Context) error {
+	md, found := metadata.FromIncomingContext(c)
+	if found {
+		if _, ok := md["trace-id"]; ok {
+			idt := md["trace-id"][0]
+
+			if idt != "" {
+				id := idt
+				if strings.HasPrefix(id, "test") {
+					return errors.New("Test trace")
+				}
+
+				conn, err := s.DialMaster("tracer")
+				if err == nil {
+					defer conn.Close()
+					ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+					defer cancel()
+					client := pbt.NewTracerServiceClient(conn)
+
+					_, err := client.Mark(ctx, &pbt.MarkRequest{LongRunningId: id})
 					return err
 				}
 			}
@@ -218,7 +254,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 
 		// Raise an issue on a long call
 		if time.Now().Sub(t) > time.Minute {
-			s.RaiseIssue(ctx, "Long Server Call", fmt.Sprintf("%v is reportintg a long call (%v): %v", tracer.rpcName, time.Now().Sub(t), req), false)
+			s.mark(ctx)
 		}
 	}
 
