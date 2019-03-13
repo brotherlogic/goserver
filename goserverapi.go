@@ -507,7 +507,9 @@ func (s *GoServer) run(t sFunc) {
 				name := fmt.Sprintf("%v-Repeat-(%v)-%v", s.Registry.Name, t.key, t.d)
 				ctx, cancel := utils.BuildContext(name, s.Registry.Name)
 				defer cancel()
+				s.runTimesMutex.Lock()
 				s.runTimes[t.key] = time.Now()
+				s.runTimesMutex.Unlock()
 				t.fun(ctx)
 			}
 			time.Sleep(t.d)

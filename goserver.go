@@ -94,6 +94,7 @@ type GoServer struct {
 	SendTrace        bool
 	masterRequests   int64
 	runTimes         map[string]time.Time
+	runTimesMutex    *sync.Mutex
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
@@ -147,6 +148,7 @@ func (s *GoServer) PrepServer() {
 	s.SendTrace = true
 
 	s.runTimes = make(map[string]time.Time)
+	s.runTimesMutex = &sync.Mutex{}
 }
 
 func (s *GoServer) teardown() {
