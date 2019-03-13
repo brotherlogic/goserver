@@ -145,6 +145,8 @@ func (s *GoServer) PrepServer() {
 	// Enable RPC tracing
 	s.RPCTracing = true
 	s.SendTrace = true
+
+	s.runTimes = make(map[string]time.Time)
 }
 
 func (s *GoServer) teardown() {
