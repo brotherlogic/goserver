@@ -254,6 +254,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 
 		// Raise an issue on a long call
 		if time.Now().Sub(t) > time.Minute {
+			s.marks++
 			s.mark(ctx)
 		}
 	}
@@ -387,6 +388,7 @@ func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, erro
 //State gets the state of the server.
 func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, error) {
 	states := s.Register.GetState()
+	states = append(states, &pbl.State{Key: "marks_sent", Value: s.marks})
 	states = append(states, &pbl.State{Key: "running_binary", Text: s.RunningFile})
 	states = append(states, &pbl.State{Key: "hearts", Value: int64(s.hearts)})
 	states = append(states, &pbl.State{Key: "bad_hearts", Value: int64(s.BadHearts)})
