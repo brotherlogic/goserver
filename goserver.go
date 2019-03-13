@@ -93,6 +93,7 @@ type GoServer struct {
 	LameDuck         bool
 	SendTrace        bool
 	masterRequests   int64
+	runTimes         map[string]time.Time
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
