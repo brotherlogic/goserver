@@ -407,6 +407,11 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "mote_count", Value: int64(s.moteCount)})
 	states = append(states, &pbl.State{Key: "last_mote_time", Text: fmt.Sprintf("%v", s.lastMoteTime)})
 	states = append(states, &pbl.State{Key: "last_mote_fail", Text: s.lastMoteFail})
+
+	for key, ti := range s.runTimes {
+		states = append(states, &pbl.State{Key: "last_run_" + key, TimeValue: ti.Unix()})
+	}
+
 	if s.Sudo {
 		p, err := ps.FindProcess(os.Getppid())
 		if err == nil {
@@ -502,6 +507,7 @@ func (s *GoServer) run(t sFunc) {
 				name := fmt.Sprintf("%v-Repeat-(%v)-%v", s.Registry.Name, t.key, t.d)
 				ctx, cancel := utils.BuildContext(name, s.Registry.Name)
 				defer cancel()
+				s.runTimes[t.key] = time.Now()
 				t.fun(ctx)
 			}
 			time.Sleep(t.d)
