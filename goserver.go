@@ -95,6 +95,7 @@ type GoServer struct {
 	masterRequests   int64
 	runTimes         map[string]time.Time
 	runTimesMutex    *sync.Mutex
+	marks            int64
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
