@@ -197,7 +197,9 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	if s.LameDuck {
 		err = fmt.Errorf("Server is lameducking")
 	} else {
+		s.outgoing++
 		err = invoker(ctx, method, req, reply, cc, opts...)
+		s.outgoing--
 	}
 
 	if s.RPCTracing {
@@ -238,7 +240,9 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 		ctx = s.trace(ctx, info.FullMethod)
 	}
 	_, memBefore := s.getCPUUsage()
+	s.incoming++
 	h, err := handler(ctx, req)
+	s.incoming--
 	_, memAfter := s.getCPUUsage()
 
 	if s.RPCTracing {
@@ -388,6 +392,8 @@ func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, erro
 //State gets the state of the server.
 func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, error) {
 	states := s.Register.GetState()
+	states = append(states, &pbl.State{Key: "incoming_counts", Value: s.incoming})
+	states = append(states, &pbl.State{Key: "outgoing_counts", Value: s.outgoing})
 	states = append(states, &pbl.State{Key: "marks_sent", Value: s.marks})
 	states = append(states, &pbl.State{Key: "running_binary", Text: s.RunningFile})
 	states = append(states, &pbl.State{Key: "hearts", Value: int64(s.hearts)})
