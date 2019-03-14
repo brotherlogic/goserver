@@ -260,7 +260,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 		}
 
 		// Raise an issue on a long call
-		if time.Now().Sub(t) > time.Minute {
+		if time.Now().Sub(t) > time.Second*5 {
 			s.marks++
 			s.mark(ctx)
 		}
