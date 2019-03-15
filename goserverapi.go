@@ -22,8 +22,10 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
+	pbbs "github.com/brotherlogic/buildserver/proto"
 	pb "github.com/brotherlogic/discovery/proto"
 	pbgh "github.com/brotherlogic/githubcard/proto"
+	pbgbs "github.com/brotherlogic/gobuildslave/proto"
 	pbl "github.com/brotherlogic/goserver/proto"
 	pbks "github.com/brotherlogic/keystore/proto"
 	pbd "github.com/brotherlogic/monitor/monitorproto"
@@ -647,4 +649,18 @@ func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job stri
 			s.alertError = "Skip log enabled"
 		}
 	}()
+}
+
+//SendCrash reports a crash
+func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.Crash_CrashType) {
+	conn, err := s.DialMaster("buildserver")
+	if err == nil {
+		defer conn.Close()
+		client := pbbs.NewBuildServiceClient(conn)
+		client.ReportCrash(ctx, &pbbs.CrashRequest{Job: &pbgbs.Job{
+			Name: s.Registry.Name,
+		}, Crash: &pbbs.Crash{
+			ErrorMessage: crashText,
+			CrashType:    ctype}})
+	}
 }
