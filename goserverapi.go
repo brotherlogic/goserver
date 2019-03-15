@@ -643,10 +643,14 @@ func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.C
 	if err == nil {
 		defer conn.Close()
 		client := pbbs.NewBuildServiceClient(conn)
-		client.ReportCrash(ctx, &pbbs.CrashRequest{Job: &pbgbs.Job{
-			Name: s.Registry.Name,
-		}, Crash: &pbbs.Crash{
-			ErrorMessage: crashText,
-			CrashType:    ctype}})
+		client.ReportCrash(ctx, &pbbs.CrashRequest{
+			Version: s.RunningFile,
+			Origin:  s.Registry.Name,
+			Job: &pbgbs.Job{
+				Name: s.Registry.Name,
+			},
+			Crash: &pbbs.Crash{
+				ErrorMessage: crashText,
+				CrashType:    ctype}})
 	}
 }
