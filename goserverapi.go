@@ -62,10 +62,7 @@ func (s *GoServer) trace(c context.Context, name string) context.Context {
 
 func (s *GoServer) mark(c context.Context) {
 	go func() {
-		err := s.sendMark(c)
-		if err != nil {
-			panic(err)
-		}
+		s.sendMark(c)
 	}()
 }
 
