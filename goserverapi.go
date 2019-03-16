@@ -238,17 +238,14 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	if s.SendTrace {
 		ctx = s.trace(ctx, info.FullMethod)
 	}
-	_, memBefore := s.getCPUUsage()
 	s.incoming++
 	h, err := handler(ctx, req)
 	s.incoming--
-	_, memAfter := s.getCPUUsage()
 
 	if s.RPCTracing {
 		tracer.latencies[tracer.count%100] = time.Now().Sub(t)
 		tracer.count++
 		tracer.timeIn += time.Now().Sub(t)
-		tracer.memChange += int64(memAfter - memBefore)
 
 		if err != nil {
 			tracer.errors++
