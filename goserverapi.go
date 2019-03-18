@@ -397,9 +397,11 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "last_mote_time", Text: fmt.Sprintf("%v", s.lastMoteTime)})
 	states = append(states, &pbl.State{Key: "last_mote_fail", Text: s.lastMoteFail})
 
+	s.runTimesMutex.Lock()
 	for key, ti := range s.runTimes {
 		states = append(states, &pbl.State{Key: "last_run_" + key, TimeValue: ti.Unix()})
 	}
+	s.runTimesMutex.Unlock()
 
 	if s.Sudo {
 		p, err := ps.FindProcess(os.Getppid())
