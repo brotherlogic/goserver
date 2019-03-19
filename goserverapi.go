@@ -98,6 +98,7 @@ func (s *GoServer) sendTrace(c context.Context, name string, t time.Time) error 
 			return fmt.Errorf("Unable to trace - maybe because of %v", md)
 		}
 	}
+	s.incoming++
 	return fmt.Errorf("Unable to trace - context: %v", c)
 }
 
@@ -238,9 +239,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	if s.SendTrace {
 		ctx = s.trace(ctx, info.FullMethod)
 	}
-	s.incoming++
 	h, err := handler(ctx, req)
-	s.incoming--
 
 	if s.RPCTracing {
 		tracer.latencies[tracer.count%100] = time.Now().Sub(t)
