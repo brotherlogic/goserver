@@ -89,7 +89,7 @@ func (s *GoServer) sendTrace(c context.Context, name string, t time.Time) error 
 						t = time.Now()
 					}
 
-					m := &pbt.Event{Id: id, Call: name, Timestamp: t.UnixNano()}
+					m := &pbt.Event{Server: s.Registry.Identifier, Binary: s.Registry.Name, Id: id, Call: name, Timestamp: t.UnixNano()}
 					_, err := client.Record(ctx, &pbt.RecordRequest{Event: m})
 					return err
 				}
