@@ -50,54 +50,56 @@ const (
 
 // GoServer The basic server construct
 type GoServer struct {
-	Servername       string
-	Port             int32
-	Registry         *pb.RegistryEntry
-	dialler          dialler
-	monitorBuilder   monitorBuilder
-	clientBuilder    clientBuilder
-	heartbeatChan    chan int
-	heartbeatCount   int
-	heartbeatTime    time.Duration
-	Register         Registerable
-	SkipLog          bool
-	servingFuncs     []sFunc
-	KSclient         keystoreclient.Keystoreclient
-	suicideTime      time.Duration
-	Killme           bool
-	hearts           int
-	BadHearts        int
-	failMaster       int
-	milestoneMutex   *sync.Mutex
-	failLogs         int
-	failMessage      string
-	startup          time.Time
-	config           *pbg.ServerConfig
-	cpuMutex         *sync.Mutex
-	AlertsFired      int
-	Sudo             bool
-	alertError       string
-	RunningFile      string
-	badHeartMessage  string
-	traceCount       int
-	traceFails       int
-	traceFailMessage string
-	moteCount        int
-	lastMoteTime     time.Duration
-	lastMoteFail     string
-	badPorts         int64
-	regTime          time.Duration
-	MemCap           int
-	traces           []*rpcStats
-	RPCTracing       bool
-	LameDuck         bool
-	SendTrace        bool
-	masterRequests   int64
-	runTimes         map[string]time.Time
-	runTimesMutex    *sync.Mutex
-	marks            int64
-	incoming         int64
-	outgoing         int64
+	Servername              string
+	Port                    int32
+	Registry                *pb.RegistryEntry
+	dialler                 dialler
+	monitorBuilder          monitorBuilder
+	clientBuilder           clientBuilder
+	heartbeatChan           chan int
+	heartbeatCount          int
+	heartbeatTime           time.Duration
+	Register                Registerable
+	SkipLog                 bool
+	servingFuncs            []sFunc
+	KSclient                keystoreclient.Keystoreclient
+	suicideTime             time.Duration
+	Killme                  bool
+	hearts                  int
+	BadHearts               int
+	failMaster              int
+	milestoneMutex          *sync.Mutex
+	failLogs                int
+	failMessage             string
+	startup                 time.Time
+	config                  *pbg.ServerConfig
+	cpuMutex                *sync.Mutex
+	AlertsFired             int
+	Sudo                    bool
+	alertError              string
+	RunningFile             string
+	badHeartMessage         string
+	traceCount              int
+	traceFails              int
+	traceFailMessage        string
+	moteCount               int
+	lastMoteTime            time.Duration
+	lastMoteFail            string
+	badPorts                int64
+	regTime                 time.Duration
+	MemCap                  int
+	traces                  []*rpcStats
+	RPCTracing              bool
+	LameDuck                bool
+	SendTrace               bool
+	masterRequests          int64
+	masterRequestFails      int64
+	masterRequestFailReason string
+	runTimes                map[string]time.Time
+	runTimesMutex           *sync.Mutex
+	marks                   int64
+	incoming                int64
+	outgoing                int64
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
@@ -184,13 +186,19 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 			ctx, cancel := context.WithTimeout(context.Background(), registerFreq)
 			defer cancel()
 			s.hearts++
-			r, err := c.RegisterService(ctx, &pb.RegisterRequest{Service: s.Registry}, grpc.FailFast(false))
+			r, err := c.RegisterService(ctx, &pb.RegisterRequest{Service: s.Registry})
 			if err == nil {
 				if s.Registry.Port > 0 && s.Registry.Port != r.GetService().Port {
 					s.badPorts++
 				}
 				if !s.Registry.Master && r.GetService().Master {
-					s.masterRequests++
+					err := s.Register.Mote(ctx, true)
+					if err == nil {
+						s.masterRequests++
+					} else {
+						s.masterRequestFails++
+						s.masterRequestFailReason = fmt.Sprintf("%v", err)
+					}
 					r.GetService().Master = false
 				}
 				s.Registry = r.GetService()

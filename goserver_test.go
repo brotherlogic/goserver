@@ -2,6 +2,7 @@ package goserver
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"sync"
 	"testing"
@@ -260,7 +261,19 @@ func TestBadRegister(t *testing.T) {
 }
 
 func TestMasterRegister(t *testing.T) {
-	server := GoServer{}
+	server := InitTestServer()
+	server.PrepServer()
+	server.Registry = &pb.RegistryEntry{Port: 23, Master: false}
+
+	server.reregister(passingDialler{}, passingBuilder{returnMaster: true})
+
+	if server.Registry.Master {
+		t.Errorf("Master has been recorded")
+	}
+}
+
+func TestMasterRegisterFailMote(t *testing.T) {
+	server := InitTestServerWithOptions(true)
 	server.PrepServer()
 	server.Registry = &pb.RegistryEntry{Port: 23, Master: false}
 
@@ -353,6 +366,7 @@ func TestGetIP(t *testing.T) {
 
 type TestServer struct {
 	*GoServer
+	failMote bool
 }
 
 func (s TestServer) DoRegister(server *grpc.Server) {
@@ -364,6 +378,9 @@ func (s TestServer) ReportHealth() bool {
 }
 
 func (s TestServer) Mote(ctx context.Context, master bool) error {
+	if s.failMote {
+		return fmt.Errorf("Built to fail")
+	}
 	return nil
 }
 
@@ -376,7 +393,20 @@ func (s TestServer) GetState() []*pbg.State {
 }
 
 func InitTestServer() TestServer {
-	s := TestServer{&GoServer{}}
+	s := TestServer{&GoServer{}, false}
+	s.Register = s
+	s.PrepServer()
+	s.monitorBuilder = passingMonitorBuilder{}
+	s.dialler = passingDialler{}
+	s.heartbeatTime = time.Millisecond
+	s.clientBuilder = passingBuilder{}
+	s.Registry = &pb.RegistryEntry{Name: "testserver"}
+	log.Printf("Set heartbeat time")
+	return s
+}
+
+func InitTestServerWithOptions(failMote bool) TestServer {
+	s := TestServer{&GoServer{}, failMote}
 	s.Register = s
 	s.PrepServer()
 	s.monitorBuilder = passingMonitorBuilder{}
