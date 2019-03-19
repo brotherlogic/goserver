@@ -385,6 +385,8 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "bad_hearts", Value: int64(s.BadHearts)})
 	states = append(states, &pbl.State{Key: "bad_heart_message", Text: s.badHeartMessage})
 	states = append(states, &pbl.State{Key: "master_requests", Value: int64(s.masterRequests)})
+	states = append(states, &pbl.State{Key: "master_requests_fails", Value: int64(s.masterRequestFails)})
+	states = append(states, &pbl.State{Key: "master_requests_fail_reason", Text: s.masterRequestFailReason})
 	states = append(states, &pbl.State{Key: "fail_master", Value: int64(s.failMaster)})
 	states = append(states, &pbl.State{Key: "fail_log", Value: int64(s.failLogs)})
 	states = append(states, &pbl.State{Key: "fail_message", Text: s.failMessage})
