@@ -3,9 +3,11 @@ package goserver
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
+	"runtime/pprof"
 	"sort"
 	"strconv"
 	"strings"
@@ -271,6 +273,14 @@ func (s *GoServer) suicideWatch() {
 			ctx, cancel := utils.BuildContext("goserver-crash", s.Registry.Name)
 			defer cancel()
 			s.SendCrash(ctx, "Memory is Too high", pbbs.Crash_MEMORY)
+			memProfile, err := os.Create("/home/simon/" + s.Registry.Name + "-heap.prof")
+			if err != nil {
+				log.Fatal(err)
+			}
+			if err = pprof.WriteHeapProfile(memProfile); err != nil {
+				log.Fatal(err)
+			}
+			memProfile.Close()
 			time.Sleep(time.Second * 5)
 			os.Exit(1)
 		}
