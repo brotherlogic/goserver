@@ -137,7 +137,7 @@ func (s *GoServer) PrepServer() {
 	s.traceFails = 0
 	s.traceFailMessage = ""
 	s.moteCount = 0
-	s.MemCap = 100000000
+	s.MemCap = 200000000
 	s.traces = []*rpcStats{}
 
 	//Turn off grpc logging
