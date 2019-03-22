@@ -42,12 +42,13 @@ func (dialler failingDialler) Dial(host string, opts ...grpc.DialOption) (*grpc.
 }
 
 type passingDiscoveryServiceClient struct {
-	upreregister int32
-	returnMaster bool
+	upreregister     int32
+	returnWeakMaster bool
+	returnMaster     bool
 }
 
 func (DiscoveryServiceClient passingDiscoveryServiceClient) RegisterService(ctx context.Context, in *pb.RegisterRequest, opts ...grpc.CallOption) (*pb.RegisterResponse, error) {
-	return &pb.RegisterResponse{Service: &pb.RegistryEntry{Port: 35 + DiscoveryServiceClient.upreregister, Identifier: in.GetService().Identifier, Master: DiscoveryServiceClient.returnMaster}}, nil
+	return &pb.RegisterResponse{Service: &pb.RegistryEntry{Port: 35 + DiscoveryServiceClient.upreregister, Identifier: in.GetService().Identifier, WeakMaster: DiscoveryServiceClient.returnWeakMaster, Master: DiscoveryServiceClient.returnMaster}}, nil
 }
 
 func (DiscoveryServiceClient passingDiscoveryServiceClient) Discover(ctx context.Context, in *pb.DiscoverRequest, opts ...grpc.CallOption) (*pb.DiscoverResponse, error) {
@@ -104,11 +105,12 @@ func (DiscoveryServiceClient failingDiscoveryServiceClient) State(ctx context.Co
 }
 
 type passingBuilder struct {
-	returnMaster bool
+	returnMaster     bool
+	returnWeakMaster bool
 }
 
 func (clientBuilder passingBuilder) NewDiscoveryServiceClient(conn *grpc.ClientConn) pb.DiscoveryServiceClient {
-	return passingDiscoveryServiceClient{returnMaster: clientBuilder.returnMaster}
+	return passingDiscoveryServiceClient{returnMaster: clientBuilder.returnMaster, returnWeakMaster: clientBuilder.returnWeakMaster}
 }
 
 type passingFailBuilder struct{}
@@ -260,30 +262,6 @@ func TestBadRegister(t *testing.T) {
 	server.reregister(failingDialler{}, passingBuilder{})
 }
 
-func TestMasterRegister(t *testing.T) {
-	server := InitTestServer()
-	server.PrepServer()
-	server.Registry = &pb.RegistryEntry{Port: 23, Master: false}
-
-	server.reregister(passingDialler{}, passingBuilder{returnMaster: true})
-
-	if server.Registry.Master {
-		t.Errorf("Master has been recorded")
-	}
-}
-
-func TestMasterRegisterFailMote(t *testing.T) {
-	server := InitTestServerWithOptions(true)
-	server.PrepServer()
-	server.Registry = &pb.RegistryEntry{Port: 23, Master: false}
-
-	server.reregister(passingDialler{}, passingBuilder{returnMaster: true})
-
-	if server.Registry.Master {
-		t.Errorf("Master has been recorded")
-	}
-}
-
 func TestLameDuckRegister(t *testing.T) {
 	server := GoServer{}
 	server.PrepServer()
@@ -427,4 +405,28 @@ func TestHeartbeat(t *testing.T) {
 	time.Sleep(20 * time.Millisecond)
 	log.Printf("Tearing Down")
 	server.teardown()
+}
+
+func TestMasterRegister(t *testing.T) {
+	server := InitTestServer()
+	server.PrepServer()
+	server.Registry = &pb.RegistryEntry{Port: 23, Master: false}
+
+	server.reregister(passingDialler{}, passingBuilder{returnWeakMaster: true})
+
+	if server.Registry.Master {
+		t.Errorf("Master has been recorded")
+	}
+}
+
+func TestMasterRegisterFailMote(t *testing.T) {
+	server := InitTestServerWithOptions(true)
+	server.PrepServer()
+	server.Registry = &pb.RegistryEntry{Port: 23, Master: false}
+
+	server.reregister(passingDialler{}, passingBuilder{returnWeakMaster: true})
+
+	if server.Registry.Master {
+		t.Errorf("Master has been recorded")
+	}
 }

@@ -101,8 +101,11 @@ func main() {
 				for _, st := range state.GetStates() {
 					state := buildState(st)
 					if len(state) > 0 {
-
-						fmt.Printf("%v (%v): %v -> %v\n", s.Identifier, s.Name, st.GetKey(), state)
+						prechar := ""
+						if s.Master {
+							prechar = "*"
+						}
+						fmt.Printf("%v%v (%v): %v -> %v\n", prechar, s.Identifier, s.Name, st.GetKey(), state)
 					}
 
 				}
