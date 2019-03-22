@@ -191,7 +191,7 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 				if s.Registry.Port > 0 && s.Registry.Port != r.GetService().Port {
 					s.badPorts++
 				}
-				if !s.Registry.Master && r.GetService().Master {
+				if !s.Registry.Master && r.GetService().WeakMaster && !r.GetService().Master {
 					err := s.Register.Mote(ctx, true)
 					if err == nil {
 						s.masterRequests++
