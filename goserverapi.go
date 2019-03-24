@@ -328,8 +328,13 @@ func (clientBuilder mainBuilder) NewDiscoveryServiceClient(conn *grpc.ClientConn
 // RegisterServer registers this server
 func (s *GoServer) RegisterServer(servername string, external bool) error {
 	s.Servername = servername
-	port, err := s.getRegisteredServerPort(getLocalIP(), s.Servername, external)
-	s.Port = port
+	err := fmt.Errorf("First fail")
+	port := int32(0)
+	for err != nil {
+		s.registerAttempts++
+		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external)
+		s.Port = port
+	}
 	return err
 }
 
@@ -386,6 +391,7 @@ func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, erro
 //State gets the state of the server.
 func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, error) {
 	states := s.Register.GetState()
+	states = append(states, &pbl.State{Key: "register_attempts", Value: s.registerAttempts})
 	states = append(states, &pbl.State{Key: "incoming_counts", Value: s.incoming})
 	states = append(states, &pbl.State{Key: "outgoing_counts", Value: s.outgoing})
 	states = append(states, &pbl.State{Key: "marks_sent", Value: s.marks})

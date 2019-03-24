@@ -100,6 +100,7 @@ type GoServer struct {
 	marks                   int64
 	incoming                int64
 	outgoing                int64
+	registerAttempts        int64
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
