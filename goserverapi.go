@@ -281,6 +281,14 @@ func (s *GoServer) suicideWatch() {
 				log.Fatal(err)
 			}
 			memProfile.Close()
+			cpuProfile, err := os.Create("/home/simon/" + s.Registry.Name + "-cpu.prof")
+			if err != nil {
+				log.Fatal(err)
+			}
+			if err := pprof.StartCPUProfile(cpuProfile); err != nil {
+				log.Fatal("could not start CPU profile: ", err)
+			}
+			defer pprof.StopCPUProfile()
 			time.Sleep(time.Second * 5)
 			os.Exit(1)
 		}
