@@ -148,8 +148,9 @@ func (monitorBuilder passingMonitorBuilder) NewMonitorServiceClient(conn *grpc.C
 	return passingMonitorServiceClient{failLog: monitorBuilder.failLog}
 }
 
-func run(ctx context.Context) {
+func run(ctx context.Context) error {
 	log.Printf("Run")
+	return nil
 }
 
 func TestRegister(t *testing.T) {
