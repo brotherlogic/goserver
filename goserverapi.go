@@ -353,12 +353,12 @@ func (s *GoServer) close(conn *grpc.ClientConn) {
 }
 
 // RegisterServingTask registers tasks to run when serving
-func (s *GoServer) RegisterServingTask(task func(ctx context.Context), key string) {
+func (s *GoServer) RegisterServingTask(task func(ctx context.Context) error, key string) {
 	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: 0, key: key})
 }
 
 // RegisterRepeatingTask registers a repeating task with a given frequency
-func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context), key string, freq time.Duration) {
+func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context) error, key string, freq time.Duration) {
 	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, key: key})
 	found := false
 	for _, c := range s.config.Periods {
@@ -373,7 +373,7 @@ func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context), key str
 }
 
 // RegisterRepeatingTaskNonMaster registers a repeating task with a given frequency
-func (s *GoServer) RegisterRepeatingTaskNonMaster(task func(ctx context.Context), key string, freq time.Duration) {
+func (s *GoServer) RegisterRepeatingTaskNonMaster(task func(ctx context.Context) error, key string, freq time.Duration) {
 	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, nm: true, key: key})
 	found := false
 	for _, c := range s.config.Periods {
@@ -526,7 +526,32 @@ func (s *GoServer) run(t sFunc) {
 				s.runTimesMutex.Lock()
 				s.runTimes[t.key] = time.Now()
 				s.runTimesMutex.Unlock()
-				t.fun(ctx)
+
+				var tracer *rpcStats
+				if s.RPCTracing {
+					for _, trace := range s.traces {
+						if trace.rpcName == t.key && trace.source == "repeat" {
+							tracer = trace
+						}
+					}
+
+					if tracer == nil {
+						tracer = &rpcStats{rpcName: t.key, count: 0, latencies: make([]time.Duration, 100), source: "repeat"}
+						s.traces = append(s.traces, tracer)
+					}
+				}
+
+				ti := time.Now()
+				err := t.fun(ctx)
+				if s.RPCTracing {
+					tracer.latencies[tracer.count%100] = time.Now().Sub(ti)
+					tracer.count++
+					tracer.timeIn += time.Now().Sub(ti)
+					if err != nil {
+						tracer.errors++
+						tracer.lastError = fmt.Sprintf("%v", err)
+					}
+				}
 			}
 			time.Sleep(t.d)
 		}
