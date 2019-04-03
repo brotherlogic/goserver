@@ -530,13 +530,13 @@ func (s *GoServer) run(t sFunc) {
 				var tracer *rpcStats
 				if s.RPCTracing {
 					for _, trace := range s.traces {
-						if trace.rpcName == t.key && trace.source == "repeat" {
+						if trace.rpcName == "/"+t.key && trace.source == "repeat" {
 							tracer = trace
 						}
 					}
 
 					if tracer == nil {
-						tracer = &rpcStats{rpcName: t.key, count: 0, latencies: make([]time.Duration, 100), source: "repeat"}
+						tracer = &rpcStats{rpcName: "/" + t.key, count: 0, latencies: make([]time.Duration, 100), source: "repeat"}
 						s.traces = append(s.traces, tracer)
 					}
 				}
