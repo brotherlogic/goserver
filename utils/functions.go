@@ -16,15 +16,21 @@ import (
 
 // BuildContext builds a context object for use
 func BuildContext(label, origin string) (context.Context, context.CancelFunc) {
-	con, can := generateContext(origin)
+	con, can := generateContext(origin, time.Hour)
 	return con, can
 }
 
-func generateContext(origin string) (context.Context, context.CancelFunc) {
+// ManualContext builds a context object for use
+func ManualContext(label, origin string, t time.Duration) (context.Context, context.CancelFunc) {
+	con, can := generateContext(origin, t)
+	return con, can
+}
+
+func generateContext(origin string, t time.Duration) (context.Context, context.CancelFunc) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	tracev := fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), r.Int63())
 	mContext := metadata.AppendToOutgoingContext(context.Background(), "trace-id", tracev)
-	return context.WithTimeout(mContext, time.Hour)
+	return context.WithTimeout(mContext, t)
 }
 
 //FuzzyMatch experimental fuzzy match
