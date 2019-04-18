@@ -27,7 +27,7 @@ import (
 	pbgbs "github.com/brotherlogic/gobuildslave/proto"
 	pbl "github.com/brotherlogic/goserver/proto"
 	pbks "github.com/brotherlogic/keystore/proto"
-	pbd "github.com/brotherlogic/monitor/monitorproto"
+	pbd "github.com/brotherlogic/monitor/proto"
 	pbt "github.com/brotherlogic/tracer/proto"
 
 	ps "github.com/mitchellh/go-ps"

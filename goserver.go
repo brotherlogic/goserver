@@ -21,7 +21,7 @@ import (
 	pb "github.com/brotherlogic/discovery/proto"
 	pbg "github.com/brotherlogic/goserver/proto"
 	utils "github.com/brotherlogic/goserver/utils"
-	pbd "github.com/brotherlogic/monitor/monitorproto"
+	pbd "github.com/brotherlogic/monitor/proto"
 
 	pid "github.com/struCoder/pidusage"
 )

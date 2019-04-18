@@ -57,7 +57,10 @@ func main() {
 
 		check := pb.NewGoserverServiceClient(conn)
 
-		state, _ := check.State(context.Background(), &pb.Empty{})
+		state, err := check.State(context.Background(), &pb.Empty{})
+		if err != nil {
+			log.Fatalf("Unable to read state: %v", err)
+		}
 		for _, s := range state.GetStates() {
 			fmt.Printf("%v and %v (%v, %v) with %v\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue(), s.GetFraction(), s.GetText())
 		}
@@ -97,7 +100,10 @@ func main() {
 
 				check := pb.NewGoserverServiceClient(conn)
 
-				state, _ := check.State(context.Background(), &pb.Empty{})
+				state, err := check.State(context.Background(), &pb.Empty{})
+				if err != nil {
+					fmt.Printf("Error reading state: %v\n", err)
+				}
 				for _, st := range state.GetStates() {
 					state := buildState(st)
 					if len(state) > 0 {
