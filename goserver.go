@@ -225,8 +225,10 @@ func (s *GoServer) Log(message string) {
 					defer cancel()
 					_, err := monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
 					e, ok := status.FromError(err)
-					if ok && err != nil && e.Code() != codes.DeadlineExceeded {
+					if err != nil {
 						s.failLogs++
+					}
+					if ok && err != nil && e.Code() != codes.DeadlineExceeded {
 						s.failMessage = fmt.Sprintf("%v", message)
 					}
 					s.close(conn)
