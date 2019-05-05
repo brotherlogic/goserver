@@ -14,7 +14,7 @@ import (
 
 	pb "github.com/brotherlogic/discovery/proto"
 	pbg "github.com/brotherlogic/goserver/proto"
-	pbd "github.com/brotherlogic/monitor/monitorproto"
+	pbd "github.com/brotherlogic/monitor/proto"
 )
 
 type basicGetter struct{}
