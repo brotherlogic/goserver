@@ -372,6 +372,21 @@ func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context) error, k
 	}
 }
 
+// RegisterRepeatingTaskNoTrace registers a repeating task with a given frequency
+func (s *GoServer) RegisterRepeatingTaskNoTrace(task func(ctx context.Context) error, key string, freq time.Duration) {
+	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, key: key, noTrace: true})
+	found := false
+	for _, c := range s.config.Periods {
+		if c.Key == key {
+			found = true
+		}
+	}
+
+	if !found {
+		s.config.Periods = append(s.config.Periods, &pbl.TaskPeriod{Key: key, Period: int64(freq)})
+	}
+}
+
 // RegisterRepeatingTaskNonMaster registers a repeating task with a given frequency
 func (s *GoServer) RegisterRepeatingTaskNonMaster(task func(ctx context.Context) error, key string, freq time.Duration) {
 	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, nm: true, key: key})
@@ -521,7 +536,13 @@ func (s *GoServer) run(t sFunc) {
 		for true {
 			if s.Registry.GetMaster() || t.nm {
 				name := fmt.Sprintf("%v-Repeat-(%v)-%v", s.Registry.Name, t.key, t.d)
-				ctx, cancel := utils.BuildContext(name, s.Registry.Name)
+				var ctx context.Context
+				var cancel context.CancelFunc
+				if t.noTrace {
+					ctx, cancel = context.WithTimeout(context.Background(), time.Hour)
+				} else {
+					ctx, cancel = utils.BuildContext(name, s.Registry.Name)
+				}
 				defer cancel()
 				s.runTimesMutex.Lock()
 				s.runTimes[t.key] = time.Now()

@@ -38,10 +38,11 @@ type Registerable interface {
 type baseRegistrable struct{ Registerable }
 
 type sFunc struct {
-	fun func(ctx context.Context) error
-	d   time.Duration
-	nm  bool
-	key string
+	fun     func(ctx context.Context) error
+	d       time.Duration
+	nm      bool
+	key     string
+	noTrace bool
 }
 
 const (
