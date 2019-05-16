@@ -123,7 +123,7 @@ func (s *GoServer) sendMark(c context.Context, t time.Duration) error {
 					defer cancel()
 					client := pbt.NewTracerServiceClient(conn)
 
-					_, err := client.Mark(ctx, &pbt.MarkRequest{LongRunningId: id, RunningTimeInMs: t.Nanoseconds() / 1000000})
+					_, err := client.Mark(ctx, &pbt.MarkRequest{LongRunningId: id, RunningTimeInMs: t.Nanoseconds() / 1000000, Origin: s.Registry.Name})
 					return err
 				}
 			}
