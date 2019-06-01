@@ -102,6 +102,8 @@ type GoServer struct {
 	incoming                int64
 	outgoing                int64
 	registerAttempts        int64
+	alertWait               time.Time
+	AlertsSkipped           int64
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
@@ -141,6 +143,7 @@ func (s *GoServer) PrepServer() {
 	s.moteCount = 0
 	s.MemCap = 200000000
 	s.traces = []*rpcStats{}
+	s.alertWait = time.Now()
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))

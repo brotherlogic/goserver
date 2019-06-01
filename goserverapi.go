@@ -433,6 +433,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "periods", Value: int64(len(s.config.Periods))})
 	states = append(states, &pbl.State{Key: "alerts_sent", Value: int64(s.AlertsFired)})
 	states = append(states, &pbl.State{Key: "alerts_error", Text: s.alertError})
+	states = append(states, &pbl.State{Key: "alerts_skipped", Value: s.AlertsSkipped})
 	states = append(states, &pbl.State{Key: "mote_count", Value: int64(s.moteCount)})
 	states = append(states, &pbl.State{Key: "last_mote_time", Text: fmt.Sprintf("%v", s.lastMoteTime)})
 	states = append(states, &pbl.State{Key: "last_mote_fail", Text: s.lastMoteFail})
@@ -654,6 +655,12 @@ func (s *GoServer) Serve() error {
 //RaiseIssue raises an issue
 func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bool) {
 	s.AlertsFired++
+
+	if time.Now().Before(s.alertWait) {
+		s.AlertsSkipped++
+		return
+	}
+
 	go func() {
 		if !s.SkipLog || len(body) == 0 {
 			ip, port, _ := utils.Resolve("githubcard")
@@ -667,7 +674,12 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bo
 
 					_, err := client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: sticky}, grpc.FailFast(false))
 					if err != nil {
-						s.alertError = fmt.Sprintf("Failure to add issue: %v", err)
+						st := status.Convert(err)
+						if st.Code() == codes.ResourceExhausted {
+							s.alertWait = time.Now().Add(time.Minute * 10)
+						} else {
+							s.alertError = fmt.Sprintf("Failure to add issue: %v", err)
+						}
 					}
 				}
 			} else {
