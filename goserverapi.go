@@ -542,7 +542,7 @@ func (s *GoServer) run(t sFunc) {
 				if t.noTrace {
 					ctx, cancel = context.WithTimeout(context.Background(), time.Hour)
 				} else {
-					ctx, cancel = utils.BuildContext(name, s.Registry.Name)
+					ctx, cancel = utils.BuildContext(name, name)
 				}
 				defer cancel()
 				s.runTimesMutex.Lock()
