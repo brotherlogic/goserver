@@ -96,7 +96,7 @@ func Resolve(name string) (string, int32, error) {
 	defer conn.Close()
 
 	registry := pbdi.NewDiscoveryServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	val, err := registry.Discover(ctx, &pbdi.DiscoverRequest{Request: &pbdi.RegistryEntry{Name: name}})
 	if err != nil {
