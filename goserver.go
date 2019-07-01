@@ -217,27 +217,7 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 
 //Log a simple string message
 func (s *GoServer) Log(message string) {
-	go func() {
-		if !s.SkipLog {
-			monitorIP, monitorPort := s.GetIP("monitor")
-			if monitorPort > 0 {
-				conn, err := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
-				if err == nil {
-					monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
-					messageLog := &pbd.MessageLog{Message: message, Entry: s.Registry}
-					ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-					defer cancel()
-					_, err := monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
-					e, ok := status.FromError(err)
-					if ok && err != nil && e.Code() != codes.DeadlineExceeded {
-						s.failLogs++
-						s.failMessage = fmt.Sprintf("%v", message)
-					}
-					s.close(conn)
-				}
-			}
-		}
-	}()
+	s.PLog(message, pbd.LogLevel_DISCARD)
 }
 
 //PLog a simple string message with priority
