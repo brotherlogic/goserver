@@ -136,7 +136,7 @@ func (s *GoServer) sendMark(c context.Context, t time.Duration) error {
 
 // DoDial dials a server
 func (s *GoServer) DoDial(entry *pb.RegistryEntry) (*grpc.ClientConn, error) {
-	return grpc.Dial(entry.Ip+":"+strconv.Itoa(int(entry.Port)), grpc.WithInsecure(), s.withClientUnaryInterceptor())
+	return grpc.Dial(entry.Ip+":"+strconv.Itoa(int(entry.Port)), grpc.WithInsecure(), s.withClientUnaryInterceptor(), grpc.WithMaxMsgSize(1024*1024*1024))
 }
 
 // DialServer dials a given server
