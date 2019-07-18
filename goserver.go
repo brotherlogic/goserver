@@ -104,6 +104,7 @@ type GoServer struct {
 	registerAttempts        int64
 	alertWait               time.Time
 	AlertsSkipped           int64
+	RunInV2                 bool
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
