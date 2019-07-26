@@ -160,6 +160,9 @@ func (s *GoServer) PrepServer() {
 
 	s.runTimes = make(map[string]time.Time)
 	s.runTimesMutex = &sync.Mutex{}
+
+	// Build out the ksclient
+	s.KSclient = *keystoreclient.GetClient(s.DialMaster)
 }
 
 func (s *GoServer) teardown() {
