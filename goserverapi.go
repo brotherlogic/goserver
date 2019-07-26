@@ -532,15 +532,17 @@ func (s *GoServer) Save(ctx context.Context, key string, p proto.Message) error 
 //RunBackgroundTask with tracing and tracking
 func (s *GoServer) RunBackgroundTask(task func(ctx context.Context) error, name string) {
 	go s.run(sFunc{
-		fun:    task,
-		key:    name,
-		source: "background",
+		fun:     task,
+		key:     name,
+		source:  "background",
+		runOnce: true,
+		nm:      true,
 	})
 }
 
 func (s *GoServer) run(t sFunc) {
 	time.Sleep(time.Minute)
-	if t.d == 0 {
+	if t.d == 0 && !t.runOnce {
 		t.fun(context.Background())
 	} else {
 		for true {
@@ -589,6 +591,9 @@ func (s *GoServer) run(t sFunc) {
 				}
 			}
 			time.Sleep(t.d)
+			if t.runOnce {
+				return
+			}
 		}
 	}
 }
