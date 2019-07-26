@@ -43,6 +43,7 @@ type sFunc struct {
 	nm      bool
 	key     string
 	noTrace bool
+	source  string
 }
 
 const (

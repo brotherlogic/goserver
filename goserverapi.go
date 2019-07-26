@@ -354,7 +354,7 @@ func (s *GoServer) close(conn *grpc.ClientConn) {
 
 // RegisterServingTask registers tasks to run when serving
 func (s *GoServer) RegisterServingTask(task func(ctx context.Context) error, key string) {
-	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: 0, key: key})
+	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: 0, key: key, source: "repeat"})
 }
 
 // RegisterRepeatingTask registers a repeating task with a given frequency
@@ -374,7 +374,7 @@ func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context) error, k
 
 // RegisterRepeatingTaskNoTrace registers a repeating task with a given frequency
 func (s *GoServer) RegisterRepeatingTaskNoTrace(task func(ctx context.Context) error, key string, freq time.Duration) {
-	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, key: key, noTrace: true})
+	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, key: key, noTrace: true, source: "repeat"})
 	found := false
 	for _, c := range s.config.Periods {
 		if c.Key == key {
@@ -389,7 +389,7 @@ func (s *GoServer) RegisterRepeatingTaskNoTrace(task func(ctx context.Context) e
 
 // RegisterRepeatingTaskNonMaster registers a repeating task with a given frequency
 func (s *GoServer) RegisterRepeatingTaskNonMaster(task func(ctx context.Context) error, key string, freq time.Duration) {
-	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, nm: true, key: key})
+	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, nm: true, key: key, source: "repeat"})
 	found := false
 	for _, c := range s.config.Periods {
 		if c.Key == key {
@@ -529,6 +529,15 @@ func (s *GoServer) Save(ctx context.Context, key string, p proto.Message) error 
 	return s.KSclient.Save(ctx, key, p)
 }
 
+//RunBackgroundTask with tracing and tracking
+func (s *GoServer) RunBackgroundTask(task func(ctx context.Context) error, name string) {
+	go s.run(sFunc{
+		fun:    task,
+		key:    name,
+		source: "background",
+	})
+}
+
 func (s *GoServer) run(t sFunc) {
 	time.Sleep(time.Minute)
 	if t.d == 0 {
@@ -552,13 +561,13 @@ func (s *GoServer) run(t sFunc) {
 				var tracer *rpcStats
 				if s.RPCTracing {
 					for _, trace := range s.traces {
-						if trace.rpcName == "/"+t.key && trace.source == "repeat" {
+						if trace.rpcName == "/"+t.key && trace.source == t.source {
 							tracer = trace
 						}
 					}
 
 					if tracer == nil {
-						tracer = &rpcStats{rpcName: "/" + t.key, count: 0, latencies: make([]time.Duration, 100), source: "repeat"}
+						tracer = &rpcStats{rpcName: "/" + t.key, count: 0, latencies: make([]time.Duration, 100), source: t.source}
 						s.traces = append(s.traces, tracer)
 					}
 				}
