@@ -44,6 +44,7 @@ type sFunc struct {
 	key     string
 	noTrace bool
 	source  string
+	runOnce bool
 }
 
 const (
