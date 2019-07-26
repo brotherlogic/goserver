@@ -536,6 +536,7 @@ func (s *GoServer) RunBackgroundTask(task func(ctx context.Context) error, name 
 		key:     name,
 		source:  "background",
 		runOnce: true,
+		nm:      true,
 	})
 }
 
