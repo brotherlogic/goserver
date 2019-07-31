@@ -237,10 +237,10 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	}
 
 	// Calls the handler
-	t := time.Now()
 	if s.SendTrace {
 		ctx = s.trace(ctx, info.FullMethod)
 	}
+	t := time.Now()
 	h, err := handler(ctx, req)
 
 	if s.RPCTracing {
