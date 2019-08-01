@@ -325,17 +325,6 @@ func TestLog(t *testing.T) {
 	server.Log("MadeUpLog")
 }
 
-func TestLogFail(t *testing.T) {
-	server := InitTestServer()
-	server.monitorBuilder = &passingMonitorBuilder{failLog: true}
-	server.Log("MadeUpLog")
-	time.Sleep(time.Second)
-
-	if server.failLogs != 1 {
-		t.Errorf("Log has not failed: %v", server.failLogs)
-	}
-}
-
 func TestGetIP(t *testing.T) {
 	ip := getLocalIP()
 	if ip == "" || ip == "127.0.0.1" {
