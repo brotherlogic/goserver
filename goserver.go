@@ -230,22 +230,20 @@ func (s *GoServer) Log(message string) {
 func (s *GoServer) PLog(message string, level pbd.LogLevel) {
 	go func() {
 		if !s.SkipLog {
-			monitorIP, monitorPort := s.GetIP("monitor")
-			if monitorPort > 0 {
-				conn, err := s.dialler.Dial(monitorIP+":"+strconv.Itoa(int(monitorPort)), grpc.WithInsecure())
-				if err == nil {
-					monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
-					messageLog := &pbd.MessageLog{Message: message, Entry: s.Registry, Level: level}
-					ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-					defer cancel()
-					_, err := monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
-					e, ok := status.FromError(err)
-					if ok && err != nil && e.Code() != codes.DeadlineExceeded {
-						s.failLogs++
-						s.failMessage = fmt.Sprintf("%v", message)
-					}
-					s.close(conn)
+			conn, err := s.DialMaster("monitor")
+			if err == nil {
+				defer conn.Close()
+				monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
+				messageLog := &pbd.MessageLog{Message: message, Entry: s.Registry, Level: level}
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+				defer cancel()
+				_, err := monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
+				e, ok := status.FromError(err)
+				if ok && err != nil && e.Code() != codes.DeadlineExceeded {
+					s.failLogs++
+					s.failMessage = fmt.Sprintf("%v", message)
 				}
+				s.close(conn)
 			}
 		}
 	}()
