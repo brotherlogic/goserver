@@ -750,3 +750,26 @@ func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.C
 				CrashType:    ctype}})
 	}
 }
+
+//PLog a simple string message with priority
+func (s *GoServer) PLog(message string, level pbd.LogLevel) {
+	go func() {
+		if !s.SkipLog {
+			conn, err := s.DialMaster("monitor")
+			if err == nil {
+				defer conn.Close()
+				monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
+				messageLog := &pbd.MessageLog{Message: message, Entry: s.Registry, Level: level}
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+				defer cancel()
+				_, err := monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
+				e, ok := status.FromError(err)
+				if ok && err != nil && e.Code() != codes.DeadlineExceeded {
+					s.failLogs++
+					s.failMessage = fmt.Sprintf("%v", message)
+				}
+				s.close(conn)
+			}
+		}
+	}()
+}

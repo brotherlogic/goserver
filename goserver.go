@@ -226,29 +226,6 @@ func (s *GoServer) Log(message string) {
 	s.PLog(message, pbd.LogLevel_DISCARD)
 }
 
-//PLog a simple string message with priority
-func (s *GoServer) PLog(message string, level pbd.LogLevel) {
-	go func() {
-		if !s.SkipLog {
-			conn, err := s.DialMaster("monitor")
-			if err == nil {
-				defer conn.Close()
-				monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
-				messageLog := &pbd.MessageLog{Message: message, Entry: s.Registry, Level: level}
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-				defer cancel()
-				_, err := monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
-				e, ok := status.FromError(err)
-				if ok && err != nil && e.Code() != codes.DeadlineExceeded {
-					s.failLogs++
-					s.failMessage = fmt.Sprintf("%v", message)
-				}
-				s.close(conn)
-			}
-		}
-	}()
-}
-
 //GetIP gets an IP address from the discovery server
 func (s *GoServer) GetIP(servername string) (string, int) {
 	conn, err := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
