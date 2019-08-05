@@ -359,7 +359,7 @@ func (s *GoServer) RegisterServingTask(task func(ctx context.Context) error, key
 
 // RegisterRepeatingTask registers a repeating task with a given frequency
 func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context) error, key string, freq time.Duration) {
-	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, key: key})
+	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, key: key, source: "repeat"})
 	found := false
 	for _, c := range s.config.Periods {
 		if c.Key == key {
