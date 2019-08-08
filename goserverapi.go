@@ -336,6 +336,20 @@ func (clientBuilder mainBuilder) NewDiscoveryServiceClient(conn *grpc.ClientConn
 // RegisterServer registers this server
 func (s *GoServer) RegisterServer(servername string, external bool) error {
 	s.Servername = servername
+
+	// Short circuit if we don't need to register
+	if s.noRegister {
+		IP := getLocalIP()
+		hostname, err := osHostGetter{}.Hostname()
+		if err != nil {
+			hostname = "Server-" + IP
+		}
+		entry := &pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: false, Identifier: hostname, Port: s.Port}
+		s.Registry = entry
+
+		return nil
+	}
+
 	err := fmt.Errorf("First fail")
 	port := int32(0)
 	for err != nil {
@@ -648,9 +662,11 @@ func (s *GoServer) Serve() error {
 	)
 	s.Register.DoRegister(server)
 	pbl.RegisterGoserverServiceServer(server, s)
-	s.setupHeartbeats()
 
-	go s.suicideWatch()
+	if !s.noRegister {
+		s.setupHeartbeats()
+		go s.suicideWatch()
+	}
 
 	// Enable profiling
 	go http.ListenAndServe(fmt.Sprintf(":%v", s.Port+1), nil)

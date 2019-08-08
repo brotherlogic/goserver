@@ -107,6 +107,7 @@ type GoServer struct {
 	alertWait               time.Time
 	AlertsSkipped           int64
 	RunInV2                 bool
+	noRegister              bool
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
@@ -123,6 +124,16 @@ func (s *GoServer) RunSudo() {
 
 // PrepServer builds out the server for use.
 func (s *GoServer) PrepServer() {
+	s.prepareServer(false)
+}
+
+// PrepServerNoRegister builds out a server that doesn't register
+func (s *GoServer) PrepServerNoRegister(port int32) {
+	s.Port = port
+	s.prepareServer(true)
+}
+
+func (s *GoServer) prepareServer(register bool) {
 	s.heartbeatChan = make(chan int)
 	s.heartbeatTime = registerFreq
 	s.monitorBuilder = mainMonitorBuilder{}
@@ -147,6 +158,7 @@ func (s *GoServer) PrepServer() {
 	s.MemCap = 200000000
 	s.traces = []*rpcStats{}
 	s.alertWait = time.Now()
+	s.noRegister = register
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
