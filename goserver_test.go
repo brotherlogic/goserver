@@ -159,6 +159,11 @@ func TestRegister(t *testing.T) {
 	server.RegisterRepeatingTask(run, "test_task", time.Second)
 }
 
+func TestNoRegister(t *testing.T) {
+	server := GoServer{}
+	server.PrepServerNoRegister(int32(50055))
+}
+
 func TestCPUGet(t *testing.T) {
 	server := GoServer{}
 	server.cpuMutex = &sync.Mutex{}
