@@ -129,7 +129,6 @@ func (s *GoServer) PrepServer() {
 
 // PrepServerNoRegister builds out a server that doesn't register
 func (s *GoServer) PrepServerNoRegister(port int32) {
-	log.Printf("HERE %v", s)
 	s.Port = port
 	s.prepareServer(true)
 }
