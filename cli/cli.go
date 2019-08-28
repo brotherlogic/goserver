@@ -15,13 +15,13 @@ import (
 	_ "google.golang.org/grpc/encoding/gzip"
 )
 
-func buildState(s *pb.State) string {
+func buildState(s *pb.State, uptime int64) string {
 	if len(s.Text) > 0 {
 		return fmt.Sprintf("%v", s.Text)
 	}
 
 	if s.Value > 0 {
-		return fmt.Sprintf("%v", s.Value)
+		return fmt.Sprintf("%v (%2.2f)", s.Value, float64(s.Value)/float64(uptime))
 	}
 
 	if s.Fraction > 0 {
@@ -37,6 +37,15 @@ func buildState(s *pb.State) string {
 	}
 
 	return ""
+}
+
+func getUptime(states []*pb.State) int64 {
+	for _, state := range states {
+		if state.GetKey() == "uptime" {
+			return int64(time.Duration(state.TimeDuration).Seconds())
+		}
+	}
+	return 1
 }
 
 func main() {
@@ -61,8 +70,14 @@ func main() {
 		if err != nil {
 			log.Fatalf("Unable to read state: %v", err)
 		}
-		for _, s := range state.GetStates() {
-			fmt.Printf("%v and %v (%v, %v) with %v\n", s.GetKey(), time.Unix(s.GetTimeValue(), 0), s.GetValue(), s.GetFraction(), s.GetText())
+
+		uptime := getUptime(state.GetStates())
+		for _, st := range state.GetStates() {
+			state := buildState(st, uptime)
+			if len(state) > 0 {
+				fmt.Printf("%v: %v -> %v\n", *host, st.GetKey(), state)
+			}
+
 		}
 	} else if len(*name) > 0 {
 		ip, port, err := utils.Resolve(*name)
@@ -78,8 +93,9 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
 		state, _ := check.State(ctx, &pb.Empty{})
+		uptime := getUptime(state.GetStates())
 		for _, st := range state.GetStates() {
-			state := buildState(st)
+			state := buildState(st, uptime)
 			if len(state) > 0 {
 				fmt.Printf("%v: %v -> %v\n", ip, st.GetKey(), state)
 			}
@@ -104,8 +120,9 @@ func main() {
 				if err != nil {
 					fmt.Printf("Error reading state: %v\n", err)
 				}
+				uptime := getUptime(state.GetStates())
 				for _, st := range state.GetStates() {
-					state := buildState(st)
+					state := buildState(st, uptime)
 					if len(state) > 0 {
 						prechar := ""
 						if s.Master {

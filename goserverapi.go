@@ -471,6 +471,15 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "reg_time", TimeDuration: s.regTime.Nanoseconds()})
 
 	for _, trace := range s.traces {
+
+		if trace.count > 100 {
+			seconds := time.Now().Sub(s.startup).Nanoseconds() / 1000000000
+			qps := float64(trace.count) / float64(seconds)
+			if qps > float64(1) {
+				s.RaiseIssue(ctx, "Over Active Service", fmt.Sprintf("rpc_%v%v is busy", trace.source, trace.rpcName), false)
+			}
+		}
+
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_count", Value: trace.count})
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_errors", Value: trace.errors})
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_lasterror", Text: trace.lastError})
