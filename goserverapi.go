@@ -354,7 +354,34 @@ func (s *GoServer) RegisterServer(servername string, external bool) error {
 	port := int32(0)
 	for err != nil {
 		s.registerAttempts++
-		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external)
+		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external, false)
+		s.Port = port
+	}
+	return err
+}
+
+// RegisterServerV2 registers this server under the v2 protocol
+func (s *GoServer) RegisterServerV2(servername string, external bool) error {
+	s.Servername = servername
+
+	// Short circuit if we don't need to register
+	if s.noRegister {
+		IP := getLocalIP()
+		hostname, err := osHostGetter{}.Hostname()
+		if err != nil {
+			hostname = "Server-" + IP
+		}
+		entry := &pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: false, Identifier: hostname, Port: s.Port, Version: pb.RegistryEntry_V2}
+		s.Registry = entry
+
+		return nil
+	}
+
+	err := fmt.Errorf("First fail")
+	port := int32(0)
+	for err != nil {
+		s.registerAttempts++
+		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external, true)
 		s.Port = port
 	}
 	return err
@@ -543,8 +570,8 @@ func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, e
 	return &pbl.Empty{}, err
 }
 
-func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool) (int32, error) {
-	return s.registerServer(IP, servername, external, grpcDialler{}, mainBuilder{}, osHostGetter{})
+func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool, v2 bool) (int32, error) {
+	return s.registerServer(IP, servername, external, v2, grpcDialler{}, mainBuilder{}, osHostGetter{})
 }
 
 //Save a protobuf
@@ -797,4 +824,55 @@ func (s *GoServer) PLog(message string, level pbd.LogLevel) {
 			}
 		}
 	}()
+}
+
+// RegisterServer Registers a server with the system and gets the port number it should use
+func (s *GoServer) registerServer(IP string, servername string, external bool, v2 bool, dialler dialler, builder clientBuilder, getter hostGetter) (int32, error) {
+	conn, err := dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
+	if err != nil {
+		return -1, err
+	}
+
+	if v2 {
+		registry := pb.NewDiscoveryServiceV2Client(conn)
+		hostname, err := getter.Hostname()
+		if err != nil {
+			hostname = "Server-" + IP
+		}
+		entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname, TimeToClean: 5000}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+		t := time.Now()
+		r, err := registry.RegisterV2(ctx, &pb.RegisterRequest{Service: &entry}, grpc.FailFast(false))
+		s.regTime = time.Now().Sub(t)
+		if err != nil {
+			s.close(conn)
+			return -1, err
+		}
+		s.Registry = r.GetService()
+		s.close(conn)
+
+		return r.GetService().Port, nil
+
+	}
+
+	registry := builder.NewDiscoveryServiceClient(conn)
+	hostname, err := getter.Hostname()
+	if err != nil {
+		hostname = "Server-" + IP
+	}
+	entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname, TimeToClean: 5000}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	t := time.Now()
+	r, err := registry.RegisterService(ctx, &pb.RegisterRequest{Service: &entry}, grpc.FailFast(false))
+	s.regTime = time.Now().Sub(t)
+	if err != nil {
+		s.close(conn)
+		return -1, err
+	}
+	s.Registry = r.GetService()
+	s.close(conn)
+
+	return r.GetService().Port, nil
 }

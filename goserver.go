@@ -319,31 +319,3 @@ func (s *GoServer) Dial(server string, dialler dialler, builder clientBuilder) (
 func (s *GoServer) setupHeartbeats() {
 	go s.heartbeat()
 }
-
-// RegisterServer Registers a server with the system and gets the port number it should use
-func (s *GoServer) registerServer(IP string, servername string, external bool, dialler dialler, builder clientBuilder, getter hostGetter) (int32, error) {
-	conn, err := dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
-	if err != nil {
-		return -1, err
-	}
-
-	registry := builder.NewDiscoveryServiceClient(conn)
-	hostname, err := getter.Hostname()
-	if err != nil {
-		hostname = "Server-" + IP
-	}
-	entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname, TimeToClean: 5000}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-	t := time.Now()
-	r, err := registry.RegisterService(ctx, &pb.RegisterRequest{Service: &entry}, grpc.FailFast(false))
-	s.regTime = time.Now().Sub(t)
-	if err != nil {
-		s.close(conn)
-		return -1, err
-	}
-	s.Registry = r.GetService()
-	s.close(conn)
-
-	return r.GetService().Port, nil
-}
