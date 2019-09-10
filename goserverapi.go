@@ -263,6 +263,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 
 		// Raise an issue on a long call
 		if time.Now().Sub(t) > time.Second*5 {
+			s.Log(fmt.Sprintf("Long Call %v, %v -> %v", info.FullMethod, time.Now(), t))
 			s.marks++
 			s.mark(ctx, time.Now().Sub(t))
 		}
