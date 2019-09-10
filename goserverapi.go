@@ -700,7 +700,9 @@ func (s *GoServer) Serve() error {
 	pbl.RegisterGoserverServiceServer(server, s)
 
 	if !s.noRegister {
-		s.setupHeartbeats()
+		if s.Registry.Version == pb.RegistryEntry_V1 {
+			s.setupHeartbeats()
+		}
 		go s.suicideWatch()
 	}
 
