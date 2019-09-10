@@ -157,6 +157,14 @@ func (s *GoServer) DialServer(server, host string) (*grpc.ClientConn, error) {
 
 // DialMaster dials the master server
 func (s *GoServer) DialMaster(server string) (*grpc.ClientConn, error) {
+	if s.Registry.Version == pb.RegistryEntry_V2 {
+		entry, err := utils.ResolveV2(server)
+		if err != nil {
+			return nil, err
+		}
+		return s.DoDial(entry)
+	}
+
 	ip, port, err := utils.Resolve(server)
 	if err != nil {
 		return nil, err
