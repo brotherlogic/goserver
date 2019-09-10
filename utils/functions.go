@@ -105,6 +105,29 @@ func Resolve(name string) (string, int32, error) {
 	return val.GetService().GetIp(), val.GetService().GetPort(), err
 }
 
+// Resolve resolves out a server
+func ResolveV2(name string) (*pbdi.RegistryEntry, error) {
+	conn, err := grpc.Dial(Discover, grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	registry := pbdi.NewDiscoveryServiceV2Client(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	val, err := registry.Get(ctx, &pbdi.GetRequest{Job: name})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(val.GetServices()) != 1 {
+		return nil, fmt.Errorf("Found %v services", len(val.GetServices()))
+	}
+
+	return val.GetServices()[0], err
+}
+
 // GetMaster resolves out a server
 func GetMaster(name string) (*pbdi.RegistryEntry, error) {
 	conn, err := grpc.Dial(Discover, grpc.WithInsecure())
