@@ -109,6 +109,7 @@ type GoServer struct {
 	RunInV2                 bool
 	noRegister              bool
 	latestMem               int
+	activeRPCs              map[string]int
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
@@ -135,6 +136,7 @@ func (s *GoServer) PrepServerNoRegister(port int32) {
 }
 
 func (s *GoServer) prepareServer(register bool) {
+	s.activeRPCs = make(map[string]int)
 	s.heartbeatChan = make(chan int)
 	s.heartbeatTime = registerFreq
 	s.monitorBuilder = mainMonitorBuilder{}
