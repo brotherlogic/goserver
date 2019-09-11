@@ -186,6 +186,8 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	opts ...grpc.CallOption,
 ) error {
 
+	s.activeRPCs[method]++
+
 	var tracer *rpcStats
 	if s.RPCTracing {
 		for _, trace := range s.traces {
@@ -222,6 +224,7 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 		}
 	}
 
+	s.activeRPCs[method]++
 	return err
 }
 
@@ -229,6 +232,8 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	req interface{},
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (interface{}, error) {
+
+	s.activeRPCs[info.FullMethod]++
 
 	var tracer *rpcStats
 	if s.RPCTracing {
@@ -269,6 +274,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 		}
 	}
 
+	s.activeRPCs[info.FullMethod]--
 	return h, err
 }
 
@@ -465,6 +471,7 @@ func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, erro
 //State gets the state of the server.
 func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, error) {
 	states := s.Register.GetState()
+	states = append(states, &pbl.State{Key: "active_rpcs", Text: fmt.Sprintf("%v", s.activeRPCs)})
 	states = append(states, &pbl.State{Key: "memory", Text: fmt.Sprintf("%v/%v", s.latestMem, s.MemCap)})
 	states = append(states, &pbl.State{Key: "register_attempts", Value: s.registerAttempts})
 	states = append(states, &pbl.State{Key: "incoming_counts", Value: s.incoming})

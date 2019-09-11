@@ -55,6 +55,7 @@ func main() {
 	var name = flag.String("name", "", "Name")
 	var server = flag.String("server", "", "Server")
 	var all = flag.String("all", "", "All")
+	var action = flag.String("action", "", "Action")
 	flag.Parse()
 
 	if len(*host) > 0 {
@@ -107,6 +108,7 @@ func main() {
 		}
 		for _, s := range servers {
 			if !s.IgnoresMaster && (*server == "" || *server == s.Identifier) {
+
 				fmt.Printf("SERVER: %v\n", s)
 				conn, err := grpc.Dial(s.Ip+":"+strconv.Itoa(int(s.Port)), grpc.WithInsecure())
 				if err != nil {
@@ -115,6 +117,12 @@ func main() {
 				defer conn.Close()
 
 				check := pb.NewGoserverServiceClient(conn)
+
+				if len(*action) > 0 {
+					val, err := check.Shutdown(context.Background(), &pb.ShutdownRequest{})
+					fmt.Printf("Shutdown: %v, %v", val, err)
+					return
+				}
 
 				state, err := check.State(context.Background(), &pb.Empty{})
 				if err != nil {
