@@ -278,6 +278,7 @@ func (s *GoServer) suicideWatch() {
 
 		// Commit suicide if our memory usage is high
 		_, mem := s.getCPUUsage()
+		s.latestMem = int(mem)
 		if mem > float64(s.MemCap) {
 			ctx, cancel := utils.BuildContext("goserver-crash", s.Registry.Name)
 			defer cancel()
@@ -464,6 +465,7 @@ func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, erro
 //State gets the state of the server.
 func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, error) {
 	states := s.Register.GetState()
+	states = append(states, &pbl.State{Key: "memory", Text: fmt.Sprintf("%v/%v", s.latestMem, s.MemCap)})
 	states = append(states, &pbl.State{Key: "register_attempts", Value: s.registerAttempts})
 	states = append(states, &pbl.State{Key: "incoming_counts", Value: s.incoming})
 	states = append(states, &pbl.State{Key: "outgoing_counts", Value: s.outgoing})
