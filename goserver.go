@@ -108,6 +108,7 @@ type GoServer struct {
 	AlertsSkipped           int64
 	RunInV2                 bool
 	noRegister              bool
+	latestMem               int
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
