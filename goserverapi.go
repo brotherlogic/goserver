@@ -186,7 +186,9 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	opts ...grpc.CallOption,
 ) error {
 
+	s.activeRPCsMutex.Lock()
 	s.activeRPCs[method]++
+	s.activeRPCsMutex.Unlock()
 
 	var tracer *rpcStats
 	if s.RPCTracing {
@@ -224,7 +226,9 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 		}
 	}
 
-	s.activeRPCs[method]++
+	s.activeRPCsMutex.Lock()
+	s.activeRPCs[method]--
+	s.activeRPCsMutex.Unlock()
 	return err
 }
 
@@ -233,7 +237,9 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (interface{}, error) {
 
+	s.activeRPCsMutex.Lock()
 	s.activeRPCs[info.FullMethod]++
+	s.activeRPCsMutex.Unlock()
 
 	var tracer *rpcStats
 	if s.RPCTracing {
@@ -274,7 +280,9 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 		}
 	}
 
+	s.activeRPCsMutex.Lock()
 	s.activeRPCs[info.FullMethod]--
+	s.activeRPCsMutex.Unlock()
 	return h, err
 }
 
