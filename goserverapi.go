@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"runtime"
 	"runtime/pprof"
 	"sort"
 	"strconv"
@@ -295,7 +296,16 @@ func (s *GoServer) suicideWatch() {
 		// Commit suicide if our memory usage is high
 		_, mem := s.getCPUUsage()
 		s.latestMem = int(mem)
+
+		// GC is we're 90% of the memory cap
+		if mem > float64(s.MemCap)*0.9 {
+			t := time.Now()
+			runtime.GC()
+			s.Log(fmt.Sprintf("Running GC with memory %v (took %v)", mem, time.Now().Sub(t)))
+		}
+
 		if mem > float64(s.MemCap) {
+			s.Log(fmt.Sprintf("Memory exceeded, killing ourselves"))
 			ctx, cancel := utils.BuildContext("goserver-crash", s.Registry.Name)
 			defer cancel()
 			s.SendCrash(ctx, "Memory is Too high", pbbs.Crash_MEMORY)
