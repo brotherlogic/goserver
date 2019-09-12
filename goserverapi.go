@@ -301,7 +301,11 @@ func (s *GoServer) suicideWatch() {
 		if mem > float64(s.MemCap)*0.9 {
 			t := time.Now()
 			runtime.GC()
-			s.Log(fmt.Sprintf("Running GC with memory %v (took %v)", mem, time.Now().Sub(t)))
+			_, mem2 := s.getCPUUsage()
+			s.latestMem = int(mem2)
+			s.Log(fmt.Sprintf("Running GC with memory %v (took %v) %v -> %v", mem, time.Now().Sub(t), mem, mem2))
+			mem = mem2
+
 		}
 
 		if mem > float64(s.MemCap) {
