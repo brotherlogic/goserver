@@ -237,6 +237,8 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (interface{}, error) {
 
+	s.Log(fmt.Sprintf("RPC Call %v with %v", info.FullMethod, req))
+
 	s.activeRPCsMutex.Lock()
 	s.activeRPCs[info.FullMethod]++
 	s.activeRPCsMutex.Unlock()
