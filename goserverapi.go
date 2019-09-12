@@ -283,6 +283,9 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 		}
 	}
 
+	if err == nil {
+		s.Log(fmt.Sprintf("Returning %v with %v bytes", info.FullMethod, proto.Size(h.(proto.Message))))
+	}
 	s.activeRPCsMutex.Lock()
 	s.activeRPCs[info.FullMethod]--
 	s.activeRPCsMutex.Unlock()
