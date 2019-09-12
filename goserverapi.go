@@ -639,6 +639,7 @@ func (s *GoServer) run(t sFunc) {
 	} else {
 		for true {
 			if s.Registry.GetMaster() || t.nm {
+				s.Log(fmt.Sprintf("Running Repeat task %v", t.key))
 				name := fmt.Sprintf("%v-Repeat-(%v)-%v", s.Registry.Name, t.key, t.d)
 				var ctx context.Context
 				var cancel context.CancelFunc
@@ -668,6 +669,7 @@ func (s *GoServer) run(t sFunc) {
 
 				ti := time.Now()
 				err := t.fun(ctx)
+				s.Log(fmt.Sprintf("Complet Repeat task %v", t.key))
 				if s.RPCTracing {
 					tracer.latencies[tracer.count%100] = time.Now().Sub(ti)
 					tracer.count++
