@@ -514,6 +514,8 @@ func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, erro
 //State gets the state of the server.
 func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, error) {
 	states := s.Register.GetState()
+	s.activeRPCsMutex.Lock()
+	defer s.activeRPCsMutex.Unlock()
 	states = append(states, &pbl.State{Key: "active_rpcs", Text: fmt.Sprintf("%v", s.activeRPCs)})
 	states = append(states, &pbl.State{Key: "memory", Text: fmt.Sprintf("%v/%v", s.latestMem, s.MemCap)})
 	states = append(states, &pbl.State{Key: "register_attempts", Value: s.registerAttempts})
