@@ -68,6 +68,19 @@ func (s *GoServer) mark(c context.Context, t time.Duration) {
 	}()
 }
 
+func (s *GoServer) validateMaster() error {
+	entry, err := utils.ResolveV2(s.Registry.Name)
+	if err != nil {
+		return err
+	}
+
+	if entry.Identifier != s.Registry.Identifier {
+		return fmt.Errorf("We are no longer master")
+	}
+
+	return nil
+}
+
 func (s *GoServer) sendTrace(c context.Context, name string, t time.Time) error {
 	md, found := metadata.FromIncomingContext(c)
 	if found {
@@ -644,7 +657,11 @@ func (s *GoServer) run(t sFunc) {
 		t.fun(context.Background())
 	} else {
 		for true {
-			if s.Registry.GetMaster() || t.nm {
+			err := s.validateMaster()
+			if err != nil {
+				s.Log(fmt.Sprintf("Unable to validate as master: %v", err))
+			}
+			if err == nil || t.nm {
 				name := fmt.Sprintf("%v-Repeat-(%v)-%v", s.Registry.Name, t.key, t.d)
 				var ctx context.Context
 				var cancel context.CancelFunc
