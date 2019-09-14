@@ -79,12 +79,12 @@ func (s *GoServer) validateMaster() error {
 			return fmt.Errorf("We are no longer master")
 		}
 	} else {
-		ip, port, err := utils.Resolve(s.Registry.Name)
+		ip, _, err := utils.Resolve(s.Registry.Name)
 		if err != nil {
 			return err
 		}
 
-		if entry.Ip != ip {
+		if s.Registry.Ip != ip {
 			return fmt.Errorf("We are no longer master, %v is", ip)
 		}
 	}
