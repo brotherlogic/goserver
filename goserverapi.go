@@ -69,13 +69,24 @@ func (s *GoServer) mark(c context.Context, t time.Duration) {
 }
 
 func (s *GoServer) validateMaster() error {
-	entry, err := utils.ResolveV2(s.Registry.Name)
-	if err != nil {
-		return err
-	}
+	if s.Registry.Version == pb.RegistryEntry_V2 {
+		entry, err := utils.ResolveV2(s.Registry.Name)
+		if err != nil {
+			return err
+		}
 
-	if entry.Identifier != s.Registry.Identifier {
-		return fmt.Errorf("We are no longer master")
+		if entry.Identifier != s.Registry.Identifier {
+			return fmt.Errorf("We are no longer master")
+		}
+	} else {
+		ip, port, err := utils.Resolve(s.Registry.Name)
+		if err != nil {
+			return err
+		}
+
+		if entry.Ip != ip {
+			return fmt.Errorf("We are no longer master, %v is", ip)
+		}
 	}
 
 	return nil
