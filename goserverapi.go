@@ -310,7 +310,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	if err == nil {
 		s.Log(fmt.Sprintf("Returning %v with %v bytes", info.FullMethod, proto.Size(h.(proto.Message))))
 		if proto.Size(h.(proto.Message)) > 1024*1024 {
-			s.RaiseIssue(ctx, "Large Response", fmt.Sprintf("%v has produced a large response (%vMb)", info.FullMethod, proto.Size(h.(proto.Message))/(1024*1024)), false)
+			s.RaiseIssue(ctx, "Large Response", fmt.Sprintf("%v has produced a large response from %v (%vMb)", info.FullMethod, req, proto.Size(h.(proto.Message))/(1024*1024)), false)
 		}
 	}
 	s.activeRPCsMutex.Lock()
