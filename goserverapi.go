@@ -262,7 +262,9 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (interface{}, error) {
 
-	s.Log(fmt.Sprintf("RPC Call %v with %v", info.FullMethod, req))
+	if !strings.HasSuffix(info.FullMethod, "State") {
+		s.Log(fmt.Sprintf("RPC Call %v with %v", info.FullMethod, req))
+	}
 
 	s.activeRPCsMutex.Lock()
 	s.activeRPCs[info.FullMethod]++
@@ -308,9 +310,11 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	}
 
 	if err == nil {
-		s.Log(fmt.Sprintf("Returning %v with %v bytes", info.FullMethod, proto.Size(h.(proto.Message))))
-		if proto.Size(h.(proto.Message)) > 1024*1024 {
-			s.RaiseIssue(ctx, "Large Response", fmt.Sprintf("%v has produced a large response from %v (%vMb)", info.FullMethod, req, proto.Size(h.(proto.Message))/(1024*1024)), false)
+		if !strings.HasSuffix(info.FullMethod, "State") {
+			s.Log(fmt.Sprintf("Returning %v with %v bytes", info.FullMethod, proto.Size(h.(proto.Message))))
+			if proto.Size(h.(proto.Message)) > 1024*1024 {
+				s.RaiseIssue(ctx, "Large Response", fmt.Sprintf("%v has produced a large response from %v (%vMb)", info.FullMethod, req, proto.Size(h.(proto.Message))/(1024*1024)), false)
+			}
 		}
 	}
 	s.activeRPCsMutex.Lock()
