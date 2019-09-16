@@ -670,9 +670,6 @@ func (s *GoServer) run(t sFunc) {
 	} else {
 		for true {
 			err := s.validateMaster()
-			if err != nil {
-				s.Log(fmt.Sprintf("Unable to validate as master: %v", err))
-			}
 			if err == nil || t.nm {
 				name := fmt.Sprintf("%v-Repeat-(%v)-%v", s.Registry.Name, t.key, t.d)
 				var ctx context.Context
