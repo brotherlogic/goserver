@@ -576,6 +576,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 			seconds := time.Now().Sub(s.startup).Nanoseconds() / 1000000000
 			qps := float64(trace.count) / float64(seconds)
 			if qps > float64(1) {
+				s.Log(fmt.Sprintf("High: %v", ctx))
 				s.RaiseIssue(ctx, "Over Active Service", fmt.Sprintf("rpc_%v%v is busy", trace.source, trace.rpcName), false)
 			}
 		}
