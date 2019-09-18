@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
 	pbbs "github.com/brotherlogic/buildserver/proto"
@@ -308,7 +309,11 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 			seconds := time.Now().Sub(s.startup).Nanoseconds() / 1000000000
 			qps := float64(tracer.count) / float64(seconds)
 			if qps > float64(1) {
-				s.Log(fmt.Sprintf("High: %v", ctx))
+				peer, found := peer.FromContext(ctx)
+
+				if found {
+					s.Log(fmt.Sprintf("High: (%+v), %v", peer.Addr, ctx))
+				}
 				s.RaiseIssue(ctx, "Over Active Service", fmt.Sprintf("rpc_%v%v is busy", tracer.source, tracer.rpcName), false)
 			}
 		}
