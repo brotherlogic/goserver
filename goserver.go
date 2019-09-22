@@ -105,7 +105,9 @@ type GoServer struct {
 	outgoing                int64
 	registerAttempts        int64
 	alertWait               time.Time
+	logWait                 time.Time
 	AlertsSkipped           int64
+	logsSkipped             int64
 	RunInV2                 bool
 	noRegister              bool
 	latestMem               int
@@ -240,6 +242,11 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 
 //Log a simple string message
 func (s *GoServer) Log(message string) {
+	if time.Now().Before(s.logWait) {
+		s.logsSkipped++
+		return
+	}
+	s.logWait = time.Now().Add(time.Second)
 	s.PLog(message, pbd.LogLevel_DISCARD)
 }
 
