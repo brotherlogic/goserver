@@ -812,7 +812,7 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bo
 
 	go func() {
 		if !s.SkipLog || len(body) == 0 {
-			ip, port, _ := utils.Resolve("githubcard", s.Registry.Name)
+			ip, port, _ := utils.Resolve("githubcard", s.Registry.Name+"-ri")
 			if port > 0 {
 				conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
 				if err == nil {
@@ -845,7 +845,7 @@ func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job stri
 	s.AlertsFired++
 	go func() {
 		if !s.SkipLog {
-			ip, port, _ := utils.Resolve("githubcard", s.Registry.Name)
+			ip, port, _ := utils.Resolve("githubcard", s.Registry.Name+"-bi")
 			if port > 0 {
 				conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
 				if err == nil {
