@@ -541,6 +541,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states := s.Register.GetState()
 	s.activeRPCsMutex.Lock()
 	defer s.activeRPCsMutex.Unlock()
+	states = append(states, &pbl.State{Key: "alert_wait", TimeValue: s.alertWait.Unix()})
 	states = append(states, &pbl.State{Key: "active_rpcs", Text: fmt.Sprintf("%v", s.activeRPCs)})
 	states = append(states, &pbl.State{Key: "memory", Text: fmt.Sprintf("%v/%v", s.latestMem, s.MemCap)})
 	states = append(states, &pbl.State{Key: "register_attempts", Value: s.registerAttempts})
@@ -832,7 +833,7 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bo
 					}
 				}
 			} else {
-				s.alertWait - time.Now().Add(time.Minute*10)
+				s.alertWait = time.Now().Add(time.Minute * 10)
 				s.alertError = fmt.Sprintf("Cannot locate githubcard")
 			}
 		} else {
