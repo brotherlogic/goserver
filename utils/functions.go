@@ -88,7 +88,7 @@ func doMatch(in, out reflect.Value) bool {
 }
 
 // Resolve resolves out a server
-func Resolve(name string) (string, int32, error) {
+func Resolve(name, origin string) (string, int32, error) {
 	conn, err := grpc.Dial(Discover, grpc.WithInsecure())
 	if err != nil {
 		return "", -1, err
@@ -98,7 +98,7 @@ func Resolve(name string) (string, int32, error) {
 	registry := pbdi.NewDiscoveryServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	val, err := registry.Discover(ctx, &pbdi.DiscoverRequest{Request: &pbdi.RegistryEntry{Name: name}})
+	val, err := registry.Discover(ctx, &pbdi.DiscoverRequest{Caller: origin, Request: &pbdi.RegistryEntry{Name: name}})
 	if err != nil {
 		return "", -1, err
 	}

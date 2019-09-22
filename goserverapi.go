@@ -80,7 +80,7 @@ func (s *GoServer) validateMaster() error {
 			return fmt.Errorf("We are no longer master")
 		}
 	} else {
-		ip, _, err := utils.Resolve(s.Registry.Name)
+		ip, _, err := utils.Resolve(s.Registry.Name, s.Registry.Name)
 		if err != nil {
 			return err
 		}
@@ -191,7 +191,7 @@ func (s *GoServer) DialMaster(server string) (*grpc.ClientConn, error) {
 		return s.DoDial(entry)
 	}
 
-	ip, port, err := utils.Resolve(server)
+	ip, port, err := utils.Resolve(server, s.Registry.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -812,7 +812,7 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bo
 
 	go func() {
 		if !s.SkipLog || len(body) == 0 {
-			ip, port, _ := utils.Resolve("githubcard")
+			ip, port, _ := utils.Resolve("githubcard", s.Registry.Name)
 			if port > 0 {
 				conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
 				if err == nil {
@@ -845,7 +845,7 @@ func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job stri
 	s.AlertsFired++
 	go func() {
 		if !s.SkipLog {
-			ip, port, _ := utils.Resolve("githubcard")
+			ip, port, _ := utils.Resolve("githubcard", s.Registry.Name)
 			if port > 0 {
 				conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
 				if err == nil {
