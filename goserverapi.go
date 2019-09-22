@@ -832,6 +832,7 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bo
 					}
 				}
 			} else {
+				s.alertWait - time.Now().Add(time.Minute*10)
 				s.alertError = fmt.Sprintf("Cannot locate githubcard")
 			}
 		} else {
