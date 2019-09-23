@@ -129,7 +129,7 @@ func ResolveV2(name string) (*pbdi.RegistryEntry, error) {
 }
 
 // GetMaster resolves out a server
-func GetMaster(name string) (*pbdi.RegistryEntry, error) {
+func GetMaster(name, caller string) (*pbdi.RegistryEntry, error) {
 	conn, err := grpc.Dial(Discover, grpc.WithInsecure())
 	if err != nil {
 		return &pbdi.RegistryEntry{}, err
@@ -139,7 +139,7 @@ func GetMaster(name string) (*pbdi.RegistryEntry, error) {
 	registry := pbdi.NewDiscoveryServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	val, err := registry.Discover(ctx, &pbdi.DiscoverRequest{Request: &pbdi.RegistryEntry{Name: name}})
+	val, err := registry.Discover(ctx, &pbdi.DiscoverRequest{Caller: caller, Request: &pbdi.RegistryEntry{Name: name}})
 	return val.GetService(), err
 }
 
