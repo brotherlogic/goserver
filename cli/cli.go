@@ -81,7 +81,7 @@ func main() {
 
 		}
 	} else if len(*name) > 0 {
-		ip, port, err := utils.Resolve(*name)
+		ip, port, err := utils.Resolve(*name, "goserver-cliname")
 		fmt.Printf("DIAL: %v - %v\n", ip, port)
 		conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
 		if err != nil {
