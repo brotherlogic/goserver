@@ -876,6 +876,14 @@ func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.C
 	if err == nil {
 		defer conn.Close()
 		client := pbbs.NewBuildServiceClient(conn)
+
+		// Build out the current state
+		info, _ := s.State(ctx, &pbl.Empty{})
+		infoString := ""
+		for _, str := range info.GetStates() {
+			infoString += fmt.Sprintf("%v = %v\n", str.Key, str)
+		}
+
 		client.ReportCrash(ctx, &pbbs.CrashRequest{
 			Version: s.RunningFile,
 			Origin:  s.Registry.Name,
@@ -883,7 +891,7 @@ func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.C
 				Name: s.Registry.Name,
 			},
 			Crash: &pbbs.Crash{
-				ErrorMessage: crashText,
+				ErrorMessage: crashText + "\n" + infoString,
 				CrashType:    ctype}})
 	}
 }
