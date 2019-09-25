@@ -425,3 +425,13 @@ func TestMasterRegisterFailMote(t *testing.T) {
 		t.Errorf("Master has been recorded")
 	}
 }
+
+func TestDoLog(t *testing.T) {
+	server := InitTestServer()
+	server.Log("hello")
+	server.Log("hello")
+	if server.logsSkipped == 0 {
+		t.Errorf("Missed double log skip")
+	}
+
+}

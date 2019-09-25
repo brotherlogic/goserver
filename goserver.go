@@ -240,16 +240,6 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 	}
 }
 
-//Log a simple string message
-func (s *GoServer) Log(message string) {
-	if time.Now().Before(s.logWait) {
-		s.logsSkipped++
-		return
-	}
-	s.logWait = time.Now().Add(time.Second)
-	s.PLog(message, pbd.LogLevel_DISCARD)
-}
-
 //GetIP gets an IP address from the discovery server
 func (s *GoServer) GetIP(servername string) (string, int) {
 	conn, err := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
@@ -330,4 +320,14 @@ func (s *GoServer) Dial(server string, dialler dialler, builder clientBuilder) (
 
 func (s *GoServer) setupHeartbeats() {
 	go s.heartbeat()
+}
+
+//Log a simple string message
+func (s *GoServer) Log(message string) {
+	if time.Now().Before(s.logWait) {
+		s.logsSkipped++
+		return
+	}
+	s.logWait = time.Now().Add(time.Second)
+	s.PLog(message, pbd.LogLevel_DISCARD)
 }
