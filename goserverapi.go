@@ -31,6 +31,7 @@ import (
 	pbks "github.com/brotherlogic/keystore/proto"
 	pbd "github.com/brotherlogic/monitor/proto"
 	pbt "github.com/brotherlogic/tracer/proto"
+	pbv "github.com/brotherlogic/versionserver/proto"
 
 	ps "github.com/mitchellh/go-ps"
 
@@ -477,6 +478,11 @@ func (s *GoServer) close(conn *grpc.ClientConn) {
 	}
 }
 
+// RegisterLockingTask registers a locking task to run
+func (s *GoServer) RegisterLockingTask(task func(ctx context.Context) (time.Time, error), key string) {
+	s.servingFuncs = append(s.servingFuncs, sFunc{lFun: task, key: key, source: "locking"})
+}
+
 // RegisterServingTask registers tasks to run when serving
 func (s *GoServer) RegisterServingTask(task func(ctx context.Context) error, key string) {
 	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: 0, key: key, source: "repeat"})
@@ -671,8 +677,116 @@ func (s *GoServer) RunBackgroundTask(task func(ctx context.Context) error, name 
 	})
 }
 
+// Acquires a distributed lock for an hour
+func (s *GoServer) acquireLock(lockName string) (time.Time, bool, error) {
+	conn, err := s.DialMaster("versionserver")
+	if err != nil {
+		return time.Now(), false, err
+	}
+	defer conn.Close()
+
+	client := pbv.NewVersionServerClient(conn)
+	ctx, cancel := utils.BuildContext(lockName, lockName)
+	defer cancel()
+	resp, err := client.SetIfLessThan(ctx, &pbv.SetIfLessThanRequest{
+		TriggerValue: time.Now().Unix(),
+		Set: &pbv.Version{
+			Key:    lockName,
+			Value:  time.Now().Add(time.Hour).Unix(),
+			Setter: s.Registry.Name,
+		},
+	})
+
+	if err != nil {
+		return time.Now(), false, err
+	}
+
+	return time.Unix(resp.Response.Value, 0), resp.Success, nil
+}
+
+func (s *GoServer) runLockTask(lockName string, t sFunc) (time.Time, error) {
+	var tracer *rpcStats
+	if s.RPCTracing {
+		for _, trace := range s.traces {
+			if trace.rpcName == "/"+t.key && trace.source == t.source {
+				tracer = trace
+			}
+		}
+
+		if tracer == nil {
+			tracer = &rpcStats{rpcName: "/" + t.key, count: 0, latencies: make([]time.Duration, 100), source: t.source}
+			s.traces = append(s.traces, tracer)
+		}
+	}
+	ctx, cancel := utils.BuildContext(lockName, lockName)
+	defer cancel()
+
+	ti := time.Now()
+	rt, err := t.lFun(ctx)
+	if s.RPCTracing {
+		tracer.latencies[tracer.count%100] = time.Now().Sub(ti)
+		tracer.count++
+		tracer.timeIn += time.Now().Sub(ti)
+		if err != nil {
+			tracer.errors++
+			tracer.lastError = fmt.Sprintf("%v", err)
+
+			if float64(tracer.errors)/float64(tracer.count) > 0.5 && tracer.count > 10 {
+				s.RaiseIssue(ctx, "Failing Task", fmt.Sprintf("%v is failing at %v [%v]", tracer.rpcName, float64(tracer.errors)/float64(tracer.count), tracer.lastError), false)
+			}
+		}
+	}
+
+	return rt, err
+}
+
+// Acquires a distributed lock for an hour
+func (s *GoServer) setLock(lockName string, ti time.Time) error {
+	conn, err := s.DialMaster("versionserver")
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	client := pbv.NewVersionServerClient(conn)
+	ctx, cancel := utils.BuildContext(lockName, lockName)
+	defer cancel()
+	_, err = client.SetVersion(ctx, &pbv.SetVersionRequest{
+		Set: &pbv.Version{
+			Key:    lockName,
+			Value:  ti.Unix(),
+			Setter: s.Registry.Name,
+		},
+	})
+	return err
+}
+
+func (s *GoServer) runLockingTask(t sFunc) {
+	lockName := s.Registry.Name + "-" + t.key
+	for true {
+		//Read the lock
+		ti, success, err := s.acquireLock(lockName)
+		if success {
+			// Run the task
+			ti, err = s.runLockTask(lockName, t)
+			if err == nil {
+				// Set the lock
+				err = s.setLock(lockName, ti)
+			}
+		}
+
+		// Wait until we can possibly acquire the lock
+		time.Sleep(time.Now().Sub(ti))
+	}
+}
+
 func (s *GoServer) run(t sFunc) {
 	time.Sleep(time.Minute)
+
+	if t.source == "locking" {
+		s.runLockingTask(t)
+	}
+
 	if t.d == 0 && !t.runOnce {
 		t.fun(context.Background())
 	} else {

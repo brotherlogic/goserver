@@ -39,6 +39,7 @@ type baseRegistrable struct{ Registerable }
 
 type sFunc struct {
 	fun     func(ctx context.Context) error
+	lFun    func(ctx context.Context) (time.Time, error)
 	d       time.Duration
 	nm      bool
 	key     string
