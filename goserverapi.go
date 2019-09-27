@@ -918,12 +918,12 @@ func (s *GoServer) Serve() error {
 
 //RaiseIssue raises an issue
 func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bool) {
-	s.AlertsFired++
-
 	if time.Now().Before(s.alertWait) {
 		s.AlertsSkipped++
 		return
 	}
+
+	s.AlertsFired++
 
 	go func() {
 		if !s.SkipLog || len(body) == 0 {
