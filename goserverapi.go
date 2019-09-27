@@ -776,7 +776,6 @@ func (s *GoServer) runLockingTask(t sFunc) {
 		}
 
 		// Wait until we can possibly acquire the lock
-		s.Log(fmt.Sprintf("Waiting until %v (%v, %v) -> %v", ti, success, err, ti.Sub(time.Now())))
 		time.Sleep(ti.Sub(time.Now()))
 	}
 }
