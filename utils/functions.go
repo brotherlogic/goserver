@@ -34,57 +34,57 @@ func generateContext(origin string, t time.Duration) (context.Context, context.C
 }
 
 //FuzzyMatch experimental fuzzy match
-func FuzzyMatch(matcher, matchee proto.Message) bool {
+func FuzzyMatch(matcher, matchee proto.Message) error {
 	in := reflect.ValueOf(matcher)
 	out := reflect.ValueOf(matchee)
 
 	return matchStruct(in.Elem(), out.Elem())
 }
 
-func matchStruct(in, out reflect.Value) bool {
+func matchStruct(in, out reflect.Value) error {
 	for i := 0; i < in.NumField(); i++ {
-		if !(doMatch(in.Field(i), out.Field(i))) {
-			return false
+		err := doMatch(in.Field(i), out.Field(i))
+		if err != nil {
+			return fmt.Errorf("Bad match in field %v: %v", i, err)
 		}
 	}
-	return true
+	return nil
 }
 
-func doMatch(in, out reflect.Value) bool {
+func doMatch(in, out reflect.Value) error {
 	switch in.Kind() {
 	case reflect.Int32, reflect.Int64, reflect.Uint32, reflect.Uint64:
 		if in.Int() != 0 && in.Int() != out.Int() {
-			return false
+			return fmt.Errorf("Mismatch in ints %v vs %v", in.Int(), out.Int())
 		}
 	case reflect.Float32, reflect.Float64:
 		if in.Float() != 0 && in.Float() != out.Float() {
-			return false
+			return fmt.Errorf("Mismatch in floats %v vs %v", in.Float(), out.Float())
 		}
 	case reflect.Bool:
 		if !in.Bool() || out.Bool() {
-			return true
+			return nil
 		}
-		return false
+		return fmt.Errorf("Mimstatch in bools")
 	case reflect.String:
 		if in.String() != "" && in.String() != out.String() {
-			return false
+			return fmt.Errorf("Mismatch in strings %v vs %v", in.String(), out.String())
 		}
 	case reflect.Ptr:
 		if in.IsNil() {
-			return true
+			return nil
 		}
 		return doMatch(in.Elem(), out.Elem())
 	case reflect.Struct:
 		return matchStruct(in, out)
 	case reflect.Slice:
 		// We ignore slices for now
-		return true
+		return nil
 	default:
-		fmt.Printf("Error in parsing fuzzy match: %v -> %v\n", in.Kind(), out)
-		return false
+		return fmt.Errorf("Error in parsing fuzzy match: %v -> %v\n", in.Kind(), out)
 	}
 
-	return true
+	return nil
 }
 
 // Resolve resolves out a server
