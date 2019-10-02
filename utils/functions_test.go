@@ -2,6 +2,7 @@ package utils
 
 import (
 	"testing"
+	"time"
 
 	pbgd "github.com/brotherlogic/godiscogs"
 	pb "github.com/brotherlogic/goserver/proto"
@@ -11,15 +12,15 @@ import (
 
 func BenchmarkBuildContext(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_, cancel := generateContext("blah")
+		_, cancel := generateContext("blah", time.Minute)
 		cancel()
 	}
 }
 
 func TestEmbed(t *testing.T) {
 	a := &pb.EmbeddedTest{Blah: &pb.Alive{Name: "blah"}}
-	if !FuzzyMatch(a, a) {
-		t.Errorf("Failure to match on embedded: %v", a)
+	if FuzzyMatch(a, a) != nil {
+		t.Errorf("Failure to match on embedded: %v", FuzzyMatch(a, a))
 	}
 }
 
@@ -27,8 +28,8 @@ func TestFuzzyMatchDetailed(t *testing.T) {
 	a := &pbrc.Record{Release: &pbgd.Release{Id: 1234, FolderId: 1, Title: "Bonkers"}}
 	b := &pbrc.Record{Release: &pbgd.Release{FolderId: 1}}
 
-	if !FuzzyMatch(b, a) {
-		t.Errorf("Failed to match on detailed: %v != %v", b, a)
+	if FuzzyMatch(b, a) != nil {
+		t.Errorf("Failed to match on detailed: %v != %v -> %v", b, a, FuzzyMatch(b, a))
 	}
 }
 
@@ -36,7 +37,7 @@ func TestFuzzyMatchDetailedEmpty(t *testing.T) {
 	a := &pbrc.Record{Release: &pbgd.Release{Id: 1234, FolderId: 1, Title: "Bonkers"}, Metadata: &pbrc.ReleaseMetadata{}}
 	b := &pbrc.Record{Metadata: &pbrc.ReleaseMetadata{}}
 
-	if !FuzzyMatch(b, a) {
+	if FuzzyMatch(b, a) != nil {
 		t.Errorf("Failed to match on detailed: %v != %v", b, a)
 	}
 }
@@ -58,7 +59,7 @@ func TestFuzzyMatch(t *testing.T) {
 
 	for _, tt := range testData {
 		actual := FuzzyMatch(tt.b, a)
-		if actual != tt.match {
+		if (tt.match && actual != nil) || (!tt.match && actual == nil) {
 			t.Errorf("Failure in match %v vs %v", tt.b, a)
 		}
 	}
