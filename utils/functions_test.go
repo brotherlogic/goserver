@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -27,6 +28,15 @@ func TestEmbed(t *testing.T) {
 func TestFuzzyMatchDetailed(t *testing.T) {
 	a := &pbrc.Record{Release: &pbgd.Release{Id: 1234, FolderId: 1, Title: "Bonkers"}}
 	b := &pbrc.Record{Release: &pbgd.Release{FolderId: 1}}
+
+	if FuzzyMatch(b, a) != nil {
+		t.Errorf("Failed to match on detailed: %v != %v -> %v", b, a, FuzzyMatch(b, a))
+	}
+}
+
+func TestFuzzyMatchWithNaN(t *testing.T) {
+	a := &pbrc.Record{Metadata: &pbrc.ReleaseMetadata{OverallScore: float32(math.NaN())}}
+	b := &pbrc.Record{Metadata: &pbrc.ReleaseMetadata{OverallScore: float32(math.NaN())}}
 
 	if FuzzyMatch(b, a) != nil {
 		t.Errorf("Failed to match on detailed: %v != %v -> %v", b, a, FuzzyMatch(b, a))
