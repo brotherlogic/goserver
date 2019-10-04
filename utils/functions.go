@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"reflect"
 	"time"
@@ -58,7 +59,7 @@ func doMatch(in, out reflect.Value) error {
 			return fmt.Errorf("Mismatch in ints %v vs %v", in.Int(), out.Int())
 		}
 	case reflect.Float32, reflect.Float64:
-		if in.Float() != 0 && in.Float() != out.Float() {
+		if in.Float() != 0 && in.Float() != out.Float() && !math.IsNaN(in.Float()) && !math.IsNaN(out.Float()) {
 			return fmt.Errorf("Mismatch in floats %v vs %v", in.Float(), out.Float())
 		}
 	case reflect.Bool:
