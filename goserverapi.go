@@ -732,7 +732,7 @@ func (s *GoServer) runLockTask(lockName string, t sFunc) (time.Time, error) {
 			tracer.lastError = fmt.Sprintf("%v", err)
 
 			if float64(tracer.errors)/float64(tracer.count) > 0.5 && tracer.count > 10 {
-				s.RaiseIssue(ctx, "Failing Task", fmt.Sprintf("%v is failing at %v [%v]", tracer.rpcName, float64(tracer.errors)/float64(tracer.count), tracer.lastError), false)
+				s.RaiseIssue(ctx, "Failing Locked Task", fmt.Sprintf("%v is failing at %v [%v]", tracer.rpcName, float64(tracer.errors)/float64(tracer.count), tracer.lastError), false)
 			}
 		}
 	}
@@ -827,11 +827,14 @@ func (s *GoServer) run(t sFunc) {
 					tracer.count++
 					tracer.timeIn += time.Now().Sub(ti)
 					if err != nil {
-						tracer.errors++
-						tracer.lastError = fmt.Sprintf("%v", err)
+						status := status.Convert(err)
+						if status.Code() != codes.Unavailable {
+							tracer.errors++
+							tracer.lastError = fmt.Sprintf("%v", err)
 
-						if float64(tracer.errors)/float64(tracer.count) > 0.5 && tracer.count > 10 {
-							s.RaiseIssue(ctx, "Failing Task", fmt.Sprintf("%v is failing at %v [%v]", tracer.rpcName, float64(tracer.errors)/float64(tracer.count), tracer.lastError), false)
+							if float64(tracer.errors)/float64(tracer.count) > 0.5 && tracer.count > 10 {
+								s.RaiseIssue(ctx, "Failing Task", fmt.Sprintf("%v is failing at %v [%v]", tracer.rpcName, float64(tracer.errors)/float64(tracer.count), tracer.lastError), false)
+							}
 						}
 					}
 				}
