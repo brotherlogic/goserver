@@ -3,6 +3,7 @@ package goserver
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -332,6 +333,47 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	s.activeRPCs[info.FullMethod]--
 	s.activeRPCsMutex.Unlock()
 	return h, err
+}
+
+func (s *GoServer) httpGet(ctx context.Context, url string) (string, error) {
+
+	var tracer *rpcStats
+	if s.RPCTracing {
+		for _, trace := range s.traces {
+			if trace.rpcName == "http_get" && trace.source == "client" {
+				tracer = trace
+			}
+		}
+
+		if tracer == nil {
+			tracer = &rpcStats{rpcName: "http_get", count: 0, latencies: make([]time.Duration, 100), source: "client"}
+			s.traces = append(s.traces, tracer)
+		}
+	}
+
+	t := time.Now()
+
+	response, err := http.Get(url)
+	defer response.Body.Close()
+	body, _ := ioutil.ReadAll(response.Body)
+
+	if response.StatusCode != 200 && response.StatusCode != 201 && response.StatusCode != 204 {
+		err = fmt.Errorf("Error reading url: %v and %v", response.StatusCode, body)
+	}
+
+	if s.RPCTracing {
+		tracer.latencies[tracer.count%100] = time.Now().Sub(t)
+		tracer.count++
+		tracer.timeIn += time.Now().Sub(t)
+
+		if err != nil {
+			tracer.errors++
+			tracer.lastError = fmt.Sprintf("%v", err)
+		}
+
+	}
+
+	return string(body), err
 }
 
 func (s *GoServer) suicideWatch() {
