@@ -310,7 +310,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 		if tracer.count > 100 {
 			seconds := time.Now().Sub(s.startup).Nanoseconds() / 1000000000
 			qps := float64(tracer.count) / float64(seconds)
-			if qps > float64(10) {
+			if tracer.timeIn/time.Now().Sub(s.startup) > time.Second {
 				peer, found := peer.FromContext(ctx)
 
 				if found {
