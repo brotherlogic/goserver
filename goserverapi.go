@@ -883,7 +883,7 @@ func (s *GoServer) run(t sFunc) {
 							tracer.lastError = fmt.Sprintf("%v", err)
 
 							if float64(tracer.errors)/float64(tracer.count) > 0.5 && tracer.count > 10 {
-								s.RaiseIssue(ctx, "Failing Task", fmt.Sprintf("%v is failing at %v [%v]", tracer.rpcName, float64(tracer.errors)/float64(tracer.count), tracer.lastError), false)
+								s.RaiseIssue(ctx, fmt.Sprintf("Failing Task for %v", s.Registry.Name), fmt.Sprintf("%v is failing at %v [%v]", tracer.rpcName, float64(tracer.errors)/float64(tracer.count), tracer.lastError), false)
 							}
 						}
 					}
