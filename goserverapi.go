@@ -335,7 +335,8 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	return h, err
 }
 
-func (s *GoServer) httpGet(ctx context.Context, url string) (string, error) {
+// HttpGet gets an http resource
+func (s *GoServer) HttpGet(ctx context.Context, url string) (string, error) {
 
 	var tracer *rpcStats
 	if s.RPCTracing {
