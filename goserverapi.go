@@ -836,6 +836,10 @@ func (s *GoServer) run(t sFunc) {
 			err := s.validateMaster()
 			if err == nil || t.nm {
 				name := fmt.Sprintf("%v-Repeat-(%v)-%v", s.Registry.Name, t.key, t.d)
+				s.activeRPCsMutex.Lock()
+				s.activeRPCs[name]++
+				s.activeRPCsMutex.Unlock()
+
 				var ctx context.Context
 				var cancel context.CancelFunc
 				if t.noTrace {
@@ -864,6 +868,10 @@ func (s *GoServer) run(t sFunc) {
 
 				ti := time.Now()
 				err := t.fun(ctx)
+				s.activeRPCsMutex.Lock()
+				s.activeRPCs[name]--
+				s.activeRPCsMutex.Unlock()
+
 				if s.RPCTracing {
 					tracer.latencies[tracer.count%100] = time.Now().Sub(ti)
 					tracer.count++
