@@ -367,7 +367,7 @@ func (s *GoServer) HTTPGet(ctx context.Context, url string, useragent string) (s
 		}
 	}
 
-	if response.StatusCode != 200 && response.StatusCode != 201 && response.StatusCode != 204 {
+	if response.StatusCode != 200 && response.StatusCode != 201 && response.StatusCode != 204 && response.StatusCode != 0 {
 		err = fmt.Errorf("Error reading url: %v and %v", response.StatusCode, string(body))
 	}
 
