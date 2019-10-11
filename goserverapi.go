@@ -356,6 +356,7 @@ func (s *GoServer) HTTPGet(ctx context.Context, url string, useragent string) (s
 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
+	req.Header.Set("User-Agent", useragent)
 	var response http.Response
 	body := []byte{}
 	if err == nil {
