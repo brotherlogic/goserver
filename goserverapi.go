@@ -336,7 +336,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 }
 
 // HTTPGet gets an http resource
-func (s *GoServer) HTTPGet(ctx context.Context, url string) (string, error) {
+func (s *GoServer) HTTPGet(ctx context.Context, url string, useragent string) (string, error) {
 
 	var tracer *rpcStats
 	if s.RPCTracing {
@@ -354,9 +354,17 @@ func (s *GoServer) HTTPGet(ctx context.Context, url string) (string, error) {
 
 	t := time.Now()
 
-	response, err := http.Get(url)
-	defer response.Body.Close()
-	body, _ := ioutil.ReadAll(response.Body)
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	var response http.Response
+	body := []byte{}
+	if err == nil {
+		response, err := client.Do(req)
+		if err == nil {
+			defer response.Body.Close()
+			body, _ = ioutil.ReadAll(response.Body)
+		}
+	}
 
 	if response.StatusCode != 200 && response.StatusCode != 201 && response.StatusCode != 204 {
 		err = fmt.Errorf("Error reading url: %v and %v", response.StatusCode, string(body))
