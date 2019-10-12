@@ -316,7 +316,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 				if found {
 					s.Log(fmt.Sprintf("High: (%+v), %v", peer.Addr, ctx))
 				}
-				s.RaiseIssue(ctx, "Over Active Service", fmt.Sprintf("rpc_%v%v is busy -> %v QPS", tracer.source, tracer.rpcName, qps), false)
+				s.RaiseIssue(ctx, "Over Active Service", fmt.Sprintf("rpc_%v%v is busy -> %v QPS / %v QTie", tracer.source, tracer.rpcName, qps, tracer.timeIn/time.Now().Sub(s.startup)), false)
 			}
 		}
 
