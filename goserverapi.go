@@ -677,7 +677,8 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 
 // Reregister this server
 func (s *GoServer) Reregister(ctx context.Context, in *pbl.ReregisterRequest) (*pbl.ReregisterResponse, error) {
-	return &pbl.ReregisterResponse{}, nil
+	err := s.RegisterServer(s.Registry.Name, s.Registry.ExternalPort)
+	return &pbl.ReregisterResponse{}, err
 }
 
 // Shutdown brings the server down
