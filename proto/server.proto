@@ -51,9 +51,13 @@ message ShutdownRequest{}
 
 message ShutdownResponse{}
 
+message ReregisterRequest{}
+message ReregisterResponse{}
+
 service goserverService {
   rpc IsAlive (Alive) returns (Alive) {};
   rpc Mote(MoteRequest) returns (Empty) {};
   rpc State(Empty) returns (ServerState) {};
   rpc Shutdown(ShutdownRequest) returns (ShutdownResponse) {};
+  rpc Reregister(ReregisterRequest) returns (ReregisterResponse) {};
 }
