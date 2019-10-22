@@ -675,6 +675,11 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	return &pbl.ServerState{States: states}, nil
 }
 
+// Reregister this server
+func (s *GoServer) Reregister(ctx context.Context, in *pbl.ReregisterRequest) (*pbl.ReregisterResponse, error) {
+	return &pbl.ReregisterResponse{}, nil
+}
+
 // Shutdown brings the server down
 func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.ShutdownResponse, error) {
 	s.LameDuck = true
