@@ -995,7 +995,7 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bo
 	s.AlertsFired++
 
 	go func() {
-		if !s.SkipLog || len(body) == 0 {
+		if !s.SkipIssue || len(body) == 0 {
 			ip, port, _ := utils.Resolve("githubcard", s.Registry.Name+"-ri")
 			if port > 0 {
 				conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
