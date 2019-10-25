@@ -114,6 +114,7 @@ type GoServer struct {
 	latestMem               int
 	activeRPCs              map[string]int
 	activeRPCsMutex         *sync.Mutex
+	SkipIssue               bool
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
