@@ -179,7 +179,7 @@ func (s *GoServer) prepareServer(register bool) {
 
 	// Enable RPC tracing
 	s.RPCTracing = true
-	s.SendTrace = false
+	s.SendTrace = true
 
 	s.runTimes = make(map[string]time.Time)
 	s.runTimesMutex = &sync.Mutex{}
