@@ -65,9 +65,9 @@ func (s *GoServer) trace(c context.Context, name string) context.Context {
 	return metadata.NewOutgoingContext(c, md)
 }
 
-func (s *GoServer) mark(c context.Context, t time.Duration) {
+func (s *GoServer) mark(c context.Context, t time.Duration, m string) {
 	go func() {
-		s.sendMark(c, t)
+		s.sendMark(c, t, m)
 	}()
 }
 
@@ -132,7 +132,7 @@ func (s *GoServer) sendTrace(c context.Context, name string, t time.Time) error 
 	return fmt.Errorf("Unable to trace - context: %v", c)
 }
 
-func (s *GoServer) sendMark(c context.Context, t time.Duration) error {
+func (s *GoServer) sendMark(c context.Context, t time.Duration, message string) error {
 	md, found := metadata.FromIncomingContext(c)
 	if found {
 		if _, ok := md["trace-id"]; ok {
@@ -151,7 +151,7 @@ func (s *GoServer) sendMark(c context.Context, t time.Duration) error {
 					defer cancel()
 					client := pbt.NewTracerServiceClient(conn)
 
-					_, err := client.Mark(ctx, &pbt.MarkRequest{LongRunningId: id, RunningTimeInMs: t.Nanoseconds() / 1000000, Origin: s.Registry.Name})
+					_, err := client.Mark(ctx, &pbt.MarkRequest{LongRunningId: id, RunningTimeInMs: t.Nanoseconds() / 1000000, Origin: s.Registry.Name, RequestMessage: message})
 					return err
 				}
 			}
@@ -304,7 +304,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 		if time.Now().Sub(t) > time.Second*5 {
 			s.Log(fmt.Sprintf("Long Call %v, %v -> %v", info.FullMethod, time.Now(), t))
 			s.marks++
-			s.mark(ctx, time.Now().Sub(t))
+			s.mark(ctx, time.Now().Sub(t), fmt.Sprintf("%v", req))
 		}
 
 		if tracer.count > 100 {
