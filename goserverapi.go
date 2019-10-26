@@ -689,9 +689,26 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 		err := s.Register.Shutdown(ctx)
 		if err != nil {
 			s.Log(fmt.Sprintf("Shutdown cancelled: %v", err))
-		} else {
+			return
+		}
+
+		// Unregister us from discovery
+		conn, err := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
+		if err != nil {
+			s.Log(fmt.Sprintf("Unable to shutdown: %v", err))
+			return
+		}
+
+		registry := pb.NewDiscoveryServiceV2Client(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		_, err = registry.Unregister(ctx, &pb.UnregisterRequest{Service: s.Registry})
+		if err == nil {
 			os.Exit(1)
 		}
+
+		s.Log(fmt.Sprintf("Cannot shutdown: %v", err))
 	}()
 	return &pbl.ShutdownResponse{}, nil
 }
