@@ -247,7 +247,7 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 
 func (s *GoServer) getTrace(name, source string) *rpcStats {
 	for _, trace := range s.traces {
-		if trace.rpcName == name && source == "server" {
+		if trace.rpcName == name && source == source {
 			return trace
 		}
 	}
