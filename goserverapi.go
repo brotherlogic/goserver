@@ -220,16 +220,7 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 
 	var tracer *rpcStats
 	if s.RPCTracing {
-		for _, trace := range s.traces {
-			if trace.rpcName == method && trace.source == "client" {
-				tracer = trace
-			}
-		}
-
-		if tracer == nil {
-			tracer = &rpcStats{rpcName: method, count: 0, latencies: make([]time.Duration, 100), source: "client"}
-			s.traces = append(s.traces, tracer)
-		}
+		tracer = s.getTrace(method, "client")
 	}
 
 	// Calls the handler
@@ -245,19 +236,56 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	}
 
 	if s.RPCTracing {
-		tracer.latencies[tracer.count%100] = time.Now().Sub(t)
-		tracer.count++
-		tracer.timeIn += time.Now().Sub(t)
-		if err != nil {
-			tracer.errors++
-			tracer.lastError = fmt.Sprintf("%v", err)
-		}
+		s.recordTrace(ctx, tracer, method, time.Now().Sub(t), err, req)
 	}
 
 	s.activeRPCsMutex.Lock()
 	s.activeRPCs[method]--
 	s.activeRPCsMutex.Unlock()
 	return err
+}
+
+func (s *GoServer) getTrace(name, source string) *rpcStats {
+	for _, trace := range s.traces {
+		if trace.rpcName == name && source == "server" {
+			return trace
+		}
+	}
+
+	tracer := &rpcStats{rpcName: name, count: 0, latencies: make([]time.Duration, 100), source: source}
+	s.traces = append(s.traces, tracer)
+	return tracer
+}
+
+func (s *GoServer) recordTrace(ctx context.Context, tracer *rpcStats, name string, timeTaken time.Duration, err error, req interface{}) {
+	tracer.latencies[tracer.count%100] = timeTaken
+	tracer.count++
+	tracer.timeIn += timeTaken
+
+	if err != nil {
+		tracer.errors++
+		tracer.lastError = fmt.Sprintf("%v", err)
+	}
+
+	// Raise an issue on a long call
+	if timeTaken > time.Second*5 {
+		s.Log(fmt.Sprintf("Long Call %v, %v", name, timeTaken))
+		s.marks++
+		s.mark(ctx, timeTaken, fmt.Sprintf("%v", req))
+	}
+
+	if tracer.count > 100 {
+		seconds := time.Now().Sub(s.startup).Nanoseconds() / 1000000000
+		qps := float64(tracer.count) / float64(seconds)
+		if tracer.timeIn/time.Now().Sub(s.startup) > time.Second {
+			peer, found := peer.FromContext(ctx)
+
+			if found {
+				s.Log(fmt.Sprintf("High: (%+v), %v", peer.Addr, ctx))
+			}
+			s.RaiseIssue(ctx, "Over Active Service", fmt.Sprintf("rpc_%v%v is busy -> %v QPS / %v QTie", tracer.source, tracer.rpcName, qps, tracer.timeIn/time.Now().Sub(s.startup)), false)
+		}
+	}
 }
 
 func (s *GoServer) serverInterceptor(ctx context.Context,
@@ -271,16 +299,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 
 	var tracer *rpcStats
 	if s.RPCTracing {
-		for _, trace := range s.traces {
-			if trace.rpcName == info.FullMethod && trace.source == "server" {
-				tracer = trace
-			}
-		}
-
-		if tracer == nil {
-			tracer = &rpcStats{rpcName: info.FullMethod, count: 0, latencies: make([]time.Duration, 100), source: "server"}
-			s.traces = append(s.traces, tracer)
-		}
+		tracer = s.getTrace(info.FullMethod, "server")
 	}
 
 	// Calls the handler
@@ -291,42 +310,12 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	h, err := handler(ctx, req)
 
 	if s.RPCTracing {
-		tracer.latencies[tracer.count%100] = time.Now().Sub(t)
-		tracer.count++
-		tracer.timeIn += time.Now().Sub(t)
-
-		if err != nil {
-			tracer.errors++
-			tracer.lastError = fmt.Sprintf("%v", err)
-		}
-
-		// Raise an issue on a long call
-		if time.Now().Sub(t) > time.Second*5 {
-			s.Log(fmt.Sprintf("Long Call %v, %v -> %v", info.FullMethod, time.Now(), t))
-			s.marks++
-			s.mark(ctx, time.Now().Sub(t), fmt.Sprintf("%v", req))
-		}
-
-		if tracer.count > 100 {
-			seconds := time.Now().Sub(s.startup).Nanoseconds() / 1000000000
-			qps := float64(tracer.count) / float64(seconds)
-			if tracer.timeIn/time.Now().Sub(s.startup) > time.Second {
-				peer, found := peer.FromContext(ctx)
-
-				if found {
-					s.Log(fmt.Sprintf("High: (%+v), %v", peer.Addr, ctx))
-				}
-				s.RaiseIssue(ctx, "Over Active Service", fmt.Sprintf("rpc_%v%v is busy -> %v QPS / %v QTie", tracer.source, tracer.rpcName, qps, tracer.timeIn/time.Now().Sub(s.startup)), false)
-			}
-		}
-
+		s.recordTrace(ctx, tracer, info.FullMethod, time.Now().Sub(t), err, req)
 	}
 
 	if err == nil {
-		if !strings.HasSuffix(info.FullMethod, "State") {
-			if proto.Size(h.(proto.Message)) > 1024*1024 {
-				s.RaiseIssue(ctx, "Large Response", fmt.Sprintf("%v has produced a large response from %v (%vMb) -> %v", info.FullMethod, req, proto.Size(h.(proto.Message))/(1024*1024), ctx), false)
-			}
+		if proto.Size(h.(proto.Message)) > 1024*1024 {
+			s.RaiseIssue(ctx, "Large Response", fmt.Sprintf("%v has produced a large response from %v (%vMb) -> %v", info.FullMethod, req, proto.Size(h.(proto.Message))/(1024*1024), ctx), false)
 		}
 	}
 	s.activeRPCsMutex.Lock()
@@ -340,16 +329,7 @@ func (s *GoServer) HTTPGet(ctx context.Context, url string, useragent string) (s
 
 	var tracer *rpcStats
 	if s.RPCTracing {
-		for _, trace := range s.traces {
-			if trace.rpcName == "http_get" && trace.source == "client" {
-				tracer = trace
-			}
-		}
-
-		if tracer == nil {
-			tracer = &rpcStats{rpcName: "http_get", count: 0, latencies: make([]time.Duration, 100), source: "client"}
-			s.traces = append(s.traces, tracer)
-		}
+		tracer = s.getTrace("http_get", "client")
 	}
 
 	t := time.Now()
@@ -372,15 +352,7 @@ func (s *GoServer) HTTPGet(ctx context.Context, url string, useragent string) (s
 	}
 
 	if s.RPCTracing {
-		tracer.latencies[tracer.count%100] = time.Now().Sub(t)
-		tracer.count++
-		tracer.timeIn += time.Now().Sub(t)
-
-		if err != nil {
-			tracer.errors++
-			tracer.lastError = fmt.Sprintf("%v", err)
-		}
-
+		s.recordTrace(ctx, tracer, "http_get", time.Now().Sub(t), err, url)
 	}
 
 	return string(body), err
@@ -782,34 +754,16 @@ func (s *GoServer) acquireLock(lockName string) (time.Time, bool, error) {
 func (s *GoServer) runLockTask(lockName string, t sFunc) (time.Time, error) {
 	var tracer *rpcStats
 	if s.RPCTracing {
-		for _, trace := range s.traces {
-			if trace.rpcName == "/"+t.key && trace.source == t.source {
-				tracer = trace
-			}
-		}
-
-		if tracer == nil {
-			tracer = &rpcStats{rpcName: "/" + t.key, count: 0, latencies: make([]time.Duration, 100), source: t.source}
-			s.traces = append(s.traces, tracer)
-		}
+		tracer = s.getTrace("/"+t.key, t.source)
 	}
+
 	ctx, cancel := utils.BuildContext(lockName, lockName)
 	defer cancel()
 
 	ti := time.Now()
 	rt, err := t.lFun(ctx)
 	if s.RPCTracing {
-		tracer.latencies[tracer.count%100] = time.Now().Sub(ti)
-		tracer.count++
-		tracer.timeIn += time.Now().Sub(ti)
-		if err != nil {
-			tracer.errors++
-			tracer.lastError = fmt.Sprintf("%v", err)
-
-			if float64(tracer.errors)/float64(tracer.count) > 0.5 && tracer.count > 10 {
-				s.RaiseIssue(ctx, "Failing Locked Task", fmt.Sprintf("%v is failing at %v [%v]", tracer.rpcName, float64(tracer.errors)/float64(tracer.count), tracer.lastError), false)
-			}
-		}
+		s.recordTrace(ctx, tracer, "/"+t.key, time.Now().Sub(ti), err, "")
 	}
 
 	return rt, err
@@ -887,16 +841,7 @@ func (s *GoServer) run(t sFunc) {
 
 				var tracer *rpcStats
 				if s.RPCTracing {
-					for _, trace := range s.traces {
-						if trace.rpcName == "/"+t.key && trace.source == t.source {
-							tracer = trace
-						}
-					}
-
-					if tracer == nil {
-						tracer = &rpcStats{rpcName: "/" + t.key, count: 0, latencies: make([]time.Duration, 100), source: t.source}
-						s.traces = append(s.traces, tracer)
-					}
+					tracer = s.getTrace("/"+t.key, t.source)
 				}
 
 				ti := time.Now()
@@ -906,20 +851,7 @@ func (s *GoServer) run(t sFunc) {
 				s.activeRPCsMutex.Unlock()
 
 				if s.RPCTracing {
-					tracer.latencies[tracer.count%100] = time.Now().Sub(ti)
-					tracer.count++
-					tracer.timeIn += time.Now().Sub(ti)
-					if err != nil {
-						status := status.Convert(err)
-						if status.Code() != codes.Unavailable {
-							tracer.errors++
-							tracer.lastError = fmt.Sprintf("%v", err)
-
-							if float64(tracer.errors)/float64(tracer.count) > 0.5 && tracer.count > 10 {
-								s.RaiseIssue(ctx, fmt.Sprintf("Failing Task for %v", s.Registry.Name), fmt.Sprintf("%v is failing at %v [%v]", tracer.rpcName, float64(tracer.errors)/float64(tracer.count), tracer.lastError), false)
-							}
-						}
-					}
+					s.recordTrace(ctx, tracer, "/"+t.key, time.Now().Sub(ti), err, "")
 				}
 			}
 			time.Sleep(t.d)
