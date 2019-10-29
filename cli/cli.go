@@ -12,6 +12,7 @@ import (
 
 	pb "github.com/brotherlogic/goserver/proto"
 	"github.com/brotherlogic/goserver/utils"
+	"github.com/golang/protobuf/proto"
 	_ "google.golang.org/grpc/encoding/gzip"
 )
 
@@ -82,7 +83,6 @@ func main() {
 		}
 	} else if len(*name) > 0 {
 		ip, port, err := utils.Resolve(*name, "goserver-cliname")
-		fmt.Printf("DIAL: %v - %v\n", ip, port)
 		conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
 		if err != nil {
 			log.Fatalf("Unable to reach server %v:%v -> %v", ip, port, err)
@@ -94,6 +94,7 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
 		state, _ := check.State(ctx, &pb.Empty{})
+		fmt.Printf("DIAL: %v - %v [%v]\n", ip, port, proto.Size(state))
 		uptime := getUptime(state.GetStates())
 		for _, st := range state.GetStates() {
 			state := buildState(st, uptime)
