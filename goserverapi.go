@@ -247,8 +247,10 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 
 func (s *GoServer) getTrace(name, source string) *rpcStats {
 	for _, trace := range s.traces {
-		if trace.rpcName == name && source == source {
-			return trace
+		if trace != nil {
+			if trace.rpcName == name && source == source {
+				return trace
+			}
 		}
 	}
 
@@ -571,6 +573,13 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states := s.Register.GetState()
 	s.activeRPCsMutex.Lock()
 	defer s.activeRPCsMutex.Unlock()
+	nilTraces := int64(0)
+	for _, t := range s.traces {
+		if t == nil {
+			nilTraces++
+		}
+	}
+	states = append(states, &pbl.State{Key: "nil_traces", Value: nilTraces})
 	states = append(states, &pbl.State{Key: "alert_wait", TimeValue: s.alertWait.Unix()})
 	states = append(states, &pbl.State{Key: "active_rpcs", Text: fmt.Sprintf("%v", s.activeRPCs)})
 	states = append(states, &pbl.State{Key: "memory", Text: fmt.Sprintf("%v/%v", s.latestMem, s.MemCap)})
