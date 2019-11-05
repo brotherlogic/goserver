@@ -579,6 +579,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 			nilTraces++
 		}
 	}
+	states = append(states, &pbl.State{Key: "reg", Text: fmt.Sprintf("%v", s.Registry)})
 	states = append(states, &pbl.State{Key: "nil_traces", Value: nilTraces})
 	states = append(states, &pbl.State{Key: "alert_wait", TimeValue: s.alertWait.Unix()})
 	states = append(states, &pbl.State{Key: "active_rpcs", Text: fmt.Sprintf("%v", s.activeRPCs)})
