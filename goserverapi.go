@@ -854,15 +854,11 @@ func (s *GoServer) run(t sFunc) {
 					tracer = s.getTrace("/"+t.key, t.source)
 				}
 
-				ti := time.Now()
-				err := t.fun(ctx)
+				s.runFunc(ctx, tracer, t)
 				s.activeRPCsMutex.Lock()
 				s.activeRPCs[name]--
 				s.activeRPCsMutex.Unlock()
 
-				if s.RPCTracing {
-					s.recordTrace(ctx, tracer, "/"+t.key, time.Now().Sub(ti), err, "")
-				}
 			}
 			time.Sleep(t.d)
 			if t.runOnce {
@@ -870,6 +866,25 @@ func (s *GoServer) run(t sFunc) {
 			}
 		}
 	}
+}
+
+func (s *GoServer) runFunc(ctx context.Context, tracer *rpcStats, t sFunc) {
+	ti := time.Now()
+	var err error
+
+	defer func() {
+		if s.RPCTracing {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("%v", r)
+				s.recordTrace(ctx, tracer, "/"+t.key, time.Now().Sub(ti), err, "")
+			} else {
+				s.recordTrace(ctx, tracer, "/"+t.key, time.Now().Sub(ti), err, "")
+			}
+		}
+
+	}()
+	err = t.fun(ctx)
+
 }
 
 //Read a protobuf

@@ -83,6 +83,9 @@ func main() {
 		}
 	} else if len(*name) > 0 {
 		ip, port, err := utils.Resolve(*name, "goserver-cliname")
+		if err != nil {
+			log.Fatalf("Unable to resolve %v -> %v", *name, err)
+		}
 		conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
 		if err != nil {
 			log.Fatalf("Unable to reach server %v:%v -> %v", ip, port, err)
