@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"runtime/pprof"
 	"sort"
 	"strconv"
@@ -876,7 +877,7 @@ func (s *GoServer) runFunc(ctx context.Context, tracer *rpcStats, t sFunc) {
 		if s.RPCTracing {
 			if r := recover(); r != nil {
 				err = fmt.Errorf("%v", r)
-				s.Log(fmt.Sprintf("Func has crashed: %+v", err))
+				s.SendCrash(ctx, fmt.Sprintf("%v", string(debug.Stack())), pbbs.Crash_PANIC)
 				s.recordTrace(ctx, tracer, "/"+t.key, time.Now().Sub(ti), err, "")
 			} else {
 				s.recordTrace(ctx, tracer, "/"+t.key, time.Now().Sub(ti), err, "")
