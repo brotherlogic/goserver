@@ -876,7 +876,7 @@ func (s *GoServer) runFunc(ctx context.Context, tracer *rpcStats, t sFunc) {
 		if s.RPCTracing {
 			if r := recover(); r != nil {
 				err = fmt.Errorf("%v", r)
-				s.Log(fmt.Sprintf("Func has crashed: %v", err))
+				s.Log(fmt.Sprintf("Func has crashed: %+v", err))
 				s.recordTrace(ctx, tracer, "/"+t.key, time.Now().Sub(ti), err, "")
 			} else {
 				s.recordTrace(ctx, tracer, "/"+t.key, time.Now().Sub(ti), err, "")
