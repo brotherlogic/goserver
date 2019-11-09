@@ -667,6 +667,7 @@ func (s *GoServer) Reregister(ctx context.Context, in *pbl.ReregisterRequest) (*
 // Shutdown brings the server down
 func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.ShutdownResponse, error) {
 	s.LameDuck = true
+	fmt.Printf("Shutting down %v, %v", in, ctx)
 	go func() {
 		time.Sleep(time.Minute)
 		err := s.Register.Shutdown(ctx)
