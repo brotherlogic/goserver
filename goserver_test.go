@@ -155,12 +155,14 @@ func run(ctx context.Context) error {
 
 func TestRegister(t *testing.T) {
 	server := GoServer{}
+	server.SkipLog = true
 	server.PrepServer()
 	server.RegisterRepeatingTask(run, "test_task", time.Second)
 }
 
 func TestNoRegister(t *testing.T) {
 	server := GoServer{}
+	server.SkipLog = true
 	server.PrepServerNoRegister(int32(50055))
 }
 
@@ -270,6 +272,7 @@ func TestBadRegister(t *testing.T) {
 
 func TestLameDuckRegister(t *testing.T) {
 	server := GoServer{}
+	server.SkipLog = true
 	server.PrepServer()
 
 	server.Registry = &pb.RegistryEntry{Port: 23, Master: true}
@@ -368,6 +371,7 @@ func (s TestServer) GetState() []*pbg.State {
 func InitTestServer() TestServer {
 	s := TestServer{&GoServer{}, false}
 	s.Register = s
+	s.SkipLog = true
 	s.PrepServer()
 	s.monitorBuilder = passingMonitorBuilder{}
 	s.dialler = passingDialler{}
@@ -375,12 +379,14 @@ func InitTestServer() TestServer {
 	s.clientBuilder = passingBuilder{}
 	s.Registry = &pb.RegistryEntry{Name: "testserver"}
 	log.Printf("Set heartbeat time")
+	s.SkipLog = true
 	return s
 }
 
 func InitTestServerWithOptions(failMote bool) TestServer {
 	s := TestServer{&GoServer{}, failMote}
 	s.Register = s
+	s.SkipLog = true
 	s.PrepServer()
 	s.monitorBuilder = passingMonitorBuilder{}
 	s.dialler = passingDialler{}
