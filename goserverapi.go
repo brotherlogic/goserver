@@ -264,7 +264,9 @@ func (s *GoServer) recordTrace(ctx context.Context, tracer *rpcStats, name strin
 	tracer.latencies[tracer.count%100] = timeTaken
 	tracer.count++
 	tracer.timeIn += timeTaken
-	tracer.origin = fmt.Sprintf("%v", ctx)
+	if peer, ok := peer.FromContext(ctx); ok {
+		tracer.origin = fmt.Sprintf("%+v", peer)
+	}
 
 	if err != nil {
 		tracer.errors++
