@@ -175,6 +175,7 @@ func (s *GoServer) prepareServer(register bool) {
 	// Set the file details
 	ex, _ := os.Executable()
 	data, _ := ioutil.ReadFile(ex)
+	s.Log(fmt.Sprintf("Read %v from %v", md5.Sum(data), ex))
 	s.RunningFile = fmt.Sprintf("%x", md5.Sum(data))
 
 	// Enable RPC tracing
