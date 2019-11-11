@@ -312,12 +312,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	if s.SendTrace {
 		ctx = s.trace(ctx, info.FullMethod)
 	}
-	t := time.Now()
-	h, err := handler(ctx, req)
-
-	if s.RPCTracing {
-		s.recordTrace(ctx, tracer, info.FullMethod, time.Now().Sub(t), err, req)
-	}
+	h, err := s.runHandle(ctx, handler, req, tracer, info.FullMethod)
 
 	if err == nil {
 		if proto.Size(h.(proto.Message)) > 1024*1024 {
@@ -328,6 +323,26 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	s.activeRPCs[info.FullMethod]--
 	s.activeRPCsMutex.Unlock()
 	return h, err
+}
+
+func (s *GoServer) runHandle(ctx context.Context, handler grpc.UnaryHandler, req interface{}, tracer *rpcStats, name string) (interface{}, error) {
+	ti := time.Now()
+	var err error
+
+	defer func() {
+		if s.RPCTracing {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("%v", r)
+				s.SendCrash(ctx, fmt.Sprintf("%v", string(debug.Stack())), pbbs.Crash_PANIC)
+				s.recordTrace(ctx, tracer, name, time.Now().Sub(ti), err, "")
+			} else {
+				s.recordTrace(ctx, tracer, name, time.Now().Sub(ti), err, "")
+			}
+		}
+
+	}()
+	return handler(ctx, req)
+
 }
 
 // HTTPGet gets an http resource
@@ -892,7 +907,6 @@ func (s *GoServer) runFunc(ctx context.Context, tracer *rpcStats, t sFunc) {
 
 	}()
 	err = t.fun(ctx)
-
 }
 
 //Read a protobuf
