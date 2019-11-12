@@ -312,7 +312,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	}
 	h, err := s.runHandle(ctx, handler, req, tracer, info.FullMethod)
 
-	if err == nil {
+	if err == nil && h != nil {
 		if proto.Size(h.(proto.Message)) > 1024*1024 {
 			s.RaiseIssue(ctx, "Large Response", fmt.Sprintf("%v has produced a large response from %v (%vMb) -> %v", info.FullMethod, req, proto.Size(h.(proto.Message))/(1024*1024), ctx), false)
 		}
