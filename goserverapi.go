@@ -1109,7 +1109,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 		if err != nil {
 			hostname = "Server-" + IP
 		}
-		entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname, TimeToClean: 5000}
+		entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname, TimeToClean: 5000, Version: pb.RegistryEntry_V2}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
 		t := time.Now()
