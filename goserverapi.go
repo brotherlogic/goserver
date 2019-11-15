@@ -96,6 +96,30 @@ func (s *GoServer) validateMaster() error {
 	return nil
 }
 
+func (s *GoServer) masterElect(ctx context.Context) error {
+	if s.Registry.Version == pb.RegistryEntry_V1 {
+		return fmt.Errorf("V1 does not perform master election")
+	}
+
+	_, err := s.Mote(ctx, &pbl.MoteRequest{Master: true})
+	if err != nil {
+		return err
+	}
+
+	conn, err := s.DialMaster("discover")
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	client := pb.NewDiscoveryServiceV2Client(conn)
+	resp, err := client.RegisterV2(ctx, &pb.RegisterRequest{Service: s.Registry, MasterElect: true})
+	if err == nil {
+		s.Registry = resp.GetService()
+	}
+	return err
+}
+
 func (s *GoServer) sendTrace(c context.Context, name string, t time.Time) error {
 	md, found := metadata.FromIncomingContext(c)
 	if found {
@@ -326,6 +350,19 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 func (s *GoServer) runHandle(ctx context.Context, handler grpc.UnaryHandler, req interface{}, tracer *rpcStats, name string) (interface{}, error) {
 	ti := time.Now()
 	var err error
+
+	// Immediate return without trace if we're not master and we expect to be so
+	// Or if we expect to be able to master, try electing to be master
+	if !s.Registry.IgnoresMaster && !s.Registry.Master {
+		if s.Registry.Version == pb.RegistryEntry_V1 {
+			err = fmt.Errorf("Cannot handle this request - we are not master")
+		} else {
+			err = s.masterElect(ctx)
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	defer func() {
 		if s.RPCTracing {
@@ -722,8 +759,8 @@ func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, e
 	// We can't mote to master if we're lame ducking
 	err := s.Register.Mote(ctx, in.Master && !s.LameDuck)
 
-	// If we were able to mote then we should inform discovery
-	if err == nil {
+	// If we were able to mote then we should inform discovery if we're running in V1
+	if err == nil && s.Registry.Version == pb.RegistryEntry_V1 {
 		s.Registry.Master = in.Master
 		s.reregister(s.dialler, s.clientBuilder)
 	}
