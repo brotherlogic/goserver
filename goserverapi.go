@@ -356,7 +356,7 @@ func (s *GoServer) runHandle(ctx context.Context, handler grpc.UnaryHandler, req
 	if !s.Registry.IgnoresMaster && !s.Registry.Master {
 		if s.Registry.Version == pb.RegistryEntry_V1 && !strings.HasPrefix(name, "/goserver") {
 			err = fmt.Errorf("Cannot handle %v - we are not master", name)
-		} else {
+		} else if s.Registry.Version == pb.RegistryEntry_V2 {
 			err = s.masterElect(ctx)
 		}
 		if err != nil {
