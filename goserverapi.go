@@ -523,7 +523,7 @@ func (s *GoServer) RegisterServerIgnore(servername string, external bool, ignore
 	port := int32(0)
 	for err != nil && s.registerAttempts < 10 {
 		s.registerAttempts++
-		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external, false)
+		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external, false, ignore)
 		s.Port = port
 	}
 	return err
@@ -550,7 +550,7 @@ func (s *GoServer) RegisterServerV2(servername string, external bool) error {
 	port := int32(0)
 	for err != nil {
 		s.registerAttempts++
-		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external, true)
+		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external, true, false)
 		s.Port = port
 	}
 	return err
@@ -774,8 +774,8 @@ func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, e
 	return &pbl.Empty{}, err
 }
 
-func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool, v2 bool) (int32, error) {
-	return s.registerServer(IP, servername, external, v2, grpcDialler{}, mainBuilder{}, osHostGetter{})
+func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool, v2 bool, im bool) (int32, error) {
+	return s.registerServer(IP, servername, external, v2, im, grpcDialler{}, mainBuilder{}, osHostGetter{})
 }
 
 //Save a protobuf
@@ -1138,7 +1138,7 @@ func (s *GoServer) PLog(message string, level pbd.LogLevel) {
 }
 
 // RegisterServer Registers a server with the system and gets the port number it should use
-func (s *GoServer) registerServer(IP string, servername string, external bool, v2 bool, dialler dialler, builder clientBuilder, getter hostGetter) (int32, error) {
+func (s *GoServer) registerServer(IP string, servername string, external bool, v2 bool, im bool, dialler dialler, builder clientBuilder, getter hostGetter) (int32, error) {
 	conn, err := dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
 	if err != nil {
 		return -1, err
@@ -1150,7 +1150,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 		if err != nil {
 			hostname = "Server-" + IP
 		}
-		entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname, TimeToClean: 5000, Version: pb.RegistryEntry_V2}
+		entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname, TimeToClean: 5000, Version: pb.RegistryEntry_V2, IgnoresMaster: im}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
 		t := time.Now()
@@ -1172,7 +1172,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 	if err != nil {
 		hostname = "Server-" + IP
 	}
-	entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname, TimeToClean: 5000}
+	entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname, TimeToClean: 5000, IgnoresMaster: im}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	t := time.Now()
