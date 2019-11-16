@@ -500,6 +500,10 @@ func (clientBuilder mainBuilder) NewDiscoveryServiceClient(conn *grpc.ClientConn
 
 // RegisterServer registers this server
 func (s *GoServer) RegisterServer(servername string, external bool) error {
+	return s.RegisterServerIgnore(servername, external, false)
+}
+
+func (s *GoServer) RegisterServerIgnore(servername string, external bool, ignore bool) error {
 	s.Servername = servername
 
 	// Short circuit if we don't need to register
@@ -509,7 +513,7 @@ func (s *GoServer) RegisterServer(servername string, external bool) error {
 		if err != nil {
 			hostname = "Server-" + IP
 		}
-		entry := &pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: false, Identifier: hostname, Port: s.Port}
+		entry := &pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: false, Identifier: hostname, Port: s.Port, IgnoresMaster: ignore}
 		s.Registry = entry
 
 		return nil
