@@ -111,7 +111,7 @@ func main() {
 			log.Fatalf("Error: %v", err)
 		}
 		for _, s := range servers {
-			if !s.IgnoresMaster && (*server == "" || *server == s.Identifier) {
+			if *server == "" || *server == s.Identifier {
 
 				fmt.Printf("SERVER: %v\n", s)
 				conn, err := grpc.Dial(s.Ip+":"+strconv.Itoa(int(s.Port)), grpc.WithInsecure())

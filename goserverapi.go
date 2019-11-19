@@ -72,10 +72,15 @@ func (s *GoServer) mark(c context.Context, t time.Duration, m string) {
 	}()
 }
 
-func (s *GoServer) validateMaster() error {
+func (s *GoServer) validateMaster(ctx context.Context) error {
 	if s.Registry.Version == pb.RegistryEntry_V2 {
 		entry, err := utils.ResolveV2(s.Registry.Name)
 		if err != nil {
+			//Let's master elect if we can't find a master
+			if code := status.Convert(err); code.Code() == codes.NotFound {
+				return s.masterElect(ctx)
+			}
+
 			return err
 		}
 
@@ -503,6 +508,7 @@ func (s *GoServer) RegisterServer(servername string, external bool) error {
 	return s.RegisterServerIgnore(servername, external, false)
 }
 
+// RegisterServerIgnore registers this server with ignore master set.
 func (s *GoServer) RegisterServerIgnore(servername string, external bool, ignore bool) error {
 	s.Servername = servername
 
@@ -891,21 +897,22 @@ func (s *GoServer) run(t sFunc) {
 		t.fun(context.Background())
 	} else {
 		for true {
-			err := s.validateMaster()
+			name := fmt.Sprintf("%v-Repeat-(%v)-%v", s.Registry.Name, t.key, t.d)
+			var ctx context.Context
+			var cancel context.CancelFunc
+			if t.noTrace {
+				ctx, cancel = context.WithTimeout(context.Background(), time.Hour)
+			} else {
+				ctx, cancel = utils.BuildContext(name, name)
+			}
+			defer cancel()
+
+			err := s.validateMaster(ctx)
 			if err == nil || t.nm {
-				name := fmt.Sprintf("%v-Repeat-(%v)-%v", s.Registry.Name, t.key, t.d)
 				s.activeRPCsMutex.Lock()
 				s.activeRPCs[name]++
 				s.activeRPCsMutex.Unlock()
 
-				var ctx context.Context
-				var cancel context.CancelFunc
-				if t.noTrace {
-					ctx, cancel = context.WithTimeout(context.Background(), time.Hour)
-				} else {
-					ctx, cancel = utils.BuildContext(name, name)
-				}
-				defer cancel()
 				s.runTimesMutex.Lock()
 				s.runTimes[t.key] = time.Now()
 				s.runTimesMutex.Unlock()
