@@ -352,9 +352,8 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	return h, err
 }
 
-func (s *GoServer) runHandle(ctx context.Context, handler grpc.UnaryHandler, req interface{}, tracer *rpcStats, name string) (interface{}, error) {
+func (s *GoServer) runHandle(ctx context.Context, handler grpc.UnaryHandler, req interface{}, tracer *rpcStats, name string) (resp interface{}, err error) {
 	ti := time.Now()
-	var err error
 
 	// Immediate return without trace if we're not master and we expect to be so
 	// Or if we expect to be able to master, try electing to be master
@@ -381,8 +380,8 @@ func (s *GoServer) runHandle(ctx context.Context, handler grpc.UnaryHandler, req
 		}
 
 	}()
-	return handler(ctx, req)
-
+	resp, err = handler(ctx, req)
+	return
 }
 
 // HTTPGet gets an http resource
