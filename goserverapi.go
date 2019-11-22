@@ -1160,6 +1160,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 	}
 
 	if v2 {
+		conn, err := dialler.Dial(utils.LocalDiscover, grpc.WithInsecure())
 		registry := pb.NewDiscoveryServiceV2Client(conn)
 		hostname, err := getter.Hostname()
 		if err != nil {
