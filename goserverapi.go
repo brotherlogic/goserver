@@ -562,7 +562,7 @@ func (s *GoServer) RegisterServerV2(servername string, external bool) error {
 
 	err := fmt.Errorf("First fail")
 	port := int32(0)
-	for err != nil {
+	for err != nil && s.registerAttempts < 10 {
 		s.registerAttempts++
 		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external, true, false)
 		s.Port = port
