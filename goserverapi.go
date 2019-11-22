@@ -1009,8 +1009,8 @@ func (s *GoServer) Serve() error {
 		if s.Registry.Version == pb.RegistryEntry_V1 {
 			s.setupHeartbeats()
 		}
-		go s.suicideWatch()
 	}
+	go s.suicideWatch()
 
 	// Enable profiling
 	go http.ListenAndServe(fmt.Sprintf(":%v", s.Port+1), nil)
