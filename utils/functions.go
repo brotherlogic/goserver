@@ -112,10 +112,10 @@ func Resolve(name, origin string) (string, int32, error) {
 // Resolve resolves out a server
 func ResolveV2(name string) (*pbdi.RegistryEntry, error) {
 	if name == "discover" {
-		return &pbdi.RegistryEntry{Ip: RegistryIP, Port: int32(RegistryPort)}, nil
+		return &pbdi.RegistryEntry{Ip: LocalIP, Port: int32(RegistryPort)}, nil
 	}
 
-	conn, err := grpc.Dial(Discover, grpc.WithInsecure())
+	conn, err := grpc.Dial(LocalDiscover, grpc.WithInsecure())
 	if err != nil {
 		return nil, err
 	}
