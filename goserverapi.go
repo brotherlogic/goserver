@@ -118,7 +118,7 @@ func (s *GoServer) masterElect(ctx context.Context) error {
 	defer conn.Close()
 
 	client := pb.NewDiscoveryServiceV2Client(conn)
-	resp, err := client.RegisterV2(ctx, &pb.RegisterRequest{Service: s.Registry, MasterElect: true})
+	resp, err := client.MasterElect(ctx, &pb.MasterRequest{Service: s.Registry, MasterElect: true})
 	if err == nil {
 		s.Registry = resp.GetService()
 	}
