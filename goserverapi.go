@@ -111,7 +111,7 @@ func (s *GoServer) masterElect(ctx context.Context) error {
 		return err
 	}
 
-	conn, err := s.DialMaster("discover")
+	conn, err := s.DialLocal("discover")
 	if err != nil {
 		return err
 	}
@@ -211,6 +211,15 @@ func (s *GoServer) DialServer(server, host string) (*grpc.ClientConn, error) {
 	}
 
 	return nil, fmt.Errorf("Unable to locate server called %v", server)
+}
+
+//DialLocal dials through the local discover
+func (s *GoServer) DialLocal(server string) (*grpc.ClientConn, error) {
+	entry, err := utils.ResolveV2(server)
+	if err != nil {
+		return nil, err
+	}
+	return s.DoDial(entry)
 }
 
 // DialMaster dials the master server
