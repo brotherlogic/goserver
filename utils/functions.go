@@ -10,7 +10,9 @@ import (
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	pbdi "github.com/brotherlogic/discovery/proto"
 )
@@ -129,11 +131,13 @@ func ResolveV2(name string) (*pbdi.RegistryEntry, error) {
 		return nil, err
 	}
 
-	if len(val.GetServices()) != 1 {
-		return nil, fmt.Errorf("Found %v services", len(val.GetServices()))
+	// Get master
+	for _, service := range val.GetServices() {
+		if service.Master {
+			return service, nil
+		}
 	}
-
-	return val.GetServices()[0], err
+	return nil, status.Errorf(codes.NotFound, "Found %v services but no master", len(val.GetServices()))
 }
 
 // GetMaster resolves out a server
