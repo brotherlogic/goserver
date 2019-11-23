@@ -917,8 +917,7 @@ func (s *GoServer) run(t sFunc) {
 			}
 			defer cancel()
 
-			err := s.validateMaster(ctx)
-			if err == nil || t.nm {
+			if t.nm || s.validateMaster(ctx) == nil {
 				s.activeRPCsMutex.Lock()
 				s.activeRPCs[name]++
 				s.activeRPCsMutex.Unlock()
