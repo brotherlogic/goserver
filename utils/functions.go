@@ -158,20 +158,20 @@ func GetMaster(name, caller string) (*pbdi.RegistryEntry, error) {
 // ResolveAll gets all servers
 func ResolveAll(name string) ([]*pbdi.RegistryEntry, error) {
 	entries := make([]*pbdi.RegistryEntry, 0)
-	conn, err := grpc.Dial(Discover, grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%v", RegistryPort), grpc.WithInsecure())
 	if err != nil {
 		return entries, err
 	}
 	defer conn.Close()
 
-	registry := pbdi.NewDiscoveryServiceClient(conn)
+	registry := pbdi.NewDiscoveryServiceV2Client(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	val, err := registry.ListAllServices(ctx, &pbdi.ListRequest{})
+	val, err := registry.Get(ctx, &pbdi.GetRequest{Job: name})
 	if err != nil {
 		return entries, err
 	}
-	for _, entry := range val.GetServices().Services {
+	for _, entry := range val.GetServices() {
 		if len(name) == 0 || entry.Name == name {
 			entries = append(entries, entry)
 		}
