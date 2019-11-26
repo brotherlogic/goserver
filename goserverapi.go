@@ -194,7 +194,11 @@ func (s *GoServer) sendMark(c context.Context, t time.Duration, message string) 
 
 // DoDial dials a server
 func (s *GoServer) DoDial(entry *pb.RegistryEntry) (*grpc.ClientConn, error) {
-	return grpc.Dial(entry.Ip+":"+strconv.Itoa(int(entry.Port)), grpc.WithInsecure(), s.withClientUnaryInterceptor(), grpc.WithMaxMsgSize(1024*1024*1024))
+	return s.BaseDial(entry.Ip + ":" + strconv.Itoa(int(entry.Port)))
+}
+
+func (s *GoServer) BaseDial(c string) (*grpc.ClientConn, error) {
+	return grpc.Dial(c, grpc.WithInsecure(), s.withClientUnaryInterceptor(), grpc.WithMaxMsgSize(1024*1024*1024))
 }
 
 // DialServer dials a given server
