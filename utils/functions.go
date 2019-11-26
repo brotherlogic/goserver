@@ -95,7 +95,7 @@ func Resolve(name, origin string) (string, int32, error) {
 	if name == "discover" {
 		return RegistryIP, int32(RegistryPort), nil
 	}
-	conn, err := grpc.Dial(Discover, grpc.WithInsecure())
+	conn, err := grpc.Dial("192.168.86.249:50055", grpc.WithInsecure())
 	if err != nil {
 		return "", -1, err
 	}
@@ -138,6 +138,42 @@ func ResolveV2(name string) (*pbdi.RegistryEntry, error) {
 		}
 	}
 	return nil, status.Errorf(codes.NotFound, "Found %v services but no master", len(val.GetServices()))
+}
+
+// ResolveV3 resolves out a server
+func ResolveV3(name string) ([]*pbdi.RegistryEntry, error) {
+	if name == "discover" {
+		return []*pbdi.RegistryEntry{&pbdi.RegistryEntry{Ip: LocalIP, Port: int32(RegistryPort)}}, nil
+	}
+
+	conn, err := grpc.Dial(LocalDiscover, grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	registry := pbdi.NewDiscoveryServiceV2Client(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	val, err := registry.Get(ctx, &pbdi.GetRequest{Job: name})
+	if err != nil {
+		return nil, err
+	}
+
+	services := make([]*pbdi.RegistryEntry, 0)
+	// Get master
+	for _, service := range val.GetServices() {
+		if service.Master {
+			services = append(services, service)
+		}
+	}
+	for _, service := range val.GetServices() {
+		if !service.Master {
+			services = append(services, service)
+		}
+	}
+
+	return services, nil
 }
 
 // GetMaster resolves out a server

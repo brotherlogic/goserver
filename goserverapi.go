@@ -225,11 +225,14 @@ func (s *GoServer) DialLocal(server string) (*grpc.ClientConn, error) {
 // DialMaster dials the master server
 func (s *GoServer) DialMaster(server string) (*grpc.ClientConn, error) {
 	if s.Registry == nil || s.Registry.Version == pb.RegistryEntry_V2 {
-		entry, err := utils.ResolveV2(server)
+		entries, err := utils.ResolveV3(server)
 		if err != nil {
 			return nil, err
 		}
-		return s.DoDial(entry)
+		if len(entries) == 0 {
+			return nil, fmt.Errorf("Could not find any servers for %v", server)
+		}
+		return s.DoDial(entries[0])
 	}
 
 	ip, port, err := utils.Resolve(server, s.Registry.Name)
