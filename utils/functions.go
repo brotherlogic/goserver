@@ -178,7 +178,7 @@ func ResolveV3(name string) ([]*pbdi.RegistryEntry, error) {
 
 // GetMaster resolves out a server
 func GetMaster(name, caller string) (*pbdi.RegistryEntry, error) {
-	conn, err := grpc.Dial(Discover, grpc.WithInsecure())
+	conn, err := grpc.Dial("192.168.86.249:50055", grpc.WithInsecure())
 	if err != nil {
 		return &pbdi.RegistryEntry{}, err
 	}
