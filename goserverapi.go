@@ -197,6 +197,7 @@ func (s *GoServer) DoDial(entry *pb.RegistryEntry) (*grpc.ClientConn, error) {
 	return s.BaseDial(entry.Ip + ":" + strconv.Itoa(int(entry.Port)))
 }
 
+// BaseDial dials a connection
 func (s *GoServer) BaseDial(c string) (*grpc.ClientConn, error) {
 	return grpc.Dial(c, grpc.WithInsecure(), s.withClientUnaryInterceptor(), grpc.WithMaxMsgSize(1024*1024*1024))
 }
@@ -552,7 +553,7 @@ func (s *GoServer) RegisterServerIgnore(servername string, external bool, ignore
 }
 
 // RegisterServerV2 registers this server under the v2 protocol
-func (s *GoServer) RegisterServerV2(servername string, external bool) error {
+func (s *GoServer) RegisterServerV2(servername string, external bool, ignore bool) error {
 	s.Servername = servername
 
 	// Short circuit if we don't need to register
@@ -562,7 +563,7 @@ func (s *GoServer) RegisterServerV2(servername string, external bool) error {
 		if err != nil {
 			hostname = "Server-" + IP
 		}
-		entry := &pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: false, Identifier: hostname, Port: s.Port, Version: pb.RegistryEntry_V2}
+		entry := &pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: false, Identifier: hostname, Port: s.Port, Version: pb.RegistryEntry_V2, IgnoresMaster: ignore}
 		s.Registry = entry
 
 		return nil
@@ -573,7 +574,7 @@ func (s *GoServer) RegisterServerV2(servername string, external bool) error {
 	start := s.registerAttempts
 	for err != nil && s.registerAttempts-start < 10 {
 		s.registerAttempts++
-		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external, true, false)
+		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external, true, ignore)
 		s.Port = port
 	}
 	return err
@@ -741,7 +742,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 
 // Reregister this server
 func (s *GoServer) Reregister(ctx context.Context, in *pbl.ReregisterRequest) (*pbl.ReregisterResponse, error) {
-	err := s.RegisterServerV2(s.Registry.Name, s.Registry.ExternalPort)
+	err := s.RegisterServerV2(s.Registry.Name, s.Registry.ExternalPort, s.Registry.IgnoresMaster)
 	return &pbl.ReregisterResponse{}, err
 }
 
