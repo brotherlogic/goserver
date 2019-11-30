@@ -60,6 +60,9 @@ func (r *discoveryResolver) fillClient(endpoint string) error {
 	for i, ent := range entries {
 		addrs[i] = resolver.Address{Addr: fmt.Sprintf("%v:%v", ent.Ip, ent.Port)}
 	}
+	if len(addrs) == 0 {
+		return fmt.Errorf("Unable to resolve %v", endpoint)
+	}
 	r.cc.UpdateState(resolver.State{Addresses: addrs})
 	return nil
 }

@@ -714,7 +714,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_errors", Value: trace.errors})
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_lasterror", Text: trace.lastError})
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_mem", Value: trace.memChange})
-		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_origin", Text: trace.origin})
+		//states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_origin", Text: trace.origin})
 		if trace.count > 0 {
 			states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_avgTime", TimeDuration: trace.timeIn.Nanoseconds() / trace.count})
 		}

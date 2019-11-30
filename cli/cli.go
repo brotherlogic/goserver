@@ -12,8 +12,8 @@ import (
 
 	pb "github.com/brotherlogic/goserver/proto"
 	"github.com/brotherlogic/goserver/utils"
-	"github.com/golang/protobuf/proto"
 	_ "google.golang.org/grpc/encoding/gzip"
+	"google.golang.org/grpc/resolver"
 )
 
 func buildState(s *pb.State, uptime int64) string {
@@ -49,6 +49,10 @@ func getUptime(states []*pb.State) int64 {
 	return 1
 }
 
+func init() {
+	resolver.Register(&utils.DiscoveryClientResolverBuilder{})
+}
+
 func main() {
 
 	var host = flag.String("host", "", "Host")
@@ -68,7 +72,10 @@ func main() {
 
 		check := pb.NewGoserverServiceClient(conn)
 
-		state, err := check.State(context.Background(), &pb.Empty{})
+		ctx, cancel := utils.ManualContext("goserver-cli", "goserver-cli", time.Second*5)
+		defer cancel()
+
+		state, err := check.State(ctx, &pb.Empty{})
 		if err != nil {
 			log.Fatalf("Unable to read state: %v", err)
 		}
@@ -82,13 +89,9 @@ func main() {
 
 		}
 	} else if len(*name) > 0 {
-		ip, port, err := utils.Resolve(*name, "goserver-cliname")
+		conn, err := grpc.Dial("discovery:///"+*name, grpc.WithInsecure())
 		if err != nil {
-			log.Fatalf("Unable to resolve %v -> %v", *name, err)
-		}
-		conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
-		if err != nil {
-			log.Fatalf("Unable to reach server %v:%v -> %v", ip, port, err)
+			log.Fatalf("Unable to reach server: %v", err)
 		}
 		defer conn.Close()
 
@@ -96,13 +99,15 @@ func main() {
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
-		state, _ := check.State(ctx, &pb.Empty{})
-		fmt.Printf("DIAL: %v - %v [%v]\n", ip, port, proto.Size(state))
+		state, err := check.State(ctx, &pb.Empty{})
+		if err != nil {
+			log.Fatalf("Failure to get state: %v", err)
+		}
 		uptime := getUptime(state.GetStates())
 		for _, st := range state.GetStates() {
 			state := buildState(st, uptime)
 			if len(state) > 0 {
-				fmt.Printf("%v: %v -> %v\n", ip, st.GetKey(), state)
+				fmt.Printf("%v -> %v\n", st.GetKey(), state)
 			}
 		}
 	} else {
