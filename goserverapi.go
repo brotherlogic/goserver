@@ -315,6 +315,10 @@ func (s *GoServer) recordTrace(ctx context.Context, tracer *rpcStats, name strin
 	if err != nil {
 		tracer.errors++
 		tracer.lastError = fmt.Sprintf("%v", err)
+
+		if float64(tracer.errors)/float64(tracer.count) > 0.8 {
+			s.RaiseIssue(ctx, fmt.Sprintf("Error for %v", name), fmt.Sprintf("%v calls %v errors", tracer.count, tracer.errors), false)
+		}
 	}
 
 	// Raise an issue on a long call
