@@ -315,7 +315,8 @@ func (s *GoServer) recordTrace(ctx context.Context, tracer *rpcStats, name strin
 
 	if err != nil {
 		code := status.Convert(err)
-		if code.Code() != codes.FailedPrecondition {
+		if code.Code() != codes.FailedPrecondition &&
+			code.Code() != codes.DeadlineExceeded {
 			tracer.errors++
 			tracer.lastError = fmt.Sprintf("%v", err)
 
