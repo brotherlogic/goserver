@@ -23,6 +23,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
+	"google.golang.org/grpc/resolver"
 	"google.golang.org/grpc/status"
 
 	pbbs "github.com/brotherlogic/buildserver/proto"
@@ -1048,6 +1049,10 @@ func (s *GoServer) Serve() error {
 	return nil
 }
 
+func init() {
+	resolver.Register(&utils.DiscoveryServerResolverBuilder{})
+}
+
 //RaiseIssue raises an issue
 func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bool) {
 	if time.Now().Before(s.alertWait) {
@@ -1059,30 +1064,29 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bo
 
 	go func() {
 		if !s.SkipIssue || len(body) == 0 {
-			ip, port, _ := utils.Resolve("githubcard", s.Registry.Name+"-ri")
-			if port > 0 {
-				conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
-				if err == nil {
-					defer conn.Close()
-					client := pbgh.NewGithubClient(conn)
-					ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-					defer cancel()
+			conn, err := s.DialMaster("githubcard")
+			if err == nil {
+				defer conn.Close()
+				client := pbgh.NewGithubClient(conn)
+				ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+				defer cancel()
 
-					_, err := client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: sticky}, grpc.FailFast(false))
-					if err != nil {
-						st := status.Convert(err)
-						if st.Code() == codes.ResourceExhausted {
-							s.alertWait = time.Now().Add(time.Minute * 10)
-						} else {
-							s.alertError = fmt.Sprintf("Failure to add issue: %v", err)
-						}
+				_, err := client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: sticky}, grpc.FailFast(false))
+				if err != nil {
+					st := status.Convert(err)
+					if st.Code() == codes.ResourceExhausted {
+						s.alertWait = time.Now().Add(time.Minute * 10)
+					} else {
+						s.alertError = fmt.Sprintf("Failure to add issue: %v", err)
 					}
 				}
+
 			} else {
 				s.alertWait = time.Now().Add(time.Minute * 10)
 				s.alertError = fmt.Sprintf("Cannot locate githubcard")
 			}
 		} else {
+
 			s.alertError = "Skip log enabled"
 		}
 	}()
