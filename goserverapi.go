@@ -46,15 +46,17 @@ import (
 )
 
 type rpcStats struct {
-	source    string
-	rpcName   string
-	count     int64
-	errors    int64
-	lastError string
-	timeIn    time.Duration
-	memChange int64
-	origin    string
-	latencies []time.Duration
+	source      string
+	rpcName     string
+	count       int64
+	errors      int64
+	nferrors    int64
+	lastNFError string
+	lastError   string
+	timeIn      time.Duration
+	memChange   int64
+	origin      string
+	latencies   []time.Duration
 }
 
 func (s *GoServer) trace(c context.Context, name string) context.Context {
@@ -317,13 +319,17 @@ func (s *GoServer) recordTrace(ctx context.Context, tracer *rpcStats, name strin
 		code := status.Convert(err)
 		if code.Code() != codes.FailedPrecondition &&
 			code.Code() != codes.DeadlineExceeded &&
-			code.Code() != codes.ResourceExhausted {
+			code.Code() != codes.ResourceExhausted &&
+			code.Code() != codes.NotFound {
 			tracer.errors++
 			tracer.lastError = fmt.Sprintf("%v", err)
 
 			if float64(tracer.errors)/float64(tracer.count) > 0.8 && tracer.count > 10 {
 				s.RaiseIssue(ctx, fmt.Sprintf("Error for %v", name), fmt.Sprintf("%v calls %v errors (%v)", tracer.count, tracer.errors, err), false)
 			}
+		} else {
+			tracer.nferrors++
+			tracer.lastNFError = fmt.Sprintf("%v", err)
 		}
 	}
 
@@ -722,9 +728,9 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_count", Value: trace.count})
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_errors", Value: trace.errors})
+		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_nferrors", Value: trace.nferrors})
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_lasterror", Text: trace.lastError})
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_mem", Value: trace.memChange})
-		//states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_origin", Text: trace.origin})
 		if trace.count > 0 {
 			states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_avgTime", TimeDuration: trace.timeIn.Nanoseconds() / trace.count})
 		}
