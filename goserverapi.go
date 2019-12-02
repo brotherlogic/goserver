@@ -729,6 +729,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_count", Value: trace.count})
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_errors", Value: trace.errors})
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_nferrors", Value: trace.nferrors})
+		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_nflasterror", Text: trace.lastNFError})
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_lasterror", Text: trace.lastError})
 		states = append(states, &pbl.State{Key: "rpc_" + trace.source + trace.rpcName + "_mem", Value: trace.memChange})
 		if trace.count > 0 {
