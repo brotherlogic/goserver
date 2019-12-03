@@ -297,6 +297,7 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 		retries := 1
 		for retries < 3 && err != nil {
 			err = invoker(ctx, method, req, reply, cc, opts...)
+			retries++
 		}
 		s.outgoing--
 	}
