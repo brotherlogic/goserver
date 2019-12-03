@@ -20,6 +20,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/balancer/roundrobin"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
@@ -59,6 +60,9 @@ type rpcStats struct {
 	latencies   []time.Duration
 }
 
+func init() {
+	resolver.Register(&utils.DiscoveryClientResolverBuilder{})
+}
 func (s *GoServer) trace(c context.Context, name string) context.Context {
 	go func() {
 		s.sendTrace(c, name, time.Now())
@@ -205,6 +209,14 @@ func (s *GoServer) BaseDial(c string) (*grpc.ClientConn, error) {
 	return grpc.Dial(c, grpc.WithInsecure(), s.withClientUnaryInterceptor(), grpc.WithMaxMsgSize(1024*1024*1024))
 }
 
+// NewBaseDial dials a connection
+func (s *GoServer) NewBaseDial(c string) (*grpc.ClientConn, error) {
+	return grpc.Dial("discovery:///"+c,
+		grpc.WithInsecure(),
+		s.withClientUnaryInterceptor(),
+		grpc.WithBalancerName(roundrobin.Name))
+}
+
 // DialServer dials a given server
 func (s *GoServer) DialServer(server, host string) (*grpc.ClientConn, error) {
 	entries, err := utils.ResolveAll(server)
@@ -282,6 +294,10 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	} else {
 		s.outgoing++
 		err = invoker(ctx, method, req, reply, cc, opts...)
+		retries := 1
+		for retries < 3 && err != nil {
+			err = invoker(ctx, method, req, reply, cc, opts...)
+		}
 		s.outgoing--
 	}
 
@@ -1075,7 +1091,7 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bo
 
 	go func() {
 		if !s.SkipIssue || len(body) == 0 {
-			conn, err := s.DialMaster("githubcard")
+			conn, err := s.NewBaseDial("githubcard")
 			if err == nil {
 				defer conn.Close()
 				client := pbgh.NewGithubClient(conn)
