@@ -1088,6 +1088,7 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bo
 		return
 	}
 
+	s.alertWait = time.Now().Add(time.Minute * 10)
 	s.AlertsFired++
 
 	go func() {
