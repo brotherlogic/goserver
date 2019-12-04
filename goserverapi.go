@@ -1100,6 +1100,9 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bo
 				defer cancel()
 
 				_, err := client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: sticky}, grpc.FailFast(false))
+				s.alertWait = time.Now().Add(time.Minute * 10)
+				s.alertError = fmt.Sprintf("Cannot locate githubcard")
+
 				if err != nil {
 					st := status.Convert(err)
 					if st.Code() == codes.ResourceExhausted {
@@ -1109,9 +1112,6 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bo
 					}
 				}
 
-			} else {
-				s.alertWait = time.Now().Add(time.Minute * 10)
-				s.alertError = fmt.Sprintf("Cannot locate githubcard")
 			}
 		} else {
 
