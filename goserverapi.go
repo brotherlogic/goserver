@@ -340,10 +340,7 @@ func (s *GoServer) recordTrace(ctx context.Context, tracer *rpcStats, name strin
 
 	if err != nil {
 		code := status.Convert(err)
-		if code.Code() != codes.FailedPrecondition &&
-			code.Code() != codes.DeadlineExceeded &&
-			code.Code() != codes.ResourceExhausted &&
-			code.Code() != codes.NotFound {
+		if code.Code() == codes.Unknown || code.Code() == codes.Internal {
 			tracer.errors++
 			tracer.lastError = fmt.Sprintf("%v", err)
 
