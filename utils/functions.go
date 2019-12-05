@@ -251,3 +251,28 @@ func ResolveAll(name string) ([]*pbdi.RegistryEntry, error) {
 
 	return entries, nil
 }
+
+// ResolveAll gets all servers
+func BaseResolveAll(name string) ([]*pbdi.RegistryEntry, error) {
+	entries := make([]*pbdi.RegistryEntry, 0)
+	conn, err := grpc.Dial(Discover, grpc.WithInsecure())
+	if err != nil {
+		return entries, err
+	}
+	defer conn.Close()
+
+	registry := pbdi.NewDiscoveryServiceV2Client(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	val, err := registry.Get(ctx, &pbdi.GetRequest{Job: name})
+	if err != nil {
+		return entries, err
+	}
+	for _, entry := range val.GetServices() {
+		if len(name) == 0 || entry.Name == name {
+			entries = append(entries, entry)
+		}
+	}
+
+	return entries, nil
+}
