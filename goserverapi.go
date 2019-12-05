@@ -345,7 +345,7 @@ func (s *GoServer) recordTrace(ctx context.Context, tracer *rpcStats, name strin
 			tracer.lastError = fmt.Sprintf("%v", err)
 
 			if float64(tracer.errors)/float64(tracer.count) > 0.8 && tracer.count > 10 {
-				s.RaiseIssue(ctx, fmt.Sprintf("Error for %v", name), fmt.Sprintf("%v calls %v errors (%v)", tracer.count, tracer.errors, err), false)
+				s.RaiseIssue(ctx, fmt.Sprintf("Error for %v", name), fmt.Sprintf("%v: %v calls %v errors (%v)", s.Registry.Identifier, tracer.count, tracer.errors, err), false)
 			}
 		} else {
 			tracer.nferrors++
