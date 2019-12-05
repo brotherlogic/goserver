@@ -113,19 +113,25 @@ func (s *GoServer) masterElect(ctx context.Context) error {
 		return fmt.Errorf("V1 does not perform master election")
 	}
 
-	_, err := s.Mote(ctx, &pbl.MoteRequest{Master: true})
+	conn, err := s.DoDial(s.Registry)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	client := pbl.NewGoserverServiceClient(conn)
+	_, err = client.Mote(ctx, &pbl.MoteRequest{Master: true})
 	if err != nil {
 		return err
 	}
 
-	conn, err := s.DialLocal("discover")
+	conn2, err := s.DialLocal("discover")
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
-	client := pb.NewDiscoveryServiceV2Client(conn)
-	resp, err := client.MasterElect(ctx, &pb.MasterRequest{Service: s.Registry, MasterElect: true})
+	client2 := pb.NewDiscoveryServiceV2Client(conn2)
+	resp, err := client2.MasterElect(ctx, &pb.MasterRequest{Service: s.Registry, MasterElect: true})
 	if err == nil {
 		s.Registry = resp.GetService()
 	}
