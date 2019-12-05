@@ -1203,11 +1203,6 @@ func (s *GoServer) PLog(message string, level pbd.LogLevel) {
 
 // RegisterServer Registers a server with the system and gets the port number it should use
 func (s *GoServer) registerServer(IP string, servername string, external bool, v2 bool, im bool, dialler dialler, builder clientBuilder, getter hostGetter) (int32, error) {
-	conn, err := dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
-	if err != nil {
-		return -1, err
-	}
-
 	if v2 {
 		conn, err := dialler.Dial(utils.LocalDiscover, grpc.WithInsecure())
 		registry := pb.NewDiscoveryServiceV2Client(conn)
@@ -1229,7 +1224,11 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 		s.close(conn)
 
 		return r.GetService().Port, nil
+	}
 
+	conn, err := dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
+	if err != nil {
+		return -1, err
 	}
 
 	registry := builder.NewDiscoveryServiceClient(conn)
