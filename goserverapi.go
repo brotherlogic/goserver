@@ -1182,7 +1182,7 @@ func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.C
 //PLog a simple string message with priority
 func (s *GoServer) PLog(message string, level pbd.LogLevel) {
 	go func() {
-		if !s.SkipLog {
+		if !s.SkipLog && s.Registry != nil {
 			conn, err := s.DialMaster("monitor")
 			if err == nil {
 				defer conn.Close()
