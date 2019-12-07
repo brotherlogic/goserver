@@ -423,15 +423,18 @@ func (s *GoServer) runHandle(ctx context.Context, handler grpc.UnaryHandler, req
 
 	defer func() {
 		if s.RPCTracing {
-			if r := recover(); r != nil {
-				err = fmt.Errorf("%v", r)
-				s.SendCrash(ctx, fmt.Sprintf("%v", string(debug.Stack())), pbbs.Crash_PANIC)
-				s.recordTrace(ctx, tracer, name, time.Now().Sub(ti), err, "")
+			if !s.allowCrash {
+				if r := recover(); r != nil {
+					err = fmt.Errorf("%v", r)
+					s.SendCrash(ctx, fmt.Sprintf("%v", string(debug.Stack())), pbbs.Crash_PANIC)
+					s.recordTrace(ctx, tracer, name, time.Now().Sub(ti), err, "")
+				} else {
+					s.recordTrace(ctx, tracer, name, time.Now().Sub(ti), err, "")
+				}
 			} else {
 				s.recordTrace(ctx, tracer, name, time.Now().Sub(ti), err, "")
 			}
 		}
-
 	}()
 	resp, err = handler(ctx, req)
 	return
