@@ -128,7 +128,7 @@ func (s *GoServer) masterElect(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer conn2.Close()
 
 	client2 := pb.NewDiscoveryServiceV2Client(conn2)
 	resp, err := client2.MasterElect(ctx, &pb.MasterRequest{Service: s.Registry, MasterElect: true})
@@ -802,6 +802,7 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 			s.Log(fmt.Sprintf("Unable to shutdown: %v", err))
 			return
 		}
+		defer conn.Close()
 
 		registry := pb.NewDiscoveryServiceV2Client(conn)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -1205,7 +1206,7 @@ func (s *GoServer) PLog(message string, level pbd.LogLevel) {
 func (s *GoServer) registerServer(IP string, servername string, external bool, v2 bool, im bool, dialler dialler, builder clientBuilder, getter hostGetter) (int32, error) {
 	if v2 {
 		conn, err := dialler.Dial(utils.LocalDiscover, grpc.WithInsecure())
-		defer conn.Close()
+		defer s.close(conn)
 		registry := pb.NewDiscoveryServiceV2Client(conn)
 		hostname, err := getter.Hostname()
 		if err != nil {
