@@ -797,6 +797,7 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 
 		// Unregister us from discovery
 		conn, err := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
+		defer conn.Close()
 		if err != nil {
 			s.Log(fmt.Sprintf("Unable to shutdown: %v", err))
 			return
@@ -1018,6 +1019,7 @@ func (s *GoServer) Read(ctx context.Context, key string, typ proto.Message) (pro
 func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
 	conn, err := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
 	if err == nil {
+		defer conn.Close()
 		registry := s.clientBuilder.NewDiscoveryServiceClient(conn)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
@@ -1028,7 +1030,6 @@ func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
 		}
 
 		if err == nil {
-			s.close(conn)
 			arr := make([]*pb.RegistryEntry, 0)
 			for _, s := range r.GetServices().GetServices() {
 				if s.GetName() == servername {
@@ -1038,7 +1039,6 @@ func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
 			return arr, nil
 		}
 	}
-	s.close(conn)
 	return nil, fmt.Errorf("Unable to establish connection")
 }
 
@@ -1196,7 +1196,6 @@ func (s *GoServer) PLog(message string, level pbd.LogLevel) {
 					s.failLogs++
 					s.failMessage = fmt.Sprintf("%v", message)
 				}
-				s.close(conn)
 			}
 		}
 	}()
@@ -1206,6 +1205,7 @@ func (s *GoServer) PLog(message string, level pbd.LogLevel) {
 func (s *GoServer) registerServer(IP string, servername string, external bool, v2 bool, im bool, dialler dialler, builder clientBuilder, getter hostGetter) (int32, error) {
 	if v2 {
 		conn, err := dialler.Dial(utils.LocalDiscover, grpc.WithInsecure())
+		defer conn.Close()
 		registry := pb.NewDiscoveryServiceV2Client(conn)
 		hostname, err := getter.Hostname()
 		if err != nil {
@@ -1218,16 +1218,15 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 		r, err := registry.RegisterV2(ctx, &pb.RegisterRequest{Service: &entry}, grpc.FailFast(false))
 		s.regTime = time.Now().Sub(t)
 		if err != nil {
-			s.close(conn)
 			return -1, err
 		}
 		s.Registry = r.GetService()
-		s.close(conn)
 
 		return r.GetService().Port, nil
 	}
 
 	conn, err := dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
+	defer s.close(conn)
 	if err != nil {
 		return -1, err
 	}
@@ -1244,11 +1243,9 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 	r, err := registry.RegisterService(ctx, &pb.RegisterRequest{Service: &entry}, grpc.FailFast(false))
 	s.regTime = time.Now().Sub(t)
 	if err != nil {
-		s.close(conn)
 		return -1, err
 	}
 	s.Registry = r.GetService()
-	s.close(conn)
 
 	return r.GetService().Port, nil
 }

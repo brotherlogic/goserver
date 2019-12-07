@@ -214,6 +214,7 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 
 		conn, err := d.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
 		if err == nil {
+			defer s.close(conn)
 			c := b.NewDiscoveryServiceClient(conn)
 			ctx, cancel := context.WithTimeout(context.Background(), registerFreq)
 			defer cancel()
@@ -238,7 +239,6 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 				s.failMaster++
 			}
 		}
-		s.close(conn)
 	}
 }
 
@@ -246,6 +246,7 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 func (s *GoServer) GetIP(servername string) (string, int) {
 	conn, err := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
 	if err == nil {
+		defer s.close(conn)
 		registry := s.clientBuilder.NewDiscoveryServiceClient(conn)
 		entry := &pb.RegistryEntry{Name: servername}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -257,11 +258,9 @@ func (s *GoServer) GetIP(servername string) (string, int) {
 		}
 
 		if err == nil {
-			s.close(conn)
 			return r.GetService().Ip, int(r.GetService().Port)
 		}
 	}
-	s.close(conn)
 	return "", -1
 }
 
@@ -306,16 +305,15 @@ func (s *GoServer) Dial(server string, dialler dialler, builder clientBuilder) (
 	if err != nil {
 		return nil, err
 	}
+	defer s.close(conn)
 	registry := builder.NewDiscoveryServiceClient(conn)
 	entry := pb.RegistryEntry{Name: server}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	r, err := registry.Discover(ctx, &pb.DiscoverRequest{Request: &entry}, grpc.FailFast(false))
 	if err != nil {
-		s.close(conn)
 		return nil, err
 	}
-	s.close(conn)
 
 	return dialler.Dial(r.GetService().Ip+":"+strconv.Itoa(int(r.GetService().Port)), grpc.WithInsecure())
 }
