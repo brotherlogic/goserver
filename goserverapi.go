@@ -94,6 +94,7 @@ func (s *GoServer) alive(ctx context.Context, entry *pb.RegistryEntry) error {
 func (s *GoServer) validateMaster(ctx context.Context) error {
 	if s.Registry.Version == pb.RegistryEntry_V2 {
 		entry, err := utils.ResolveV2(s.Registry.Name)
+		s.Log(fmt.Sprintf("Val %v and %v", entry, err))
 		if err != nil || s.alive(ctx, entry) != nil {
 			//Let's master elect if we can't find a master
 			s.Log(fmt.Sprintf("Code: %v", status.Convert(err).Code()))
