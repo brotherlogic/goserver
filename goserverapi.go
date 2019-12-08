@@ -975,7 +975,8 @@ func (s *GoServer) run(t sFunc) {
 			}
 			defer cancel()
 
-			if t.nm || s.validateMaster(ctx) == nil {
+			err := s.validateMaster(ctx)
+			if t.nm || err == nil {
 				s.activeRPCsMutex.Lock()
 				s.activeRPCs[name]++
 				s.activeRPCsMutex.Unlock()
@@ -994,6 +995,13 @@ func (s *GoServer) run(t sFunc) {
 				s.activeRPCs[name]--
 				s.activeRPCsMutex.Unlock()
 
+			} else if err != nil {
+				var tracer *rpcStats
+				if s.RPCTracing {
+					tracer = s.getTrace("/"+t.key, t.source)
+				}
+
+				s.recordTrace(ctx, tracer, "/"+t.key, 0, err, "")
 			}
 			time.Sleep(t.d)
 			if t.runOnce {
