@@ -79,10 +79,21 @@ func (s *GoServer) mark(c context.Context, t time.Duration, m string) {
 	}()
 }
 
+func (s *GoServer) alive(ctx context.Context, entry *pb.RegistryEntry) error {
+	conn, err := s.DoDial(entry)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	client := pbl.NewGoserverServiceClient(conn)
+	_, err = client.IsAlive(ctx, &pbl.Alive{})
+	return err
+}
+
 func (s *GoServer) validateMaster(ctx context.Context) error {
 	if s.Registry.Version == pb.RegistryEntry_V2 {
 		entry, err := utils.ResolveV2(s.Registry.Name)
-		if err != nil {
+		if err != nil || s.alive(ctx, entry) != nil {
 			//Let's master elect if we can't find a master
 			if code := status.Convert(err); code.Code() == codes.NotFound {
 				return s.masterElect(ctx)
