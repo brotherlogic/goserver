@@ -82,6 +82,7 @@ func (s *GoServer) mark(c context.Context, t time.Duration, m string) {
 func (s *GoServer) alive(ctx context.Context, entry *pb.RegistryEntry) error {
 	conn, err := s.DoDial(entry)
 	if err != nil {
+		s.Log(fmt.Sprintf("BAH %v", err))
 		return err
 	}
 	defer conn.Close()
