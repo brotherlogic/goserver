@@ -371,7 +371,6 @@ func (s *GoServer) recordTrace(ctx context.Context, tracer *rpcStats, name strin
 
 	// Raise an issue on a long call
 	if timeTaken > time.Second*5 {
-		s.Log(fmt.Sprintf("Long Call %v, %v", name, timeTaken))
 		s.marks++
 		s.mark(ctx, timeTaken, fmt.Sprintf("%v", req))
 	}
