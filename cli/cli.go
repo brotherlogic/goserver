@@ -56,6 +56,7 @@ func init() {
 func main() {
 
 	var host = flag.String("host", "", "Host")
+	var hosth = flag.String("hosth", "", "Host")
 	var port = flag.String("port", "", "Port")
 	var name = flag.String("name", "", "Name")
 	var server = flag.String("server", "", "Server")
@@ -88,6 +89,25 @@ func main() {
 			}
 
 		}
+	} else if len(*hosth) > 0 {
+		conn, err := grpc.Dial(*hosth+":"+*port, grpc.WithInsecure())
+		if err != nil {
+			log.Fatalf("Unable to reach server %v:%v -> %v", *host, *port, err)
+		}
+		defer conn.Close()
+
+		check := pb.NewGoserverServiceClient(conn)
+
+		ctx, cancel := utils.ManualContext("goserver-cli", "goserver-cli", time.Minute*10)
+		defer cancel()
+
+		state, err := check.IsAlive(ctx, &pb.Alive{})
+		if err != nil {
+			log.Fatalf("Unable to read state: %v", err)
+		}
+
+		fmt.Printf("%v and %v", state, err)
+
 	} else if len(*name) > 0 {
 		conn, err := grpc.Dial("discovery:///"+*name, grpc.WithInsecure())
 		if err != nil {
