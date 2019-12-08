@@ -97,7 +97,9 @@ func (s *GoServer) validateMaster(ctx context.Context) error {
 		if err != nil || s.alive(ctx, entry) != nil {
 			//Let's master elect if we can't find a master
 			if code := status.Convert(err); code.Code() == codes.NotFound || code.Code() == codes.Unavailable {
-				return s.masterElect(ctx)
+				err := s.masterElect(ctx)
+				s.Log(fmt.Sprintf("MASTER ELECT %v", err))
+				return err
 			}
 
 			return err
