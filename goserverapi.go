@@ -87,6 +87,7 @@ func (s *GoServer) alive(ctx context.Context, entry *pb.RegistryEntry) error {
 	defer conn.Close()
 	client := pbl.NewGoserverServiceClient(conn)
 	_, err = client.IsAlive(ctx, &pbl.Alive{})
+	s.Log(fmt.Sprintf("ALIVE %v == %v", entry, err))
 	return err
 }
 
