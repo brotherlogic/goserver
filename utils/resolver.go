@@ -63,6 +63,7 @@ func (r *discoveryResolver) fillClient(endpoint string) error {
 	if len(addrs) == 0 {
 		return fmt.Errorf("Unable to resolve %v", endpoint)
 	}
+
 	r.cc.UpdateState(resolver.State{Addresses: addrs})
 	return nil
 }
