@@ -20,7 +20,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/balancer/roundrobin"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
@@ -93,6 +92,7 @@ func (s *GoServer) alive(ctx context.Context, entry *pb.RegistryEntry) error {
 func (s *GoServer) validateMaster(ctx context.Context) error {
 	if s.Registry.Version == pb.RegistryEntry_V2 {
 		entry, err := utils.ResolveV2(s.Registry.Name)
+		s.Log(fmt.Sprintf("RESOLVE %v,%v", entry, err))
 		if err == nil {
 			err = s.alive(ctx, entry)
 		}
@@ -237,7 +237,7 @@ func (s *GoServer) NewBaseDial(c string) (*grpc.ClientConn, error) {
 	return grpc.Dial("discovery:///"+c,
 		grpc.WithInsecure(),
 		s.withClientUnaryInterceptor(),
-		grpc.WithBalancerName(roundrobin.Name))
+		grpc.WithBalancerName("my_pick_first"))
 }
 
 // DialServer dials a given server
