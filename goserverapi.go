@@ -109,7 +109,7 @@ func (s *GoServer) validateMaster(ctx context.Context) error {
 		}
 
 		if entry.Identifier != s.Registry.Identifier {
-			return fmt.Errorf("We are no longer master")
+			return status.Errorf(codes.FailedPrecondition, "We are no longer master")
 		}
 	} else {
 		ip, _, err := utils.Resolve(s.Registry.Name, s.Registry.Name)
