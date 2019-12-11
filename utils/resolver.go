@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"log"
 
 	"google.golang.org/grpc/resolver"
 )
@@ -53,7 +52,6 @@ func (r *discoveryResolver) fillServer(endpoint string) error {
 
 func (r *discoveryResolver) fillClient(endpoint string) error {
 	entries, err := ResolveV3Client(endpoint)
-	log.Printf("FOUND %v", entries)
 	if err != nil {
 		return err
 	}
@@ -65,7 +63,7 @@ func (r *discoveryResolver) fillClient(endpoint string) error {
 	if len(addrs) == 0 {
 		return fmt.Errorf("Unable to resolve %v", endpoint)
 	}
-	log.Printf("UPDATE %v", len(addrs))
+
 	r.cc.UpdateState(resolver.State{Addresses: addrs})
 	return nil
 }

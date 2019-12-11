@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"math/rand"
 	"reflect"
@@ -210,7 +209,6 @@ func ResolveV3Client(name string) ([]*pbdi.RegistryEntry, error) {
 		}
 	}
 
-	log.Printf("SERV %v", len(services))
 	return services, nil
 }
 
