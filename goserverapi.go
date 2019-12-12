@@ -439,14 +439,14 @@ func (s *GoServer) runHandle(ctx context.Context, handler grpc.UnaryHandler, req
 
 	defer func() {
 		if s.RPCTracing {
-			if r := recover(); r != nil {
-				err = fmt.Errorf("%v", r)
-				s.Log(fmt.Sprintf("Crashed: %v", string(debug.Stack())))
-				s.SendCrash(ctx, fmt.Sprintf("%v", string(debug.Stack())), pbbs.Crash_PANIC)
-				s.recordTrace(ctx, tracer, name, time.Now().Sub(ti), err, "")
-			} else {
-				s.recordTrace(ctx, tracer, name, time.Now().Sub(ti), err, "")
-			}
+			//if r := recover(); r != nil {
+			//		err = fmt.Errorf("%v", r)
+			//			s.Log(fmt.Sprintf("Crashed: %v", string(debug.Stack())))
+			//				s.SendCrash(ctx, fmt.Sprintf("%v", string(debug.Stack())), pbbs.Crash_PANIC)
+			//				s.recordTrace(ctx, tracer, name, time.Now().Sub(ti), err, "")
+			//			} else {
+			s.recordTrace(ctx, tracer, name, time.Now().Sub(ti), err, "")
+			//			}
 		}
 	}()
 	resp, err = handler(ctx, req)
@@ -980,8 +980,11 @@ func (s *GoServer) run(t sFunc) {
 			}
 			defer cancel()
 
-			err := s.validateMaster(ctx)
-			if t.nm || err == nil {
+			var err error
+			if !t.nm {
+				err = s.validateMaster(ctx)
+			}
+			if err == nil {
 				s.activeRPCsMutex.Lock()
 				s.activeRPCs[name]++
 				s.activeRPCsMutex.Unlock()
