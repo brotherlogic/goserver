@@ -848,6 +848,10 @@ func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, e
 		s.reregister(s.dialler, s.clientBuilder)
 	}
 
+	if err == nil {
+		s.Registry.Master = in.Master
+	}
+
 	s.lastMoteTime = time.Now().Sub(st)
 	s.lastMoteFail = fmt.Sprintf("%v", err)
 	return &pbl.Empty{}, err
