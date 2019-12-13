@@ -90,6 +90,11 @@ func (s *GoServer) alive(ctx context.Context, entry *pb.RegistryEntry) error {
 }
 
 func (s *GoServer) validateMaster(ctx context.Context) error {
+	//Master ignores don't validate
+	if s.Registry.IgnoresMaster {
+		return nil
+	}
+
 	if s.Registry.Version == pb.RegistryEntry_V2 {
 		entry, err := utils.ResolveV2(s.Registry.Name)
 		s.Log(fmt.Sprintf("RESOLVE %v,%v", entry, err))
