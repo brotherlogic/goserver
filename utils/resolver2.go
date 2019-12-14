@@ -119,6 +119,7 @@ func (b *pickfirstBalancer) UpdateSubConnState(sc balancer.SubConn, s balancer.S
 }
 
 func (b *pickfirstBalancer) Close() {
+
 }
 
 type picker struct {
@@ -143,7 +144,7 @@ func (p *picker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 			}
 		}
 	}
-	return balancer.PickResult{}, fmt.Errorf("Nothing available")
+	return balancer.PickResult{}, fmt.Errorf("No servers available")
 }
 
 func (p *picker) Add(sc balancer.SubConn, addr resolver.Address) {
