@@ -131,6 +131,8 @@ func (s *GoServer) masterElect(ctx context.Context) error {
 	if s.Registry.Version == pb.RegistryEntry_V1 {
 		return fmt.Errorf("V1 does not perform master election")
 	}
+	s.masterMutex.Lock()
+	defer s.masterMutex.Unlock()
 
 	conn, err := s.DoDial(s.Registry)
 	if err != nil {

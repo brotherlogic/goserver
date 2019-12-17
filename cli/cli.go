@@ -65,7 +65,7 @@ func main() {
 	flag.Parse()
 
 	if len(*host) > 0 {
-		conn, err := grpc.Dial(*host+":"+*port, grpc.WithInsecure())
+		conn, err := grpc.Dial(*host+":"+*port, grpc.WithInsecure(), grpc.WithMaxMsgSize(1024*1024*1024))
 		if err != nil {
 			log.Fatalf("Unable to reach server %v:%v -> %v", *host, *port, err)
 		}

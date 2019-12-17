@@ -115,6 +115,7 @@ type GoServer struct {
 	activeRPCs              map[string]int
 	activeRPCsMutex         *sync.Mutex
 	SkipIssue               bool
+	masterMutex             *sync.Mutex
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
@@ -186,6 +187,8 @@ func (s *GoServer) prepareServer(register bool) {
 
 	// Build out the ksclient
 	s.KSclient = *keystoreclient.GetClient(s.DialMaster)
+
+	s.masterMutex = &sync.Mutex{}
 }
 
 func (s *GoServer) teardown() {
