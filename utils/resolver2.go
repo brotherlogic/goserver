@@ -24,7 +24,7 @@ func newPickfirstBuilder() balancer.Builder {
 type pickfirstBuilder struct{}
 
 func (*pickfirstBuilder) Build(cc balancer.ClientConn, opt balancer.BuildOptions) balancer.Balancer {
-	return &pickfirstBalancer{cc: cc}
+	return &pickfirstBalancer{cc: cc, picker: picker{lastPick: -1}}
 }
 
 func (*pickfirstBuilder) Name() string {

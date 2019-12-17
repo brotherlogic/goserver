@@ -109,7 +109,7 @@ func main() {
 		fmt.Printf("%v and %v", state, err)
 
 	} else if len(*name) > 0 {
-		conn, err := grpc.Dial("discovery:///"+*name, grpc.WithInsecure())
+		conn, err := grpc.Dial("discovery:///"+*name, grpc.WithInsecure(), grpc.WithBalancerName("my_pick_first"))
 		if err != nil {
 			log.Fatalf("Unable to reach server: %v", err)
 		}
@@ -117,17 +117,19 @@ func main() {
 
 		check := pb.NewGoserverServiceClient(conn)
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-		defer cancel()
-		state, err := check.State(ctx, &pb.Empty{})
-		if err != nil {
-			log.Fatalf("Failure to get state: %v", err)
-		}
-		uptime := getUptime(state.GetStates())
-		for _, st := range state.GetStates() {
-			state := buildState(st, uptime)
-			if len(state) > 0 {
-				fmt.Printf("%v -> %v\n", st.GetKey(), state)
+		for i := 0; i < 3; i++ {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+			state, err := check.State(ctx, &pb.Empty{})
+			if err != nil {
+				log.Fatalf("Failure to get state: %v", err)
+			}
+			uptime := getUptime(state.GetStates())
+			for _, st := range state.GetStates() {
+				state := buildState(st, uptime)
+				if len(state) > 0 {
+					fmt.Printf("%v -> %v\n", st.GetKey(), state)
+				}
 			}
 		}
 	} else {

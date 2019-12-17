@@ -153,6 +153,7 @@ func (s *GoServer) masterElect(ctx context.Context) error {
 
 	client2 := pb.NewDiscoveryServiceV2Client(conn2)
 	resp, err := client2.MasterElect(ctx, &pb.MasterRequest{Service: s.Registry, MasterElect: true})
+	s.Log(fmt.Sprintf("Master elect response: %v, %v", resp, err))
 	if err == nil {
 		s.Registry = resp.GetService()
 	}
