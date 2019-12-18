@@ -318,7 +318,7 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 
 	var err error
 	if s.LameDuck {
-		err = fmt.Errorf("Server is lameducking")
+		err = status.Errorf(codes.Unavailable, "%v is lameducking", s.Registry.Name)
 	} else {
 		s.outgoing++
 		err = invoker(ctx, method, req, reply, cc, opts...)
