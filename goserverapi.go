@@ -439,6 +439,9 @@ func (s *GoServer) runHandle(ctx context.Context, handler grpc.UnaryHandler, req
 		} else if s.Registry.Version == pb.RegistryEntry_V2 {
 			s.masterv++
 			err = s.validateMaster(ctx)
+			if err != nil {
+				s.mastervfail++
+			}
 		}
 		if err != nil {
 			return nil, err
@@ -722,6 +725,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 		}
 	}
 	states = append(states, &pbl.State{Key: "masterv", Value: s.masterv})
+	states = append(states, &pbl.State{Key: "masterv_fail", Value: s.mastervfail})
 	states = append(states, &pbl.State{Key: "reg", Text: fmt.Sprintf("%v", s.Registry)})
 	states = append(states, &pbl.State{Key: "nil_traces", Value: nilTraces})
 	states = append(states, &pbl.State{Key: "alert_wait", TimeValue: s.alertWait.Unix()})
@@ -997,6 +1001,9 @@ func (s *GoServer) run(t sFunc) {
 			if !t.nm {
 				s.masterv++
 				err = s.validateMaster(ctx)
+				if err != nil {
+					s.mastervfail++
+				}
 			}
 			if err == nil {
 				s.activeRPCsMutex.Lock()

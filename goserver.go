@@ -117,6 +117,7 @@ type GoServer struct {
 	SkipIssue               bool
 	masterMutex             *sync.Mutex
 	masterv                 int64
+	mastervfail             int64
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
