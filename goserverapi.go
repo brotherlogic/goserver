@@ -319,18 +319,14 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	t := time.Now()
 
 	var err error
-	if s.LameDuck {
-		err = status.Errorf(codes.Unavailable, "%v is lameducking", s.Registry.Name)
-	} else {
-		s.outgoing++
+	s.outgoing++
+	err = invoker(ctx, method, req, reply, cc, opts...)
+	retries := 1
+	for retries < 3 && err != nil {
 		err = invoker(ctx, method, req, reply, cc, opts...)
-		retries := 1
-		for retries < 3 && err != nil {
-			err = invoker(ctx, method, req, reply, cc, opts...)
-			retries++
-		}
-		s.outgoing--
+		retries++
 	}
+	s.outgoing--
 
 	if s.RPCTracing {
 		s.recordTrace(ctx, tracer, method, time.Now().Sub(t), err, req)
