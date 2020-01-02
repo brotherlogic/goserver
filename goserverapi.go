@@ -825,8 +825,7 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 		}
 
 		// Unregister us from discovery
-		conn, err := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
-		defer conn.Close()
+		conn, err := s.DialLocal("discover")
 		if err != nil {
 			s.Log(fmt.Sprintf("Unable to shutdown: %v", err))
 			return
