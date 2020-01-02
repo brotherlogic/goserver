@@ -157,7 +157,7 @@ func TestRegister(t *testing.T) {
 	server := GoServer{}
 	server.SkipLog = true
 	server.PrepServer()
-	server.RegisterRepeatingTask(run, "test_task", time.Second)
+	server.RegisterRepeatingTask(run, "test_task", time.Second*5)
 }
 
 func TestNoRegister(t *testing.T) {

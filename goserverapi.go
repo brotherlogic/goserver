@@ -657,6 +657,9 @@ func (s *GoServer) RegisterServingTask(task func(ctx context.Context) error, key
 
 // RegisterRepeatingTask registers a repeating task with a given frequency
 func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context) error, key string, freq time.Duration) {
+	if freq < time.Second*5 {
+		log.Fatalf("%v is too short for %v", freq, key)
+	}
 	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, key: key, source: "repeat"})
 	found := false
 	for _, c := range s.config.Periods {
@@ -672,6 +675,10 @@ func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context) error, k
 
 // RegisterRepeatingTaskNoTrace registers a repeating task with a given frequency
 func (s *GoServer) RegisterRepeatingTaskNoTrace(task func(ctx context.Context) error, key string, freq time.Duration) {
+	if freq < time.Second*5 {
+		log.Fatalf("%v is too short for %v", freq, key)
+	}
+
 	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, key: key, noTrace: true, source: "repeat"})
 	found := false
 	for _, c := range s.config.Periods {
