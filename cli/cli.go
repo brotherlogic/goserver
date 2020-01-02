@@ -133,14 +133,14 @@ func main() {
 			}
 		}
 	} else {
-		servers, err := utils.ResolveAll(*all)
+		servers, err := utils.BaseResolveAll(*all)
 		if err != nil {
 			log.Fatalf("Error: %v", err)
 		}
 		for _, s := range servers {
 			if *server == "" || *server == s.Identifier {
 
-				fmt.Printf("SERVER: %v\n", s)
+				fmt.Printf("SERVER: %v-%v\n", s, *server)
 				conn, err := grpc.Dial(s.Ip+":"+strconv.Itoa(int(s.Port)), grpc.WithInsecure())
 				if err != nil {
 					log.Fatalf("Unable to reach server %v", s)
