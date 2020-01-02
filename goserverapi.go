@@ -96,6 +96,10 @@ func (s *GoServer) validateMaster(ctx context.Context) error {
 	}
 
 	if s.Registry.Version == pb.RegistryEntry_V2 {
+		//Acquire a validation lock
+		s.masterMutex.Lock()
+		defer s.masterMutex.Unlock()
+
 		entry, err := utils.ResolveV2(s.Registry.Name)
 		if err == nil {
 			err = s.alive(ctx, entry)
@@ -131,8 +135,6 @@ func (s *GoServer) masterElect(ctx context.Context) error {
 	if s.Registry.Version == pb.RegistryEntry_V1 {
 		return fmt.Errorf("V1 does not perform master election")
 	}
-	s.masterMutex.Lock()
-	defer s.masterMutex.Unlock()
 
 	conn, err := s.DoDial(s.Registry)
 	if err != nil {
@@ -435,7 +437,11 @@ func (s *GoServer) runHandle(ctx context.Context, handler grpc.UnaryHandler, req
 		if s.Registry.Version == pb.RegistryEntry_V1 {
 			err = fmt.Errorf("Cannot handle %v - we are not master", name)
 		} else if s.Registry.Version == pb.RegistryEntry_V2 {
+			s.masterv++
 			err = s.validateMaster(ctx)
+			if err != nil {
+				s.mastervfail++
+			}
 		}
 		if err != nil {
 			return nil, err
@@ -718,6 +724,8 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 			nilTraces++
 		}
 	}
+	states = append(states, &pbl.State{Key: "masterv", Value: s.masterv})
+	states = append(states, &pbl.State{Key: "masterv_fail", Value: s.mastervfail})
 	states = append(states, &pbl.State{Key: "reg", Text: fmt.Sprintf("%v", s.Registry)})
 	states = append(states, &pbl.State{Key: "nil_traces", Value: nilTraces})
 	states = append(states, &pbl.State{Key: "alert_wait", TimeValue: s.alertWait.Unix()})
@@ -991,7 +999,11 @@ func (s *GoServer) run(t sFunc) {
 
 			var err error
 			if !t.nm {
+				s.masterv++
 				err = s.validateMaster(ctx)
+				if err != nil {
+					s.mastervfail++
+				}
 			}
 			if err == nil {
 				s.activeRPCsMutex.Lock()
