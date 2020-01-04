@@ -131,6 +131,7 @@ func main() {
 					fmt.Printf("%v -> %v\n", st.GetKey(), state)
 				}
 			}
+			return
 		}
 	} else {
 		servers, err := utils.BaseResolveAll(*all)
