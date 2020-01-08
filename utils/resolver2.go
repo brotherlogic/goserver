@@ -178,7 +178,7 @@ func (p *picker) Failure(sc balancer.SubConn) bool {
 	for i, isc := range p.sc {
 		if sc == isc {
 			p.resolved[i] = true
-			unregister(p.address[i].Addr)
+			//unregister(p.address[i].Addr)
 		}
 	}
 	return p.allReady()
