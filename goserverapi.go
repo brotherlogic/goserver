@@ -329,7 +329,7 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	s.outgoing--
 
 	if s.RPCTracing {
-		s.recordTrace(ctx, tracer, method, time.Now().Sub(t), err, req)
+		s.recordTrace(ctx, tracer, method, time.Now().Sub(t), err, req, false)
 	}
 
 	s.activeRPCsMutex.Lock()
@@ -352,7 +352,7 @@ func (s *GoServer) getTrace(name, source string) *rpcStats {
 	return tracer
 }
 
-func (s *GoServer) recordTrace(ctx context.Context, tracer *rpcStats, name string, timeTaken time.Duration, err error, req interface{}) {
+func (s *GoServer) recordTrace(ctx context.Context, tracer *rpcStats, name string, timeTaken time.Duration, err error, req interface{}, mark bool) {
 	tracer.latencies[tracer.count%100] = timeTaken
 	tracer.count++
 	tracer.timeIn += timeTaken
@@ -374,7 +374,7 @@ func (s *GoServer) recordTrace(ctx context.Context, tracer *rpcStats, name strin
 	}
 
 	// Raise an issue on a long call
-	if timeTaken > time.Second*5 {
+	if timeTaken > time.Second*5 && mark {
 		s.marks++
 		s.mark(ctx, timeTaken, fmt.Sprintf("%v->%v", name, req))
 	}
@@ -450,9 +450,9 @@ func (s *GoServer) runHandle(ctx context.Context, handler grpc.UnaryHandler, req
 				err = fmt.Errorf("%v", r)
 				s.Log(fmt.Sprintf("Crashed: %v", string(debug.Stack())))
 				s.SendCrash(ctx, fmt.Sprintf("%v", string(debug.Stack())), pbbs.Crash_PANIC)
-				s.recordTrace(ctx, tracer, name, time.Now().Sub(ti), err, "")
+				s.recordTrace(ctx, tracer, name, time.Now().Sub(ti), err, "", true)
 			} else {
-				s.recordTrace(ctx, tracer, name, time.Now().Sub(ti), err, "")
+				s.recordTrace(ctx, tracer, name, time.Now().Sub(ti), err, "", true)
 			}
 		}
 	}()
@@ -488,7 +488,7 @@ func (s *GoServer) HTTPGet(ctx context.Context, url string, useragent string) (s
 	}
 
 	if s.RPCTracing {
-		s.recordTrace(ctx, tracer, "http_get", time.Now().Sub(t), err, url)
+		s.recordTrace(ctx, tracer, "http_get", time.Now().Sub(t), err, url, false)
 	}
 
 	return string(body), err
@@ -931,7 +931,7 @@ func (s *GoServer) runLockTask(lockName string, t sFunc) (time.Time, error) {
 	ti := time.Now()
 	rt, err := t.lFun(ctx)
 	if s.RPCTracing {
-		s.recordTrace(ctx, tracer, "/"+t.key, time.Now().Sub(ti), err, "")
+		s.recordTrace(ctx, tracer, "/"+t.key, time.Now().Sub(ti), err, "", false)
 	}
 
 	return rt, err
@@ -1032,7 +1032,7 @@ func (s *GoServer) run(t sFunc) {
 					tracer = s.getTrace("/"+t.key, t.source)
 				}
 
-				s.recordTrace(ctx, tracer, "/"+t.key, 0, err, "")
+				s.recordTrace(ctx, tracer, "/"+t.key, 0, err, "", false)
 			}
 			time.Sleep(t.d)
 			if t.runOnce {
@@ -1051,9 +1051,9 @@ func (s *GoServer) runFunc(ctx context.Context, tracer *rpcStats, t sFunc) {
 			if r := recover(); r != nil {
 				err = fmt.Errorf("%v", r)
 				s.SendCrash(ctx, fmt.Sprintf("%v", string(debug.Stack())), pbbs.Crash_PANIC)
-				s.recordTrace(ctx, tracer, "/"+t.key, time.Now().Sub(ti), err, "")
+				s.recordTrace(ctx, tracer, "/"+t.key, time.Now().Sub(ti), err, "", false)
 			} else {
-				s.recordTrace(ctx, tracer, "/"+t.key, time.Now().Sub(ti), err, "")
+				s.recordTrace(ctx, tracer, "/"+t.key, time.Now().Sub(ti), err, "", false)
 			}
 		}
 
