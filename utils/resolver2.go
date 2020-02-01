@@ -3,7 +3,6 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"golang.org/x/net/context"
@@ -195,7 +194,6 @@ func unregister(addr string) {
 	client := pbd.NewDiscoveryServiceV2Client(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	log.Printf("WHAT")
 	client.Unregister(ctx, &pbd.UnregisterRequest{Address: addr})
 }
 
