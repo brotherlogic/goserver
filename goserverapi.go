@@ -60,7 +60,7 @@ type rpcStats struct {
 }
 
 func init() {
-	resolver.Register(&utils.DiscoveryClientResolverBuilder{})
+	resolver.Register(&utils.DiscoveryServerResolverBuilder{})
 }
 func (s *GoServer) trace(c context.Context, name string) context.Context {
 	go func() {
@@ -1234,7 +1234,7 @@ func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.C
 func (s *GoServer) PLog(message string, level pbd.LogLevel) {
 	go func() {
 		if !s.SkipLog && s.Registry != nil {
-			conn, err := s.DialMaster("monitor")
+			conn, err := grpc.Dial("discovery:///monitor", grpc.WithInsecure())
 			if err == nil {
 				defer conn.Close()
 				monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
