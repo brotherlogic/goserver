@@ -969,11 +969,13 @@ func (s *GoServer) runLockingTask(t sFunc) {
 			if err == nil {
 				// Set the lock
 				err = s.setLock(lockName, ti)
+			} else {
+				s.Log(fmt.Sprintf("Failed to run task: %v, %v", t.key, err))
 			}
 		}
 
 		// Wait until we can possibly acquire the lock
-		s.Log(fmt.Sprintf("Sleeping for %v", ti.Sub(time.Now())))
+		s.Log(fmt.Sprintf("Sleeping for %v (%v) from %v", ti.Sub(time.Now()), err, t.key))
 		time.Sleep(ti.Sub(time.Now()))
 	}
 }
