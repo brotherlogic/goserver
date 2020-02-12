@@ -1096,20 +1096,21 @@ func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
 }
 
 // Serve Runs the server
-func (s *GoServer) Serve() error {
+func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 	s.Log(fmt.Sprintf("Starting %v on port %v", s.RunningFile, s.Registry.Port))
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.Port)))
 	if err != nil {
 		return err
 	}
-	server := grpc.NewServer(
+	fullOpts := append(opt,
 		grpc.RPCCompressor(grpc.NewGZIPCompressor()),
 		grpc.RPCDecompressor(grpc.NewGZIPDecompressor()),
 		grpc.MaxRecvMsgSize(1024*1024*1024),
 		grpc.MaxSendMsgSize(1024*1024*1024),
 		grpc.UnaryInterceptor(s.serverInterceptor),
 	)
+	server := grpc.NewServer(fullOpts...)
 	s.Register.DoRegister(server)
 	pbl.RegisterGoserverServiceServer(server, s)
 
