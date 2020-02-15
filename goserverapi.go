@@ -376,7 +376,7 @@ func (s *GoServer) recordTrace(ctx context.Context, tracer *rpcStats, name strin
 	// Raise an issue on a long call
 	if timeTaken > time.Second*5 && mark {
 		s.marks++
-		s.mark(ctx, timeTaken, fmt.Sprintf("%v->%v", name, req))
+		s.mark(ctx, timeTaken, fmt.Sprintf("%v/%v: %v -> %v", s.Registry.Name, s.Registry.Identifier, name, req))
 	}
 
 	if tracer.count > 100 {
