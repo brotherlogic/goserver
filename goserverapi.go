@@ -40,9 +40,6 @@ import (
 
 	// This enables pprof
 	_ "net/http/pprof"
-
-	//Needed to pull in gzip encoding init
-	_ "google.golang.org/grpc/encoding/gzip"
 )
 
 type rpcStats struct {
@@ -1104,10 +1101,6 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 		return err
 	}
 	fullOpts := append(opt,
-		grpc.RPCCompressor(grpc.NewGZIPCompressor()),
-		grpc.RPCDecompressor(grpc.NewGZIPDecompressor()),
-		grpc.MaxRecvMsgSize(1024*1024*1024),
-		grpc.MaxSendMsgSize(1024*1024*1024),
 		grpc.UnaryInterceptor(s.serverInterceptor),
 	)
 	server := grpc.NewServer(fullOpts...)
