@@ -32,6 +32,7 @@ import (
 	pbgbs "github.com/brotherlogic/gobuildslave/proto"
 	pbl "github.com/brotherlogic/goserver/proto"
 	pbks "github.com/brotherlogic/keystore/proto"
+	lpb "github.com/brotherlogic/logging/proto"
 	pbd "github.com/brotherlogic/monitor/proto"
 	pbt "github.com/brotherlogic/tracer/proto"
 	pbv "github.com/brotherlogic/versionserver/proto"
@@ -1230,14 +1231,14 @@ func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.C
 func (s *GoServer) PLog(message string, level pbd.LogLevel) {
 	go func() {
 		if !s.SkipLog && s.Registry != nil {
-			conn, err := grpc.Dial("discovery:///monitor", grpc.WithInsecure())
+			conn, err := grpc.Dial("discovery:///logging", grpc.WithInsecure())
 			if err == nil {
 				defer conn.Close()
-				monitor := s.monitorBuilder.NewMonitorServiceClient(conn)
-				messageLog := &pbd.MessageLog{Message: message, Entry: s.Registry, Level: level}
+				logger := lpb.NewLoggingServiceClient(conn)
+
 				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 				defer cancel()
-				_, err := monitor.WriteMessageLog(ctx, messageLog, grpc.FailFast(false))
+				_, err := logger.Log(ctx, &lpb.LogRequest{Log: &lpb.Log{Origin: s.Registry.GetName(), Server: s.Registry.GetIdentifier(), Log: message, Ttl: int32((time.Hour * 24).Seconds())}})
 				e, ok := status.FromError(err)
 				if ok && err != nil && e.Code() != codes.DeadlineExceeded {
 					s.failLogs++
