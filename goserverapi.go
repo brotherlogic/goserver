@@ -1231,7 +1231,7 @@ func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.C
 func (s *GoServer) PLog(message string, level pbd.LogLevel) {
 	go func() {
 		if !s.SkipLog && s.Registry != nil {
-			conn, err := grpc.Dial("discovery:///logging", grpc.WithInsecure())
+			conn, err := s.NewBaseDial("logging")
 			if err == nil {
 				defer conn.Close()
 				logger := lpb.NewLoggingServiceClient(conn)
