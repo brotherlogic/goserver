@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/brotherlogic/goserver/utils"
-	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -25,6 +24,7 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/resolver"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	pbbs "github.com/brotherlogic/buildserver/proto"
 	pb "github.com/brotherlogic/discovery/proto"

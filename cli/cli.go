@@ -135,6 +135,9 @@ func main() {
 		}
 	} else {
 		servers, err := utils.BaseResolveAll(*all)
+		if *all == "discovery" {
+			servers, err = utils.BaseResolveAll("gobuildslave")
+		}
 		if err != nil {
 			log.Fatalf("Error: %v", err)
 		}
@@ -143,6 +146,9 @@ func main() {
 
 				fmt.Printf("SERVER: %v-%v\n", s, *server)
 				conn, err := grpc.Dial(s.Ip+":"+strconv.Itoa(int(s.Port)), grpc.WithInsecure())
+				if *all == "discovery" {
+					conn, err = grpc.Dial(s.Ip+":50055", grpc.WithInsecure())
+				}
 				if err != nil {
 					log.Fatalf("Unable to reach server %v", s)
 				}
