@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package goserver;
+
+message Empty {}
+
+enum ContextType {
+  UNKNOWN = 0;
+  REGULAR = 1;
+  MEDIUM = 4;
+  LONG = 2;
+  INFINITE = 3;
+  NO_TRACE = 5;
+}
+
+message Alive {
+  string name = 1;
+}
+
+message MoteRequest {
+  bool master = 1;
+}
+
+message EmbeddedTest{
+  Alive blah = 1;
+  string test = 2;
+}
+
+message State {
+  string key = 1;
+  int64 time_value = 2;
+  int64 value = 3;
+  string text = 4;
+  double fraction = 5;
+  int64 time_duration = 6;
+}
+message ServerState {
+  repeated State states = 1;
+}
+
+message TaskPeriod {
+  string key = 1;
+  int64 period = 2;
+}
+
+message ServerConfig {
+  repeated TaskPeriod periods = 1;
+}
+
+message ShutdownRequest{}
+
+message ShutdownResponse{}
+
+message ReregisterRequest{}
+message ReregisterResponse{}
+
+service goserverService {
+  rpc IsAlive (Alive) returns (Alive) {};
+  rpc Mote(MoteRequest) returns (Empty) {};
+  rpc State(Empty) returns (ServerState) {};
+  rpc Shutdown(ShutdownRequest) returns (ShutdownResponse) {};
+  rpc Reregister(ReregisterRequest) returns (ReregisterResponse) {};
+}
