@@ -83,6 +83,15 @@ func doMatch(in, out reflect.Value) error {
 	case reflect.Slice:
 		// We ignore slices for now
 		return nil
+	case reflect.Array:
+		if in.Len() != out.Len() {
+			return fmt.Errorf("Mismatch in array length")
+		}
+		// Match empty arrays
+		if in.Len() == 0 {
+			return nil
+		}
+		return fmt.Errorf("Can't handle arrays yet %v vs %v", in, out)
 	default:
 		return fmt.Errorf("Error in parsing fuzzy match: %v -> %v\n", in.Kind(), out)
 	}
