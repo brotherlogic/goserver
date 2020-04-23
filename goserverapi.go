@@ -1,6 +1,7 @@
 package goserver
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -18,7 +19,6 @@ import (
 
 	"github.com/brotherlogic/goserver/utils"
 	"github.com/golang/protobuf/proto"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"

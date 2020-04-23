@@ -1,6 +1,7 @@
 package goserver
 
 import (
+	"context"
 	"crypto/md5"
 	"fmt"
 	"io/ioutil"
@@ -12,7 +13,6 @@ import (
 	"time"
 
 	"github.com/brotherlogic/keystore/client"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
