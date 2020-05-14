@@ -109,7 +109,7 @@ func main() {
 		fmt.Printf("%v and %v", state, err)
 
 	} else if len(*name) > 0 {
-		conn, err := grpc.Dial("discovery:///"+*name, grpc.WithInsecure(), grpc.WithBalancerName("my_pick_first"))
+		conn, err := grpc.Dial("discovery:///"+*name, grpc.WithInsecure(), grpc.WithBalancerName("my_pick_first"), grpc.WithMaxMsgSize(1024*1024))
 		if err != nil {
 			log.Fatalf("Unable to reach server: %v", err)
 		}

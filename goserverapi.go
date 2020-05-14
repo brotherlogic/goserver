@@ -19,6 +19,7 @@ import (
 
 	"github.com/brotherlogic/goserver/utils"
 	"github.com/golang/protobuf/proto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -1108,6 +1109,12 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 
 	// Enable profiling
 	go http.ListenAndServe(fmt.Sprintf(":%v", s.Port+1), nil)
+
+	// Enable prometheus
+	http.Handle("/metrics", promhttp.Handler())
+	go func() {
+		http.ListenAndServe(fmt.Sprintf(":%v", s.Port+2), nil)
+	}()
 
 	// Background all the serving funcs
 	for _, f := range s.servingFuncs {
