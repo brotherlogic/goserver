@@ -19,6 +19,8 @@ import (
 
 	"github.com/brotherlogic/goserver/utils"
 	"github.com/golang/protobuf/proto"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -57,6 +59,13 @@ type rpcStats struct {
 	origin      string
 	latencies   []time.Duration
 }
+
+var (
+	serverRequests = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "rpc_server_requests",
+		Help: "The number of server requests",
+	}, []string{"method"})
+)
 
 func init() {
 	resolver.Register(&utils.DiscoveryServerResolverBuilder{})
@@ -400,6 +409,8 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	s.activeRPCsMutex.Lock()
 	s.activeRPCs[info.FullMethod]++
 	s.activeRPCsMutex.Unlock()
+
+	serverRequests.With(prometheus.Labels{"method": info.FullMethod}).Inc()
 
 	var tracer *rpcStats
 	if s.RPCTracing {
