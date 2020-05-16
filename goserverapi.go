@@ -65,6 +65,14 @@ var (
 		Name: "rpc_server_requests",
 		Help: "The number of server requests",
 	}, []string{"method"})
+	clientRequests = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "rpc_client_requests",
+		Help: "The number of server requests",
+	}, []string{"method"})
+	repeatRequests = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "rpc_repeat_requests",
+		Help: "The number of server requests",
+	}, []string{"method"})
 )
 
 func init() {
@@ -317,6 +325,8 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	s.activeRPCsMutex.Lock()
 	s.activeRPCs[method]++
 	s.activeRPCsMutex.Unlock()
+
+	clientRequests.With(prometheus.Labels{"method": method}).Inc()
 
 	var tracer *rpcStats
 	if s.RPCTracing {
@@ -922,6 +932,7 @@ func (s *GoServer) acquireLock(lockName string) (time.Time, bool, error) {
 
 func (s *GoServer) runLockTask(lockName string, t sFunc) (time.Time, error) {
 	var tracer *rpcStats
+	repeatRequests.With(prometheus.Labels{"method": "/" + t.key}).Inc()
 	if s.RPCTracing {
 		tracer = s.getTrace("/"+t.key, t.source)
 	}
@@ -1024,6 +1035,7 @@ func (s *GoServer) run(t sFunc) {
 					tracer = s.getTrace("/"+t.key, t.source)
 				}
 
+				repeatRequests.With(prometheus.Labels{"method": name}).Inc()
 				s.runFunc(ctx, tracer, t)
 				s.activeRPCsMutex.Lock()
 				s.activeRPCs[name]--
