@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/brotherlogic/keystore/client"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -52,6 +54,13 @@ const (
 	registerFreq = time.Second
 )
 
+var (
+	runningBinaryTimestamp = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "running_binary_timestamp",
+		Help: "The timestamp of the running binary",
+	})
+)
+
 // GoServer The basic server construct
 type GoServer struct {
 	Servername              string
@@ -82,7 +91,6 @@ type GoServer struct {
 	Sudo                    bool
 	alertError              string
 	RunningFile             string
-	RunningFileDate         string
 	badHeartMessage         string
 	traceCount              int
 	traceFails              int
@@ -181,7 +189,7 @@ func (s *GoServer) prepareServer(register bool) {
 	data, _ := ioutil.ReadFile(ex)
 	info, _ := os.Stat(ex)
 	s.RunningFile = fmt.Sprintf("%x", md5.Sum(data))
-	s.RunningFileDate = fmt.Sprintf("%v", info.ModTime())
+	runningBinaryTimestamp.Set(float64(info.ModTime().Unix()))
 
 	// Enable RPC tracing
 	s.RPCTracing = true
