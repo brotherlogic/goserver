@@ -187,7 +187,7 @@ func (p *picker) Failure(sc balancer.SubConn) bool {
 // TODO: work on a better way of doing this
 func unregister(addr string) {
 	return
-	conn, err := grpc.Dial("192.168.86.249:50055", grpc.WithInsecure())
+	conn, err := grpc.Dial("192.168.86.49:50055", grpc.WithInsecure())
 	if err != nil {
 		return
 	}
