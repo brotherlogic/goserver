@@ -73,6 +73,14 @@ var (
 		Name: "rpc_repeat_requests",
 		Help: "The number of server requests",
 	}, []string{"method"})
+	serverLatency = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "rpc_server_latency",
+		Help: "The latency of server requests",
+	}, []string{"method"})
+	clientLatency = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "rpc_client_latency",
+		Help: "The latency of client requests",
+	}, []string{"method"})
 	repeatLatency = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name: "rpc_repeat_latency",
 		Help: "The latency of repeat requests",
@@ -350,6 +358,8 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	}
 	s.outgoing--
 
+	clientLatency.With(prometheus.Labels{"method": method}).Observe(float64(time.Now().Sub(t).Nanoseconds()))
+
 	if s.RPCTracing {
 		s.recordTrace(ctx, tracer, method, time.Now().Sub(t), err, req, false)
 	}
@@ -435,7 +445,9 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	if s.SendTrace {
 		ctx = s.trace(ctx, info.FullMethod)
 	}
+	t := time.Now()
 	h, err := s.runHandle(ctx, handler, req, tracer, info.FullMethod)
+	serverLatency.With(prometheus.Labels{"method": info.FullMethod}).Observe(float64(time.Now().Sub(t).Nanoseconds()))
 
 	if err == nil && h != nil {
 		if proto.Size(h.(proto.Message)) > 1024*1024 {
