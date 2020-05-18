@@ -82,6 +82,7 @@ type GoServer struct {
 	Sudo                    bool
 	alertError              string
 	RunningFile             string
+	RunningFileDate         string
 	badHeartMessage         string
 	traceCount              int
 	traceFails              int
@@ -178,7 +179,9 @@ func (s *GoServer) prepareServer(register bool) {
 	// Set the file details
 	ex, _ := os.Executable()
 	data, _ := ioutil.ReadFile(ex)
+	info, _ := os.Stat(ex)
 	s.RunningFile = fmt.Sprintf("%x", md5.Sum(data))
+	s.RunningFileDate = fmt.Sprintf("%v", info.ModTime())
 
 	// Enable RPC tracing
 	s.RPCTracing = true

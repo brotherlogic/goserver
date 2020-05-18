@@ -754,6 +754,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 	states = append(states, &pbl.State{Key: "outgoing_counts", Value: s.outgoing})
 	states = append(states, &pbl.State{Key: "marks_sent", Value: s.marks})
 	states = append(states, &pbl.State{Key: "running_binary", Text: s.RunningFile})
+	states = append(states, &pbl.State{Key: "running_binary_date", Text: s.RunningFileDate})
 	states = append(states, &pbl.State{Key: "hearts", Value: int64(s.hearts)})
 	states = append(states, &pbl.State{Key: "bad_hearts", Value: int64(s.BadHearts)})
 	states = append(states, &pbl.State{Key: "bad_heart_message", Text: s.badHeartMessage})
