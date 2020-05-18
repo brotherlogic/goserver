@@ -73,6 +73,10 @@ var (
 		Name: "rpc_repeat_requests",
 		Help: "The number of server requests",
 	}, []string{"method"})
+	repeatLatency = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "rpc_repeat_latency",
+		Help: "The latency of repeat requests",
+	}, []string{"method"})
 )
 
 func init() {
@@ -1036,7 +1040,9 @@ func (s *GoServer) run(t sFunc) {
 				}
 
 				repeatRequests.With(prometheus.Labels{"method": name}).Inc()
+				t1 := time.Now()
 				s.runFunc(ctx, tracer, t)
+				repeatLatency.With(prometheus.Labels{"method": name}).Observe(float64(time.Now().Sub(t1).Nanoseconds()))
 				s.activeRPCsMutex.Lock()
 				s.activeRPCs[name]--
 				s.activeRPCsMutex.Unlock()
