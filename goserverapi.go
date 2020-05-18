@@ -73,17 +73,21 @@ var (
 		Name: "rpc_repeat_requests",
 		Help: "The number of server requests",
 	}, []string{"method"})
+
 	serverLatency = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "rpc_server_latency",
-		Help: "The latency of server requests",
+		Name:    "rpc_server_latency",
+		Help:    "The latency of server requests",
+		Buckets: []float64{.005 * 1000, .01 * 1000, .025 * 1000, .05 * 1000, .1 * 1000, .25 * 1000, .5 * 1000, 1 * 1000, 2.5 * 1000, 5 * 1000, 10 * 1000},
 	}, []string{"method"})
 	clientLatency = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "rpc_client_latency",
-		Help: "The latency of client requests",
+		Name:    "rpc_client_latency",
+		Help:    "The latency of client requests",
+		Buckets: []float64{.005 * 1000, .01 * 1000, .025 * 1000, .05 * 1000, .1 * 1000, .25 * 1000, .5 * 1000, 1 * 1000, 2.5 * 1000, 5 * 1000, 10 * 1000},
 	}, []string{"method"})
 	repeatLatency = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "rpc_repeat_latency",
-		Help: "The latency of repeat requests",
+		Name:    "rpc_repeat_latency",
+		Help:    "The latency of repeat requests",
+		Buckets: []float64{.005 * 1000, .01 * 1000, .025 * 1000, .05 * 1000, .1 * 1000, .25 * 1000, .5 * 1000, 1 * 1000, 2.5 * 1000, 5 * 1000, 10 * 1000},
 	}, []string{"method"})
 )
 
@@ -358,7 +362,7 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	}
 	s.outgoing--
 
-	clientLatency.With(prometheus.Labels{"method": method}).Observe(float64(time.Now().Sub(t).Nanoseconds()))
+	clientLatency.With(prometheus.Labels{"method": method}).Observe(float64(time.Now().Sub(t).Nanoseconds() / 1000000))
 
 	if s.RPCTracing {
 		s.recordTrace(ctx, tracer, method, time.Now().Sub(t), err, req, false)
@@ -447,7 +451,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	}
 	t := time.Now()
 	h, err := s.runHandle(ctx, handler, req, tracer, info.FullMethod)
-	serverLatency.With(prometheus.Labels{"method": info.FullMethod}).Observe(float64(time.Now().Sub(t).Nanoseconds()))
+	serverLatency.With(prometheus.Labels{"method": info.FullMethod}).Observe(float64(time.Now().Sub(t).Nanoseconds() / 1000000))
 
 	if err == nil && h != nil {
 		if proto.Size(h.(proto.Message)) > 1024*1024 {
@@ -1055,7 +1059,7 @@ func (s *GoServer) run(t sFunc) {
 				repeatRequests.With(prometheus.Labels{"method": name}).Inc()
 				t1 := time.Now()
 				s.runFunc(ctx, tracer, t)
-				repeatLatency.With(prometheus.Labels{"method": name}).Observe(float64(time.Now().Sub(t1).Nanoseconds()))
+				repeatLatency.With(prometheus.Labels{"method": name}).Observe(float64(time.Now().Sub(t1).Nanoseconds() / 1000000))
 				s.activeRPCsMutex.Lock()
 				s.activeRPCs[name]--
 				s.activeRPCsMutex.Unlock()
