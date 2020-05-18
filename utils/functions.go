@@ -104,7 +104,7 @@ func Resolve(name, origin string) (string, int32, error) {
 	if name == "discover" {
 		return RegistryIP, int32(RegistryPort), nil
 	}
-	conn, err := grpc.Dial("192.168.86.249:50055", grpc.WithInsecure())
+	conn, err := grpc.Dial("192.168.86.49:50055", grpc.WithInsecure())
 	if err != nil {
 		return "", -1, err
 	}
@@ -191,7 +191,7 @@ func ResolveV3Client(name string) ([]*pbdi.RegistryEntry, error) {
 		return []*pbdi.RegistryEntry{&pbdi.RegistryEntry{Ip: LocalIP, Port: int32(RegistryPort)}}, nil
 	}
 
-	conn, err := grpc.Dial("192.168.86.249:50055", grpc.WithInsecure())
+	conn, err := grpc.Dial("192.168.86.49:50055", grpc.WithInsecure())
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +223,7 @@ func ResolveV3Client(name string) ([]*pbdi.RegistryEntry, error) {
 
 // GetMaster resolves out a server
 func GetMaster(name, caller string) (*pbdi.RegistryEntry, error) {
-	conn, err := grpc.Dial("192.168.86.249:50055", grpc.WithInsecure())
+	conn, err := grpc.Dial("192.168.86.49:50055", grpc.WithInsecure())
 	if err != nil {
 		return &pbdi.RegistryEntry{}, err
 	}
