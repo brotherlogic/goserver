@@ -534,6 +534,24 @@ func (s *GoServer) HTTPGet(ctx context.Context, url string, useragent string) (s
 	return string(body), err
 }
 
+func (s *GoServer) checkMem(mem float64) {
+	if mem > float64(s.MemCap) {
+		s.Log(fmt.Sprintf("Memory exceeded, killing ourselves"))
+		ctx, cancel := utils.BuildContext("goserver-crash", s.Registry.Name)
+		defer cancel()
+		s.SendCrash(ctx, "Memory is Too high", pbbs.Crash_MEMORY)
+		memProfile, err := os.Create("/home/simon/" + s.Registry.Name + "-heap.prof")
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err = pprof.WriteHeapProfile(memProfile); err != nil {
+			log.Fatal(err)
+		}
+		memProfile.Close()
+		os.Exit(1)
+	}
+}
+
 func (s *GoServer) suicideWatch() {
 	for true {
 		time.Sleep(s.suicideTime)
@@ -553,21 +571,7 @@ func (s *GoServer) suicideWatch() {
 
 		}
 
-		if mem > float64(s.MemCap) {
-			s.Log(fmt.Sprintf("Memory exceeded, killing ourselves"))
-			ctx, cancel := utils.BuildContext("goserver-crash", s.Registry.Name)
-			defer cancel()
-			s.SendCrash(ctx, "Memory is Too high", pbbs.Crash_MEMORY)
-			memProfile, err := os.Create("/home/simon/" + s.Registry.Name + "-heap.prof")
-			if err != nil {
-				log.Fatal(err)
-			}
-			if err = pprof.WriteHeapProfile(memProfile); err != nil {
-				log.Fatal(err)
-			}
-			memProfile.Close()
-			os.Exit(1)
-		}
+		s.checkMem(mem)
 
 		//commit suicide if we're detached from the parent and we're not sudoing
 		if s.Killme {
@@ -1012,6 +1016,61 @@ func (s *GoServer) runLockingTask(t sFunc) {
 	}
 }
 
+func (s *GoServer) runFuncInternal(t sFunc) {
+	name := fmt.Sprintf("%v-Repeat-(%v)-%v", s.Registry.Name, t.key, t.d)
+	var ctx context.Context
+	var cancel context.CancelFunc
+	if t.noTrace {
+		ctx, cancel = context.WithTimeout(context.Background(), time.Hour)
+	} else {
+		ctx, cancel = utils.BuildContext(name, name)
+	}
+	defer cancel()
+
+	var err error
+	if !t.nm {
+		s.masterv++
+		err = s.validateMaster(ctx)
+		if err != nil {
+			s.mastervfail++
+		}
+	}
+	if err == nil {
+		s.activeRPCsMutex.Lock()
+		s.activeRPCs[name]++
+		s.activeRPCsMutex.Unlock()
+
+		s.runTimesMutex.Lock()
+		s.runTimes[t.key] = time.Now()
+		s.runTimesMutex.Unlock()
+
+		var tracer *rpcStats
+		if s.RPCTracing {
+			tracer = s.getTrace("/"+t.key, t.source)
+		}
+
+		repeatRequests.With(prometheus.Labels{"method": name}).Inc()
+		t1 := time.Now()
+		s.runFunc(ctx, tracer, t)
+		repeatLatency.With(prometheus.Labels{"method": name}).Observe(float64(time.Now().Sub(t1).Nanoseconds() / 1000000))
+		s.activeRPCsMutex.Lock()
+		s.activeRPCs[name]--
+		s.activeRPCsMutex.Unlock()
+
+	} else if err != nil {
+		var tracer *rpcStats
+		if s.RPCTracing {
+			tracer = s.getTrace("/"+t.key, t.source)
+		}
+
+		s.recordTrace(ctx, tracer, "/"+t.key, 0, err, "", false)
+	}
+	time.Sleep(t.d)
+	if t.runOnce {
+		return
+	}
+}
+
 func (s *GoServer) run(t sFunc) {
 	time.Sleep(time.Minute)
 
@@ -1023,58 +1082,7 @@ func (s *GoServer) run(t sFunc) {
 		t.fun(context.Background())
 	} else {
 		for true {
-			name := fmt.Sprintf("%v-Repeat-(%v)-%v", s.Registry.Name, t.key, t.d)
-			var ctx context.Context
-			var cancel context.CancelFunc
-			if t.noTrace {
-				ctx, cancel = context.WithTimeout(context.Background(), time.Hour)
-			} else {
-				ctx, cancel = utils.BuildContext(name, name)
-			}
-			defer cancel()
-
-			var err error
-			if !t.nm {
-				s.masterv++
-				err = s.validateMaster(ctx)
-				if err != nil {
-					s.mastervfail++
-				}
-			}
-			if err == nil {
-				s.activeRPCsMutex.Lock()
-				s.activeRPCs[name]++
-				s.activeRPCsMutex.Unlock()
-
-				s.runTimesMutex.Lock()
-				s.runTimes[t.key] = time.Now()
-				s.runTimesMutex.Unlock()
-
-				var tracer *rpcStats
-				if s.RPCTracing {
-					tracer = s.getTrace("/"+t.key, t.source)
-				}
-
-				repeatRequests.With(prometheus.Labels{"method": name}).Inc()
-				t1 := time.Now()
-				s.runFunc(ctx, tracer, t)
-				repeatLatency.With(prometheus.Labels{"method": name}).Observe(float64(time.Now().Sub(t1).Nanoseconds() / 1000000))
-				s.activeRPCsMutex.Lock()
-				s.activeRPCs[name]--
-				s.activeRPCsMutex.Unlock()
-
-			} else if err != nil {
-				var tracer *rpcStats
-				if s.RPCTracing {
-					tracer = s.getTrace("/"+t.key, t.source)
-				}
-
-				s.recordTrace(ctx, tracer, "/"+t.key, 0, err, "", false)
-			}
-			time.Sleep(t.d)
-			if t.runOnce {
-				return
-			}
+			s.runFuncInternal(t)
 		}
 	}
 }
