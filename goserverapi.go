@@ -292,7 +292,7 @@ func (s *GoServer) DialServer(server, host string) (*grpc.ClientConn, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("Unable to locate server called %v", server)
+	return nil, status.Errorf(codes.NotFound, "Unable to locate server called %v", server)
 }
 
 //DialLocal dials through the local discover
