@@ -69,6 +69,10 @@ var (
 		Name: "rpc_client_requests",
 		Help: "The number of server requests",
 	}, []string{"method"})
+	openClients = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "rpc_open_clients",
+		Help: "The number of server requests",
+	}, []string{"method"})
 	repeatRequests = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "rpc_repeat_requests",
 		Help: "The number of server requests",
@@ -354,10 +358,14 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 
 	var err error
 	s.outgoing++
+	openClients.With(prometheus.Labels{"method": method}).Inc()
 	err = invoker(ctx, method, req, reply, cc, opts...)
+	openClients.With(prometheus.Labels{"method": method}).Dec()
 	retries := 1
 	for retries < 3 && err != nil {
+		openClients.With(prometheus.Labels{"method": method}).Inc()
 		err = invoker(ctx, method, req, reply, cc, opts...)
+		openClients.With(prometheus.Labels{"method": method}).Dec()
 		retries++
 	}
 	s.outgoing--
