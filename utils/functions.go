@@ -30,10 +30,13 @@ func ManualContext(label, origin string, t time.Duration) (context.Context, cont
 }
 
 func generateContext(origin string, t time.Duration) (context.Context, context.CancelFunc) {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	tracev := fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), r.Int63())
-	mContext := metadata.AppendToOutgoingContext(context.Background(), "trace-id", tracev)
-	return context.WithTimeout(mContext, t)
+	if rand.Float32() < 0.1 {
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		tracev := fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), r.Int63())
+		mContext := metadata.AppendToOutgoingContext(context.Background(), "trace-id", tracev)
+		return context.WithTimeout(mContext, t)
+	}
+	return context.WithTimeout(context.Background(), t)
 }
 
 //FuzzyMatch experimental fuzzy match
