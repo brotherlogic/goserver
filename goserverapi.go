@@ -77,6 +77,10 @@ var (
 		Name: "rpc_repeat_requests",
 		Help: "The number of server requests",
 	}, []string{"method"})
+	lockingRequests = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "rpc_lock_requests",
+		Help: "The number of server locking requests",
+	}, []string{"lock"})
 
 	serverLatency = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "rpc_server_latency",
@@ -1005,6 +1009,7 @@ func (s *GoServer) setLock(lockName string, ti time.Time) error {
 func (s *GoServer) runLockingTask(t sFunc) {
 	lockName := s.Registry.Name + "-" + t.key
 	for true {
+		lockingRequests.With(prometheus.Labels{"lock": lockName}).Inc()
 		//Read the lock
 		ti, success, err := s.acquireLock(lockName)
 		if success {
