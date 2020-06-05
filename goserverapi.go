@@ -1334,6 +1334,10 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 		}
 		s.Registry = r.GetService()
 
+		if !entry.GetIgnoresMaster() {
+			s.RaiseIssue(ctx, "Bad server", fmt.Sprintf("%v needs to be converted into a non-masterful server", entry), false)
+		}
+
 		return r.GetService().Port, nil
 	}
 
