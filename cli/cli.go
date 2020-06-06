@@ -62,25 +62,8 @@ func main() {
 	var server = flag.String("server", "", "Server")
 	var all = flag.String("all", "", "All")
 	var action = flag.String("action", "", "Action")
-	var unregister = flag.String("unregister", "", "Unregister")
 	flag.Parse()
 
-	if len(*unregister) > 0 {
-		conn, err := grpc.Dial(*host+":"+*port, grpc.WithInsecure(), grpc.WithMaxMsgSize(1024*1024*1024))
-		if err != nil {
-			log.Fatalf("Unable to reach server %v:%v -> %v", *host, *port, err)
-		}
-		defer conn.Close()
-
-		check := pb.NewGoserverServiceClientV2(conn)
-
-		ctx, cancel := utils.ManualContext("goserver-cli", "goserver-cli", time.Minute*10)
-		defer cancel()
-
-		state, err := check.Unregister(ctx, &pb.UnregisterRequest{Identifier: *unregister})
-		fmt.Printf("%v, %v\n", state, err)
-		return
-	}
 	if len(*host) > 0 {
 		conn, err := grpc.Dial(*host+":"+*port, grpc.WithInsecure(), grpc.WithMaxMsgSize(1024*1024*1024))
 		if err != nil {
