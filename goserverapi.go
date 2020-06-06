@@ -346,6 +346,14 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	opts ...grpc.CallOption,
 ) error {
 
+	s.clientr++
+	if s.clientr > 50 {
+		s.RaiseIssue(ctx, "Overloaded server", fmt.Sprintf("%v is running %v server requests", s.Registry, s.clientr), false)
+	}
+	defer func() {
+		s.clientr--
+	}()
+
 	s.activeRPCsMutex.Lock()
 	s.activeRPCs[method]++
 	s.activeRPCsMutex.Unlock()
@@ -445,6 +453,14 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	req interface{},
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (interface{}, error) {
+
+	s.serverr++
+	if s.serverr > 50 {
+		s.RaiseIssue(ctx, "Overloaded server", fmt.Sprintf("%v is running %v server requests", s.Registry, s.serverr), false)
+	}
+	defer func() {
+		s.serverr--
+	}()
 
 	s.activeRPCsMutex.Lock()
 	s.activeRPCs[info.FullMethod]++

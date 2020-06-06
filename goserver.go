@@ -127,6 +127,8 @@ type GoServer struct {
 	masterMutex             *sync.Mutex
 	masterv                 int64
 	mastervfail             int64
+	serverr                 int
+	clientr                 int
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
