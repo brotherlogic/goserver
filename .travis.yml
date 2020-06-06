@@ -18,4 +18,4 @@ before_install:
   
 script:
 - fgt golint $(ls *.go)
-- $HOME/gopath/bin/goveralls -service=travis-ci -ignore goserverapi.go -package github.com/brotherlogic/goserver
+- $HOME/gopath/bin/goveralls -service=travis-ci -ignore goserverapi.go,comms.go -package github.com/brotherlogic/goserver
