@@ -65,6 +65,11 @@ var (
 		Name: "rpc_server_requests",
 		Help: "The number of server requests",
 	}, []string{"method"})
+	serverPeak = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "rpc_server_peak_requests",
+		Help: "The number of server requests",
+	})
+
 	clientRequests = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "rpc_client_requests",
 		Help: "The number of server requests",
@@ -455,8 +460,9 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	handler grpc.UnaryHandler) (interface{}, error) {
 
 	s.serverr++
-	if s.serverr > 50 {
-		s.RaiseIssue(ctx, "Overloaded server", fmt.Sprintf("%v is running %v server requests", s.Registry, s.serverr), false)
+	if s.serverr > s.serverrmax {
+		s.serverrmax = s.serverr
+		serverPeak.Set(float64(s.serverrmax))
 	}
 	defer func() {
 		s.serverr--

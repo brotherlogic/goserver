@@ -128,6 +128,7 @@ type GoServer struct {
 	masterv                 int64
 	mastervfail             int64
 	serverr                 int
+	serverrmax              int
 	clientr                 int
 }
 
