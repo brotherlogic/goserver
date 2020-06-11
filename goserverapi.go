@@ -281,11 +281,13 @@ func (s *GoServer) DoDial(entry *pb.RegistryEntry) (*grpc.ClientConn, error) {
 
 // BaseDial dials a connection
 func (s *GoServer) BaseDial(c string) (*grpc.ClientConn, error) {
+	s.RaiseIssue(context.Background(), "BadBaseDial", fmt.Sprintf("%v has called BaseDial", s.Registry), false)
 	return grpc.Dial(c, grpc.WithInsecure(), s.withClientUnaryInterceptor(), grpc.WithMaxMsgSize(1024*1024*1024))
 }
 
 // NewBaseDial dials a connection
 func (s *GoServer) NewBaseDial(c string) (*grpc.ClientConn, error) {
+	s.RaiseIssue(context.Background(), "BadNewBaseDial", fmt.Sprintf("%v has called NewBaseDial", s.Registry), false)
 	return grpc.Dial("discovery:///"+c,
 		grpc.WithInsecure(),
 		s.withClientUnaryInterceptor(),
