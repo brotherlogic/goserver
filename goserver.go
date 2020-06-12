@@ -59,6 +59,10 @@ var (
 		Name: "running_binary_timestamp",
 		Help: "The timestamp of the running binary",
 	})
+	badDial = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "bad_dial",
+		Help: "Calls into bad dials",
+	})
 )
 
 // GoServer The basic server construct
@@ -225,6 +229,7 @@ func (s *GoServer) heartbeat() {
 }
 
 func (s *GoServer) reregister(d dialler, b clientBuilder) {
+	badDial.Inc()
 	if s.Registry != nil {
 		//We can't be master if we're lame ducking
 		if s.LameDuck {
@@ -263,6 +268,7 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 
 //GetIP gets an IP address from the discovery server
 func (s *GoServer) GetIP(servername string) (string, int) {
+	badDial.Inc()
 	conn, err := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
 	if err == nil {
 		defer s.close(conn)
@@ -320,6 +326,7 @@ func getLocalIP() string {
 
 //Dial a local server
 func (s *GoServer) Dial(server string, dialler dialler, builder clientBuilder) (*grpc.ClientConn, error) {
+	badDial.Inc()
 	conn, err := dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
 	if err != nil {
 		return nil, err
