@@ -902,7 +902,10 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 		}
 
 		// Unregister us from discovery
-		conn, err := s.DialLocal("discover")
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		conn, err := s.FDialServer(ctx, "discover")
 		if err != nil {
 			s.Log(fmt.Sprintf("Unable to shutdown: %v", err))
 			return
@@ -910,8 +913,6 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 		defer conn.Close()
 
 		registry := pb.NewDiscoveryServiceV2Client(conn)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
 
 		_, err = registry.Unregister(ctx, &pb.UnregisterRequest{Service: s.Registry})
 		if err == nil {
