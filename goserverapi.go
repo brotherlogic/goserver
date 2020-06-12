@@ -1235,13 +1235,12 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bo
 
 	go func() {
 		if !s.SkipIssue || len(body) == 0 {
-			conn, err := s.NewBaseDial("githubcard")
+			ctx, cancel := utils.ManualContext(s.Registry.GetName(), "issue", time.Minute, false)
+			defer cancel()
+			conn, err := s.FDialServer(ctx, "githubcard")
 			if err == nil {
 				defer conn.Close()
 				client := pbgh.NewGithubClient(conn)
-				ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-				defer cancel()
-
 				_, err := client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: sticky}, grpc.FailFast(false))
 				s.alertWait = time.Now().Add(time.Minute * 10)
 				s.alertError = fmt.Sprintf("Cannot locate githubcard")
@@ -1321,13 +1320,13 @@ func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.C
 func (s *GoServer) PLog(message string, level pbd.LogLevel) {
 	go func() {
 		if !s.SkipLog && s.Registry != nil {
-			conn, err := s.NewBaseDial("logging")
+			ctx, cancel := utils.ManualContext(s.Registry.GetName(), "logging", time.Second, false)
+			defer cancel()
+			conn, err := s.FDialServer(ctx, "logging")
 			if err == nil {
 				defer conn.Close()
 				logger := lpb.NewLoggingServiceClient(conn)
 
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-				defer cancel()
 				_, err := logger.Log(ctx, &lpb.LogRequest{Log: &lpb.Log{Timestamp: time.Now().Unix(), Origin: s.Registry.GetName(), Server: s.Registry.GetIdentifier(), Log: message, Ttl: int32((time.Hour * 24).Seconds())}})
 				e, ok := status.FromError(err)
 				if ok && err != nil && e.Code() != codes.DeadlineExceeded {
