@@ -124,7 +124,7 @@ func (s *GoServer) mark(c context.Context, t time.Duration, m string) {
 }
 
 func (s *GoServer) alive(ctx context.Context, entry *pb.RegistryEntry) error {
-	conn, err := s.DoDial(entry)
+	conn, err := s.FDial(fmt.Sprintf("%v:%v", entry.GetIdentifier(), entry.GetPort()))
 	if err != nil {
 		return err
 	}
