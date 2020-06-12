@@ -219,11 +219,12 @@ func (s *GoServer) sendTrace(c context.Context, name string, t time.Time) error 
 					return errors.New("Test trace")
 				}
 
-				conn, err := s.DialMaster("tracer")
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+				defer cancel()
+
+				conn, err := s.FDialServer(ctx, "tracer")
 				if err == nil {
 					defer conn.Close()
-					ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-					defer cancel()
 					client := pbt.NewTracerServiceClient(conn)
 
 					// Adjust the time if necessary
@@ -255,12 +256,12 @@ func (s *GoServer) sendMark(c context.Context, t time.Duration, message string) 
 				if strings.HasPrefix(id, "test") {
 					return errors.New("Test trace")
 				}
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+				defer cancel()
 
-				conn, err := s.DialMaster("tracer")
+				conn, err := s.FDialServer(ctx, "tracer")
 				if err == nil {
 					defer conn.Close()
-					ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-					defer cancel()
 					client := pbt.NewTracerServiceClient(conn)
 
 					_, err := client.Mark(ctx, &pbt.MarkRequest{LongRunningId: id, RunningTimeInMs: t.Nanoseconds() / 1000000, Origin: s.Registry.Name, RequestMessage: message})
@@ -967,15 +968,16 @@ func (s *GoServer) RunBackgroundTask(task func(ctx context.Context) error, name 
 
 // Acquires a distributed lock for an hour
 func (s *GoServer) acquireLock(lockName string) (time.Time, bool, error) {
-	conn, err := s.DialMaster("versionserver")
+	ctx, cancel := utils.ManualContext(lockName, lockName, time.Minute, false)
+	defer cancel()
+
+	conn, err := s.FDialServer(ctx, "versionserver")
 	if err != nil {
 		return time.Now(), false, err
 	}
 	defer conn.Close()
 
 	client := pbv.NewVersionServerClient(conn)
-	ctx, cancel := utils.BuildContext(lockName, lockName)
-	defer cancel()
 	resp, err := client.SetIfLessThan(ctx, &pbv.SetIfLessThanRequest{
 		TriggerValue: time.Now().Unix(),
 		Set: &pbv.Version{
@@ -1013,15 +1015,16 @@ func (s *GoServer) runLockTask(lockName string, t sFunc) (time.Time, error) {
 
 // Acquires a distributed lock for an hour
 func (s *GoServer) setLock(lockName string, ti time.Time) error {
-	conn, err := s.DialMaster("versionserver")
+	ctx, cancel := utils.ManualContext(lockName, lockName, time.Minute, false)
+	defer cancel()
+
+	conn, err := s.FDialServer(ctx, "versionserver")
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
 	client := pbv.NewVersionServerClient(conn)
-	ctx, cancel := utils.BuildContext(lockName, lockName)
-	defer cancel()
 	_, err = client.SetVersion(ctx, &pbv.SetVersionRequest{
 		Set: &pbv.Version{
 			Key:    lockName,
@@ -1292,7 +1295,7 @@ func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job stri
 
 //SendCrash reports a crash
 func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.Crash_CrashType) {
-	conn, err := s.DialMaster("buildserver")
+	conn, err := s.FDialServer(ctx, "buildserver")
 	if err == nil {
 		defer conn.Close()
 		client := pbbs.NewBuildServiceClient(conn)
