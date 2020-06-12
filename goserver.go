@@ -202,7 +202,7 @@ func (s *GoServer) prepareServer(register bool) {
 	s.runTimesMutex = &sync.Mutex{}
 
 	// Build out the ksclient
-	s.KSclient = *keystoreclient.GetClient(s.DialMaster)
+	s.KSclient = *keystoreclient.GetClient(s.FDialServer)
 
 	s.masterMutex = &sync.Mutex{}
 }
