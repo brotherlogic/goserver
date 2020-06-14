@@ -135,6 +135,7 @@ func (s *GoServer) alive(ctx context.Context, entry *pb.RegistryEntry) error {
 }
 
 func (s *GoServer) validateMaster(ctx context.Context) error {
+	s.RaiseIssue(ctx, "Validate Master", "Is trying to validate as master", false)
 	//Master ignores don't validate
 	if s.Registry.IgnoresMaster {
 		return nil
@@ -177,6 +178,7 @@ func (s *GoServer) validateMaster(ctx context.Context) error {
 }
 
 func (s *GoServer) masterElect(ctx context.Context) error {
+	s.RaiseIssue(ctx, "Master Elect", "Is trying to elect as master", false)
 	if s.Registry.Version == pb.RegistryEntry_V1 {
 		return fmt.Errorf("V1 does not perform master election")
 	}
@@ -277,6 +279,7 @@ func (s *GoServer) sendMark(c context.Context, t time.Duration, message string) 
 
 // DoDial dials a server
 func (s *GoServer) DoDial(entry *pb.RegistryEntry) (*grpc.ClientConn, error) {
+	s.RaiseIssue(context.Background(), "Do Dial", "Has called Do Dial", false)
 	return s.BaseDial(entry.Ip + ":" + strconv.Itoa(int(entry.Port)))
 }
 
@@ -299,6 +302,7 @@ func (s *GoServer) NewBaseDial(c string) (*grpc.ClientConn, error) {
 
 // DialServer dials a given server
 func (s *GoServer) DialServer(server, host string) (*grpc.ClientConn, error) {
+	s.RaiseIssue(context.Background(), "Dial Server", "Has called DialServer", false)
 	entries, err := utils.ResolveAll(server)
 	if err != nil {
 		return nil, err
@@ -315,6 +319,7 @@ func (s *GoServer) DialServer(server, host string) (*grpc.ClientConn, error) {
 
 //DialLocal dials through the local discover
 func (s *GoServer) DialLocal(server string) (*grpc.ClientConn, error) {
+	s.RaiseIssue(context.Background(), "Dial Local", "has called Dial Local", false)
 	entry, err := utils.ResolveV2(server)
 	if err != nil {
 		return nil, err
@@ -324,6 +329,7 @@ func (s *GoServer) DialLocal(server string) (*grpc.ClientConn, error) {
 
 // DialMaster dials the master server
 func (s *GoServer) DialMaster(server string) (*grpc.ClientConn, error) {
+	s.RaiseIssue(context.Background(), "Dial Master", "Has called dial master", false)
 	if s.Registry == nil || s.Registry.Version == pb.RegistryEntry_V2 {
 		entries, err := utils.ResolveV3(server)
 		if err != nil {
@@ -687,6 +693,9 @@ func (s *GoServer) RegisterServerIgnore(servername string, external bool, ignore
 
 // RegisterServerV2 registers this server under the v2 protocol
 func (s *GoServer) RegisterServerV2(servername string, external bool, ignore bool) error {
+	if !ignore {
+		s.RaiseIssue(context.Background(), "Bad register", "doing a non master register", false)
+	}
 	s.Servername = servername
 
 	// Short circuit if we don't need to register
@@ -721,16 +730,19 @@ func (s *GoServer) close(conn *grpc.ClientConn) {
 
 // RegisterLockingTask registers a locking task to run
 func (s *GoServer) RegisterLockingTask(task func(ctx context.Context) (time.Time, error), key string) {
+	s.RaiseIssue(context.Background(), "Locking task", "Is trying to register a locking task", false)
 	s.servingFuncs = append(s.servingFuncs, sFunc{lFun: task, key: key, source: "locking"})
 }
 
 // RegisterServingTask registers tasks to run when serving
 func (s *GoServer) RegisterServingTask(task func(ctx context.Context) error, key string) {
+	s.RaiseIssue(context.Background(), "Serving Task", "Is trying to register a serving task", false)
 	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: 0, key: key, source: "repeat"})
 }
 
 // RegisterRepeatingTask registers a repeating task with a given frequency
 func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context) error, key string, freq time.Duration) {
+	s.RaiseIssue(context.Background(), "Repeating Task", "Is trying to register a repeating task", false)
 	if freq < time.Second*5 {
 		log.Fatalf("%v is too short for %v", freq, key)
 	}
@@ -749,6 +761,7 @@ func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context) error, k
 
 // RegisterRepeatingTaskNoTrace registers a repeating task with a given frequency
 func (s *GoServer) RegisterRepeatingTaskNoTrace(task func(ctx context.Context) error, key string, freq time.Duration) {
+	s.RaiseIssue(context.Background(), "Repeating Task No Trace", "Is trying to register a no trace repeating task", false)
 	if freq < time.Second*5 {
 		log.Fatalf("%v is too short for %v", freq, key)
 	}
@@ -768,6 +781,7 @@ func (s *GoServer) RegisterRepeatingTaskNoTrace(task func(ctx context.Context) e
 
 // RegisterRepeatingTaskNonMaster registers a repeating task with a given frequency
 func (s *GoServer) RegisterRepeatingTaskNonMaster(task func(ctx context.Context) error, key string, freq time.Duration) {
+	s.RaiseIssue(context.Background(), "Repeat Task Non Master", "registered non master repeating task", false)
 	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, nm: true, key: key, source: "repeat"})
 	found := false
 	for _, c := range s.config.Periods {
@@ -926,6 +940,7 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 
 // Mote promotes or demotes a server into production
 func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, error) {
+	s.RaiseIssue(ctx, "Trying to Mote", "Is trying to mote", false)
 	st := time.Now()
 	s.moteCount++
 
@@ -1156,6 +1171,7 @@ func (s *GoServer) Read(ctx context.Context, key string, typ proto.Message) (pro
 
 //GetServers gets an IP address from the discovery server
 func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
+	s.RaiseIssue(context.Background(), "Trying to Get Servers", "Is trying to get servers", false)
 	conn, err := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
 	if err == nil {
 		defer conn.Close()
@@ -1273,7 +1289,7 @@ func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job stri
 		if !s.SkipLog {
 			ip, port, _ := utils.Resolve("githubcard", s.Registry.Name+"-bi")
 			if port > 0 {
-				conn, err := grpc.Dial(ip+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
+				conn, err := s.FDial(ip + ":" + strconv.Itoa(int(port)))
 				if err == nil {
 					defer conn.Close()
 					client := pbgh.NewGithubClient(conn)
@@ -1344,6 +1360,9 @@ func (s *GoServer) PLog(message string, level pbd.LogLevel) {
 
 // RegisterServer Registers a server with the system and gets the port number it should use
 func (s *GoServer) registerServer(IP string, servername string, external bool, v2 bool, im bool, dialler dialler, builder clientBuilder, getter hostGetter) (int32, error) {
+	if !v2 {
+		s.RaiseIssue(context.Background(), "Trying to register as v1", "Is trying to register", false)
+	}
 	if v2 {
 		conn, err := dialler.Dial(utils.LocalDiscover, grpc.WithInsecure())
 		defer s.close(conn)

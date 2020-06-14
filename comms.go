@@ -34,7 +34,7 @@ func (s *GoServer) FDialServer(ctx context.Context, servername string) (*grpc.Cl
 	return s.FDial(fmt.Sprintf("%v:%v", val.GetServices()[servernum].GetIp(), val.GetServices()[servernum].GetPort()))
 }
 
-// FDialSpecifcServer dial a specific job on a specific host
+// FDialSpecificServer dial a specific job on a specific host
 func (s *GoServer) FDialSpecificServer(ctx context.Context, servername string, host string) (*grpc.ClientConn, error) {
 	if servername == "discover" {
 		return s.FDial(fmt.Sprintf("%v:%v", utils.LocalIP, utils.RegistryPort))

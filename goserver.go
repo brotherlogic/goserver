@@ -216,6 +216,7 @@ func (s *GoServer) teardown() {
 }
 
 func (s *GoServer) heartbeat() {
+	s.RaiseIssue(context.Background(), "Heartbeat call", fmt.Sprintf("Called heartbeat"), false)
 	running := true
 	for running {
 		s.reregister(s.dialler, s.clientBuilder)
@@ -229,14 +230,13 @@ func (s *GoServer) heartbeat() {
 }
 
 func (s *GoServer) reregister(d dialler, b clientBuilder) {
-	badDial.With(prometheus.Labels{"call": "reregister"}).Inc()
 	if s.Registry != nil {
 		//We can't be master if we're lame ducking
 		if s.LameDuck {
 			s.Registry.Master = false
 		}
 
-		conn, err := d.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
+		conn, err := s.FDial(utils.RegistryIP + ":" + strconv.Itoa(utils.RegistryPort))
 		if err == nil {
 			defer s.close(conn)
 			c := b.NewDiscoveryServiceClient(conn)
@@ -276,6 +276,7 @@ func (s *GoServer) GetIP(servername string) (string, int) {
 		entry := &pb.RegistryEntry{Name: servername}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
+		s.RaiseIssue(ctx, "GetIp Call", fmt.Sprintf("Called GetIP"), false)
 		r, err := registry.Discover(ctx, &pb.DiscoverRequest{Request: entry}, grpc.FailFast(false))
 		e, ok := status.FromError(err)
 		if ok && e.Code() == codes.Unavailable {
@@ -336,6 +337,7 @@ func (s *GoServer) Dial(server string, dialler dialler, builder clientBuilder) (
 	entry := pb.RegistryEntry{Name: server}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
+	s.RaiseIssue(ctx, "Called Dial", fmt.Sprintf("Called Dial"), false)
 	r, err := registry.Discover(ctx, &pb.DiscoverRequest{Request: &entry}, grpc.FailFast(false))
 	if err != nil {
 		return nil, err
