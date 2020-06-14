@@ -185,7 +185,7 @@ func TestToggleSudo(t *testing.T) {
 }
 
 func TestFailToDial(t *testing.T) {
-	server := GoServer{}
+	server := GoServer{SkipIssue: true}
 	madeupport, _ := server.registerServer("madeup", "madeup", false, false, false, failingDialler{}, passingBuilder{}, basicGetter{})
 
 	if madeupport > 0 {
@@ -194,7 +194,7 @@ func TestFailToDial(t *testing.T) {
 }
 
 func TestFailToRegister(t *testing.T) {
-	server := GoServer{}
+	server := GoServer{SkipIssue: true}
 	madeupport, _ := server.registerServer("madeup", "madeup", false, false, false, passingDialler{}, failingBuilder{}, basicGetter{})
 
 	if madeupport > 0 {
@@ -203,7 +203,7 @@ func TestFailToRegister(t *testing.T) {
 }
 
 func TestFailToGet(t *testing.T) {
-	server := GoServer{}
+	server := GoServer{SkipIssue: true}
 	server.registerServer("madeup", "madeup", false, false, false, passingDialler{}, passingBuilder{}, failingGetter{})
 
 	if server.Registry.Identifier != "Server-madeup" {
@@ -212,7 +212,7 @@ func TestFailToGet(t *testing.T) {
 }
 
 func TestStraightDial(t *testing.T) {
-	server := GoServer{}
+	server := GoServer{SkipIssue: true}
 	_, err := server.Dial("madeup", passingDialler{}, passingBuilder{})
 	if err != nil {
 		t.Errorf("Dial has failed: %v", err)
@@ -220,7 +220,7 @@ func TestStraightDial(t *testing.T) {
 }
 
 func TestFailedDialler(t *testing.T) {
-	server := GoServer{}
+	server := GoServer{SkipIssue: true}
 	_, err := server.Dial("madeup", failingDialler{}, passingBuilder{})
 	if err == nil {
 		t.Errorf("Dial has failed: %v", err)
@@ -228,7 +228,7 @@ func TestFailedDialler(t *testing.T) {
 }
 
 func TestBadRegistry(t *testing.T) {
-	server := GoServer{}
+	server := GoServer{SkipIssue: true}
 	_, err := server.Dial("madeup", passingDialler{}, failingBuilder{})
 	if err == nil {
 		t.Errorf("Dial has failed: %v", err)
@@ -236,7 +236,7 @@ func TestBadRegistry(t *testing.T) {
 }
 
 func TestGetIPSuccess(t *testing.T) {
-	server := GoServer{}
+	server := GoServer{SkipIssue: true}
 	server.clientBuilder = passingBuilder{}
 	server.dialler = passingDialler{}
 	_, port := server.GetIP("madeup")
@@ -246,7 +246,7 @@ func TestGetIPSuccess(t *testing.T) {
 }
 
 func TestGetIPOneFail(t *testing.T) {
-	server := GoServer{}
+	server := GoServer{SkipIssue: true}
 	server.clientBuilder = passingFailBuilder{}
 	server.dialler = passingDialler{}
 	_, port := server.GetIP("madeup")
@@ -256,7 +256,7 @@ func TestGetIPOneFail(t *testing.T) {
 }
 
 func TestGetIPFail(t *testing.T) {
-	server := GoServer{}
+	server := GoServer{SkipIssue: true}
 	server.clientBuilder = failingBuilder{}
 	server.dialler = passingDialler{}
 	_, port := server.GetIP("madeup")
@@ -266,12 +266,12 @@ func TestGetIPFail(t *testing.T) {
 }
 
 func TestBadRegister(t *testing.T) {
-	server := GoServer{}
+	server := GoServer{SkipIssue: true}
 	server.reregister(failingDialler{}, passingBuilder{})
 }
 
 func TestLameDuckRegister(t *testing.T) {
-	server := GoServer{}
+	server := GoServer{SkipIssue: true}
 	server.SkipLog = true
 	server.PrepServer()
 
@@ -285,7 +285,7 @@ func TestLameDuckRegister(t *testing.T) {
 }
 
 func TestBadReregister(t *testing.T) {
-	server := GoServer{}
+	server := GoServer{SkipIssue: true}
 	server.Registry = &pb.RegistryEntry{Port: 23}
 	server.reregister(passingDialler{}, passingBuilder{})
 
@@ -294,7 +294,7 @@ func TestBadReregister(t *testing.T) {
 	}
 }
 func TestRegisterServer(t *testing.T) {
-	server := GoServer{}
+	server := GoServer{SkipIssue: true}
 	madeupport, _ := server.registerServer("madeup", "madeup", false, false, false, passingDialler{}, passingBuilder{}, basicGetter{})
 
 	if madeupport != 35 {
@@ -309,7 +309,7 @@ func TestRegisterServer(t *testing.T) {
 }
 
 func TestRegisterDemoteServer(t *testing.T) {
-	server := GoServer{SkipLog: true}
+	server := GoServer{SkipLog: true, SkipIssue: true}
 	madeupport, _ := server.registerServer("madeup", "madeup", false, false, false, passingDialler{}, passingBuilder{}, basicGetter{})
 
 	if madeupport != 35 {
