@@ -34,6 +34,32 @@ func (s *GoServer) FDialServer(ctx context.Context, servername string) (*grpc.Cl
 	return s.FDial(fmt.Sprintf("%v:%v", val.GetServices()[servernum].GetIp(), val.GetServices()[servernum].GetPort()))
 }
 
+// FFind finds all servers
+func (s *GoServer) FFind(ctx context.Context, servername string) ([]string, error) {
+	if servername == "discover" {
+		return []string{}, fmt.Errorf("Cannot multi dial discovery")
+	}
+
+	conn, err := s.FDial(utils.LocalDiscover)
+	if err != nil {
+		return []string{}, err
+	}
+	defer conn.Close()
+
+	registry := dpb.NewDiscoveryServiceV2Client(conn)
+	val, err := registry.Get(ctx, &dpb.GetRequest{Job: servername})
+	if err != nil {
+		return []string{}, err
+	}
+
+	// Pick a server at random
+	ret := []string{}
+	for _, entry := range val.GetServices() {
+		ret = append(ret, fmt.Sprintf("%v:%v", entry.Identifier, entry.Port))
+	}
+	return ret, nil
+}
+
 // FDialSpecificServer dial a specific job on a specific host
 func (s *GoServer) FDialSpecificServer(ctx context.Context, servername string, host string) (*grpc.ClientConn, error) {
 	if servername == "discover" {
