@@ -216,7 +216,7 @@ func (s *GoServer) teardown() {
 }
 
 func (s *GoServer) heartbeat() {
-	s.RaiseIssue(context.Background(), "Heartbeat call", fmt.Sprintf("Called heartbeat"), false)
+	s.RaiseIssue("Heartbeat call", fmt.Sprintf("Called heartbeat"))
 	running := true
 	for running {
 		s.reregister(s.dialler, s.clientBuilder)
@@ -276,7 +276,7 @@ func (s *GoServer) GetIP(servername string) (string, int) {
 		entry := &pb.RegistryEntry{Name: servername}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		s.RaiseIssue(ctx, "GetIp Call", fmt.Sprintf("Called GetIP"), false)
+		s.RaiseIssue("GetIp Call", fmt.Sprintf("Called GetIP"))
 		r, err := registry.Discover(ctx, &pb.DiscoverRequest{Request: entry}, grpc.FailFast(false))
 		e, ok := status.FromError(err)
 		if ok && e.Code() == codes.Unavailable {
@@ -337,7 +337,7 @@ func (s *GoServer) Dial(server string, dialler dialler, builder clientBuilder) (
 	entry := pb.RegistryEntry{Name: server}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	s.RaiseIssue(ctx, "Called Dial", fmt.Sprintf("Called Dial"), false)
+	s.RaiseIssue("Called Dial", fmt.Sprintf("Called Dial"))
 	r, err := registry.Discover(ctx, &pb.DiscoverRequest{Request: &entry}, grpc.FailFast(false))
 	if err != nil {
 		return nil, err

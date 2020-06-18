@@ -135,7 +135,7 @@ func (s *GoServer) alive(ctx context.Context, entry *pb.RegistryEntry) error {
 }
 
 func (s *GoServer) validateMaster(ctx context.Context) error {
-	s.RaiseIssue(ctx, "Validate Master", "Is trying to validate as master", false)
+	s.RaiseIssue("Validate Master", "Is trying to validate as master")
 	//Master ignores don't validate
 	if s.Registry.IgnoresMaster {
 		return nil
@@ -178,7 +178,7 @@ func (s *GoServer) validateMaster(ctx context.Context) error {
 }
 
 func (s *GoServer) masterElect(ctx context.Context) error {
-	s.RaiseIssue(ctx, "Master Elect", "Is trying to elect as master", false)
+	s.RaiseIssue("Master Elect", "Is trying to elect as master")
 	if s.Registry.Version == pb.RegistryEntry_V1 {
 		return fmt.Errorf("V1 does not perform master election")
 	}
@@ -279,21 +279,21 @@ func (s *GoServer) sendMark(c context.Context, t time.Duration, message string) 
 
 // DoDial dials a server
 func (s *GoServer) DoDial(entry *pb.RegistryEntry) (*grpc.ClientConn, error) {
-	s.RaiseIssue(context.Background(), "Do Dial", "Has called Do Dial", false)
+	s.RaiseIssue("Do Dial", "Has called Do Dial")
 	return s.BaseDial(entry.Ip + ":" + strconv.Itoa(int(entry.Port)))
 }
 
 // BaseDial dials a connection
 func (s *GoServer) BaseDial(c string) (*grpc.ClientConn, error) {
 	badDial.With(prometheus.Labels{"call": "basedial-" + c}).Inc()
-	s.RaiseIssue(context.Background(), "BadBaseDial", fmt.Sprintf("%v has called BaseDial", s.Registry), false)
+	s.RaiseIssue("BadBaseDial", fmt.Sprintf("%v has called BaseDial", s.Registry))
 	return grpc.Dial(c, grpc.WithInsecure(), s.withClientUnaryInterceptor(), grpc.WithMaxMsgSize(1024*1024*1024))
 }
 
 // NewBaseDial dials a connection
 func (s *GoServer) NewBaseDial(c string) (*grpc.ClientConn, error) {
 	badDial.With(prometheus.Labels{"call": "newbasedial-" + c}).Inc()
-	s.RaiseIssue(context.Background(), "BadNewBaseDial", fmt.Sprintf("%v has called NewBaseDial", s.Registry), false)
+	s.RaiseIssue("BadNewBaseDial", fmt.Sprintf("%v has called NewBaseDial", s.Registry))
 	return grpc.Dial("discovery:///"+c,
 		grpc.WithInsecure(),
 		s.withClientUnaryInterceptor(),
@@ -302,7 +302,7 @@ func (s *GoServer) NewBaseDial(c string) (*grpc.ClientConn, error) {
 
 // DialServer dials a given server
 func (s *GoServer) DialServer(server, host string) (*grpc.ClientConn, error) {
-	s.RaiseIssue(context.Background(), "Dial Server", "Has called DialServer", false)
+	s.RaiseIssue("Dial Server", "Has called DialServer")
 	entries, err := utils.ResolveAll(server)
 	if err != nil {
 		return nil, err
@@ -319,7 +319,7 @@ func (s *GoServer) DialServer(server, host string) (*grpc.ClientConn, error) {
 
 //DialLocal dials through the local discover
 func (s *GoServer) DialLocal(server string) (*grpc.ClientConn, error) {
-	s.RaiseIssue(context.Background(), "Dial Local", "has called Dial Local", false)
+	s.RaiseIssue("Dial Local", "has called Dial Local")
 	entry, err := utils.ResolveV2(server)
 	if err != nil {
 		return nil, err
@@ -329,7 +329,7 @@ func (s *GoServer) DialLocal(server string) (*grpc.ClientConn, error) {
 
 // DialMaster dials the master server
 func (s *GoServer) DialMaster(server string) (*grpc.ClientConn, error) {
-	s.RaiseIssue(context.Background(), "Dial Master", "Has called dial master", false)
+	s.RaiseIssue("Dial Master", "Has called dial master")
 	if s.Registry == nil || s.Registry.Version == pb.RegistryEntry_V2 {
 		entries, err := utils.ResolveV3(server)
 		if err != nil {
@@ -364,7 +364,7 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 
 	s.clientr++
 	if s.clientr > 50 {
-		s.RaiseIssue(ctx, "Overloaded server", fmt.Sprintf("%v is running %v server requests", s.Registry, s.clientr), false)
+		s.RaiseIssue("Overloaded server", fmt.Sprintf("%v is running %v server requests", s.Registry, s.clientr))
 	}
 	defer func() {
 		s.clientr--
@@ -437,7 +437,7 @@ func (s *GoServer) recordTrace(ctx context.Context, tracer *rpcStats, name strin
 			tracer.lastError = fmt.Sprintf("%v", err)
 
 			if float64(tracer.errors)/float64(tracer.count) > 0.8 && tracer.count > 10 {
-				s.RaiseIssue(ctx, fmt.Sprintf("Error for %v", name), fmt.Sprintf("%v [%v]: %v calls %v errors (%v)", s.Registry.Identifier, s.RunningFile, tracer.count, tracer.errors, err), false)
+				s.RaiseIssue(fmt.Sprintf("Error for %v", name), fmt.Sprintf("%v [%v]: %v calls %v errors (%v)", s.Registry.Identifier, s.RunningFile, tracer.count, tracer.errors, err))
 			}
 		} else {
 			tracer.nferrors++
@@ -460,7 +460,7 @@ func (s *GoServer) recordTrace(ctx context.Context, tracer *rpcStats, name strin
 			if found {
 				s.Log(fmt.Sprintf("High: (%+v), %v", peer.Addr, ctx))
 			}
-			s.RaiseIssue(ctx, "Over Active Service", fmt.Sprintf("rpc_%v%v is busy -> %v QPS / %v QTie", tracer.source, tracer.rpcName, qps, tracer.timeIn/time.Now().Sub(s.startup)), false)
+			s.RaiseIssue("Over Active Service", fmt.Sprintf("rpc_%v%v is busy -> %v QPS / %v QTie", tracer.source, tracer.rpcName, qps, tracer.timeIn/time.Now().Sub(s.startup)))
 		}
 	}
 }
@@ -500,7 +500,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 
 	if err == nil && h != nil {
 		if proto.Size(h.(proto.Message)) > 1024*1024 {
-			s.RaiseIssue(ctx, "Large Response", fmt.Sprintf("%v has produced a large response from %v (%vMb) -> %v", info.FullMethod, req, proto.Size(h.(proto.Message))/(1024*1024), ctx), false)
+			s.RaiseIssue("Large Response", fmt.Sprintf("%v has produced a large response from %v (%vMb) -> %v", info.FullMethod, req, proto.Size(h.(proto.Message))/(1024*1024), ctx))
 		}
 	}
 	s.activeRPCsMutex.Lock()
@@ -694,7 +694,7 @@ func (s *GoServer) RegisterServerIgnore(servername string, external bool, ignore
 // RegisterServerV2 registers this server under the v2 protocol
 func (s *GoServer) RegisterServerV2(servername string, external bool, ignore bool) error {
 	if !ignore {
-		s.RaiseIssue(context.Background(), "Bad register", "doing a non master register", false)
+		s.RaiseIssue("Bad register", "doing a non master register")
 	}
 	s.Servername = servername
 
@@ -730,19 +730,19 @@ func (s *GoServer) close(conn *grpc.ClientConn) {
 
 // RegisterLockingTask registers a locking task to run
 func (s *GoServer) RegisterLockingTask(task func(ctx context.Context) (time.Time, error), key string) {
-	s.RaiseIssue(context.Background(), "Locking task", "Is trying to register a locking task", false)
+	s.RaiseIssue("Locking task", "Is trying to register a locking task")
 	s.servingFuncs = append(s.servingFuncs, sFunc{lFun: task, key: key, source: "locking"})
 }
 
 // RegisterServingTask registers tasks to run when serving
 func (s *GoServer) RegisterServingTask(task func(ctx context.Context) error, key string) {
-	s.RaiseIssue(context.Background(), "Serving Task", "Is trying to register a serving task", false)
+	s.RaiseIssue("Serving Task", "Is trying to register a serving task")
 	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: 0, key: key, source: "repeat"})
 }
 
 // RegisterRepeatingTask registers a repeating task with a given frequency
 func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context) error, key string, freq time.Duration) {
-	s.RaiseIssue(context.Background(), "Repeating Task", "Is trying to register a repeating task", false)
+	s.RaiseIssue("Repeating Task", "Is trying to register a repeating task")
 	if freq < time.Second*5 {
 		log.Fatalf("%v is too short for %v", freq, key)
 	}
@@ -761,7 +761,7 @@ func (s *GoServer) RegisterRepeatingTask(task func(ctx context.Context) error, k
 
 // RegisterRepeatingTaskNoTrace registers a repeating task with a given frequency
 func (s *GoServer) RegisterRepeatingTaskNoTrace(task func(ctx context.Context) error, key string, freq time.Duration) {
-	s.RaiseIssue(context.Background(), "Repeating Task No Trace", "Is trying to register a no trace repeating task", false)
+	s.RaiseIssue("Repeating Task No Trace", "Is trying to register a no trace repeating task")
 	if freq < time.Second*5 {
 		log.Fatalf("%v is too short for %v", freq, key)
 	}
@@ -781,7 +781,7 @@ func (s *GoServer) RegisterRepeatingTaskNoTrace(task func(ctx context.Context) e
 
 // RegisterRepeatingTaskNonMaster registers a repeating task with a given frequency
 func (s *GoServer) RegisterRepeatingTaskNonMaster(task func(ctx context.Context) error, key string, freq time.Duration) {
-	s.RaiseIssue(context.Background(), "Repeat Task Non Master", "registered non master repeating task", false)
+	s.RaiseIssue("Repeat Task Non Master", "registered non master repeating task")
 	s.servingFuncs = append(s.servingFuncs, sFunc{fun: task, d: freq, nm: true, key: key, source: "repeat"})
 	found := false
 	for _, c := range s.config.Periods {
@@ -940,7 +940,7 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 
 // Mote promotes or demotes a server into production
 func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, error) {
-	s.RaiseIssue(ctx, "Trying to Mote", "Is trying to mote", false)
+	s.RaiseIssue("Trying to Mote", "Is trying to mote")
 	st := time.Now()
 	s.moteCount++
 
@@ -1171,7 +1171,7 @@ func (s *GoServer) Read(ctx context.Context, key string, typ proto.Message) (pro
 
 //GetServers gets an IP address from the discovery server
 func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
-	s.RaiseIssue(context.Background(), "Trying to Get Servers", "Is trying to get servers", false)
+	s.RaiseIssue("Trying to Get Servers", "Is trying to get servers")
 	conn, err := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
 	if err == nil {
 		defer conn.Close()
@@ -1244,7 +1244,7 @@ func init() {
 }
 
 //RaiseIssue raises an issue
-func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bool) {
+func (s *GoServer) RaiseIssue(title, body string) {
 	if time.Now().Before(s.alertWait) {
 		s.AlertsSkipped++
 		return
@@ -1261,7 +1261,7 @@ func (s *GoServer) RaiseIssue(ctx context.Context, title, body string, sticky bo
 			if err == nil {
 				defer conn.Close()
 				client := pbgh.NewGithubClient(conn)
-				_, err := client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: sticky}, grpc.FailFast(false))
+				_, err := client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: false}, grpc.FailFast(false))
 				s.alertWait = time.Now().Add(time.Minute * 10)
 				s.alertError = fmt.Sprintf("Cannot locate githubcard")
 
@@ -1361,7 +1361,7 @@ func (s *GoServer) PLog(message string, level pbd.LogLevel) {
 // RegisterServer Registers a server with the system and gets the port number it should use
 func (s *GoServer) registerServer(IP string, servername string, external bool, v2 bool, im bool, dialler dialler, builder clientBuilder, getter hostGetter) (int32, error) {
 	if !v2 {
-		s.RaiseIssue(context.Background(), "Trying to register as v1", "Is trying to register", false)
+		s.RaiseIssue("Trying to register as v1", "Is trying to register")
 	}
 	if v2 {
 		conn, err := dialler.Dial(utils.LocalDiscover, grpc.WithInsecure())
@@ -1383,7 +1383,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 		s.Registry = r.GetService()
 
 		if !entry.GetIgnoresMaster() {
-			s.RaiseIssue(ctx, "Bad server", fmt.Sprintf("%v needs to be converted into a non-masterful server", entry), false)
+			s.RaiseIssue("Bad server", fmt.Sprintf("%v needs to be converted into a non-masterful server", entry))
 		}
 
 		return r.GetService().Port, nil
