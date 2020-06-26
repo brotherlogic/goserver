@@ -73,7 +73,7 @@ var (
 	clientRequests = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "rpc_client_requests",
 		Help: "The number of server requests",
-	}, []string{"method"})
+	}, []string{"method", "status"})
 	openClients = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "rpc_open_clients",
 		Help: "The number of server requests",
@@ -374,8 +374,6 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	s.activeRPCs[method]++
 	s.activeRPCsMutex.Unlock()
 
-	clientRequests.With(prometheus.Labels{"method": method}).Inc()
-
 	var tracer *rpcStats
 	if s.RPCTracing {
 		tracer = s.getTrace(method, "client")
@@ -389,15 +387,9 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	openClients.With(prometheus.Labels{"method": method}).Inc()
 	err = invoker(ctx, method, req, reply, cc, opts...)
 	openClients.With(prometheus.Labels{"method": method}).Dec()
-	retries := 1
-	for retries < 3 && err != nil {
-		openClients.With(prometheus.Labels{"method": method}).Inc()
-		err = invoker(ctx, method, req, reply, cc, opts...)
-		openClients.With(prometheus.Labels{"method": method}).Dec()
-		retries++
-	}
 	s.outgoing--
 
+	clientRequests.With(prometheus.Labels{"status": status.Convert(err).Code().String(), "method": method}).Inc()
 	clientLatency.With(prometheus.Labels{"method": method}).Observe(float64(time.Now().Sub(t).Nanoseconds() / 1000000))
 
 	if s.RPCTracing {
