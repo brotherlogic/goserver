@@ -64,7 +64,7 @@ var (
 	serverRequests = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "rpc_server_requests",
 		Help: "The number of server requests",
-	}, []string{"method"})
+	}, []string{"method", "status"})
 	serverPeak = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "rpc_server_peak_requests",
 		Help: "The number of server requests",
@@ -483,8 +483,6 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	s.activeRPCs[info.FullMethod]++
 	s.activeRPCsMutex.Unlock()
 
-	serverRequests.With(prometheus.Labels{"method": info.FullMethod}).Inc()
-
 	var tracer *rpcStats
 	if s.RPCTracing {
 		tracer = s.getTrace(info.FullMethod, "server")
@@ -496,6 +494,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	}
 	t := time.Now()
 	h, err := s.runHandle(ctx, handler, req, tracer, info.FullMethod)
+	serverRequests.With(prometheus.Labels{"status": status.Convert(err).Code().String(), "method": info.FullMethod}).Inc()
 	serverLatency.With(prometheus.Labels{"method": info.FullMethod}).Observe(float64(time.Now().Sub(t).Nanoseconds() / 1000000))
 
 	if err == nil && h != nil {
