@@ -288,3 +288,34 @@ func BaseResolveAll(name string) ([]*pbdi.RegistryEntry, error) {
 
 	return entries, nil
 }
+
+// LFFind finds all servers
+func LFFind(ctx context.Context, servername string) ([]string, error) {
+	if servername == "discover" {
+		return []string{}, fmt.Errorf("Cannot multi dial discovery")
+	}
+
+	conn, err := LFDial(Discover)
+	if err != nil {
+		return []string{}, err
+	}
+	defer conn.Close()
+
+	registry := pbdi.NewDiscoveryServiceV2Client(conn)
+	val, err := registry.Get(ctx, &pbdi.GetRequest{Job: servername})
+	if err != nil {
+		return []string{}, err
+	}
+
+	// Pick a server at random
+	ret := []string{}
+	for _, entry := range val.GetServices() {
+		ret = append(ret, fmt.Sprintf("%v:%v", entry.Identifier, entry.Port))
+	}
+	return ret, nil
+}
+
+// LFDial fundamental dial
+func LFDial(host string) (*grpc.ClientConn, error) {
+	return grpc.Dial(host, grpc.WithInsecure())
+}
