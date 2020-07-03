@@ -319,3 +319,22 @@ func LFFind(ctx context.Context, servername string) ([]string, error) {
 func LFDial(host string) (*grpc.ClientConn, error) {
 	return grpc.Dial(host, grpc.WithInsecure())
 }
+
+// LFDialServer dial a specific job
+func LFDialServer(ctx context.Context, servername string) (*grpc.ClientConn, error) {
+	conn, err := LFDial(Discover)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	registry := pbdi.NewDiscoveryServiceV2Client(conn)
+	val, err := registry.Get(ctx, &pbdi.GetRequest{Job: servername})
+	if err != nil {
+		return nil, err
+	}
+
+	// Pick a server at random
+	servernum := rand.Intn(len(val.GetServices()))
+	return LFDial(fmt.Sprintf("%v:%v", val.GetServices()[servernum].GetIp(), val.GetServices()[servernum].GetPort()))
+}
