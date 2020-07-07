@@ -350,10 +350,17 @@ func (s *GoServer) setupHeartbeats() {
 	go s.heartbeat()
 }
 
+var (
+	skipLog = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "skiplog",
+		Help: "Calls into bad dials",
+	})
+)
+
 //Log a simple string message
 func (s *GoServer) Log(message string) {
 	if time.Now().Before(s.logWait) {
-		s.logsSkipped++
+		skipLog.Inc()
 		return
 	}
 	s.logWait = time.Now().Add(time.Second)
