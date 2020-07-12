@@ -1,6 +1,7 @@
 package goserver
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"runtime"
 	"runtime/debug"
 	"runtime/pprof"
@@ -1403,4 +1405,44 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 	s.Registry = r.GetService()
 
 	return r.GetService().Port, nil
+}
+
+func (s *GoServer) runElection(elected chan error, complete chan bool) {
+	command := exec.Command("etcdctl", "elect", s.Registry.Name, s.Registry.Identifier)
+	out, _ := command.StdoutPipe()
+	if out != nil {
+		scanner := bufio.NewScanner(out)
+		go func() {
+			for scanner != nil && scanner.Scan() {
+				// Expect something like registry.name/key
+				if strings.HasPrefix(scanner.Text(), s.Registry.Name) {
+					elected <- nil
+				} else {
+					elected <- fmt.Errorf("Unable to elect: %v", scanner.Text())
+				}
+			}
+			out.Close()
+		}()
+	}
+
+	//Run the election
+	err := command.Start()
+	if err != nil {
+		s.Log(fmt.Sprintf("Error starting command: %v", err))
+	}
+	<-complete
+	command.Process.Kill()
+}
+
+func (s *GoServer) elect() (func(), error) {
+	elected := make(chan error)
+	complete := make(chan bool)
+	rf := func() {
+		complete <- true
+	}
+
+	go s.runElection(elected, complete)
+
+	err := <-elected
+	return rf, err
 }
