@@ -1434,7 +1434,8 @@ func (s *GoServer) runElection(elected chan error, complete chan bool) {
 	command.Process.Kill()
 }
 
-func (s *GoServer) elect() (func(), error) {
+//Elect elect me
+func (s *GoServer) Elect() (func(), error) {
 	elected := make(chan error)
 	complete := make(chan bool)
 	rf := func() {
