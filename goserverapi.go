@@ -1454,6 +1454,9 @@ func (s *GoServer) runElection(elected chan error, complete chan bool) {
 	s.Log(fmt.Sprintf("Started command, waiting for complete"))
 	<-complete
 	command.Process.Kill()
+
+	// Ensure that the command is stopped an removed
+	command.Wait()
 }
 
 //Elect elect me
