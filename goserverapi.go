@@ -926,7 +926,7 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 			os.Exit(1)
 		}
 
-		s.Log(fmt.Sprintf("Cannot shutdown: %v", err))
+		s.Log(fmt.Sprintf("Cannot shutdown: %v, %v", err, ctx))
 	}()
 	return &pbl.ShutdownResponse{}, nil
 }
