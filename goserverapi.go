@@ -1408,7 +1408,6 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 }
 
 func (s *GoServer) runElection(elected chan error, complete chan bool) {
-	s.Log(fmt.Sprintf("Running election"))
 	command := exec.Command("etcdctl", "elect", s.Registry.Name, s.Registry.Identifier)
 	out, _ := command.StdoutPipe()
 	if out != nil {
@@ -1416,7 +1415,6 @@ func (s *GoServer) runElection(elected chan error, complete chan bool) {
 		go func() {
 			for scanner != nil && scanner.Scan() {
 				text := scanner.Text()
-				s.Log(fmt.Sprintf("HERE %v", text))
 				// Expect something like registry.name/key
 				if strings.HasPrefix(text, s.Registry.Name) {
 					elected <- nil
@@ -1435,11 +1433,10 @@ func (s *GoServer) runElection(elected chan error, complete chan bool) {
 			for scanner != nil && scanner.Scan() {
 				text := scanner.Text()
 				s.Log(fmt.Sprintf("ERR %v", text))
-				// Expect something like registry.name/key
 				if strings.HasPrefix(text, s.Registry.Name) {
 					elected <- nil
 				} else {
-					elected <- fmt.Errorf("Unable to elect: %v", scanner.Text())
+					elected <- fmt.Errorf("Unable to from err elect: %v", scanner.Text())
 				}
 			}
 			out2.Close()
@@ -1451,7 +1448,6 @@ func (s *GoServer) runElection(elected chan error, complete chan bool) {
 	if err != nil {
 		s.Log(fmt.Sprintf("Error starting command: %v", err))
 	}
-	s.Log(fmt.Sprintf("Started command, waiting for complete"))
 	<-complete
 	command.Process.Kill()
 
