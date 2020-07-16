@@ -36,8 +36,6 @@ type pickfirstBalancer struct {
 	cc     balancer.ClientConn
 }
 
-var _ balancer.V2Balancer = &pickfirstBalancer{} // Assert we implement v2
-
 func (b *pickfirstBalancer) HandleResolvedAddrs(addrs []resolver.Address, err error) {
 	if err != nil {
 		return
