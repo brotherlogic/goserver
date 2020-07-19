@@ -1407,8 +1407,8 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 	return r.GetService().Port, nil
 }
 
-func (s *GoServer) runElection(elected chan error, complete chan bool) {
-	command := exec.Command("etcdctl", "elect", s.Registry.Name, s.Registry.Identifier)
+func (s *GoServer) runElection(key string, elected chan error, complete chan bool) {
+	command := exec.Command("etcdctl", "elect", s.Registry.Name+key, s.Registry.Identifier)
 	out, _ := command.StdoutPipe()
 	if out != nil {
 		scanner := bufio.NewScanner(out)
@@ -1463,7 +1463,21 @@ func (s *GoServer) Elect() (func(), error) {
 		complete <- true
 	}
 
-	go s.runElection(elected, complete)
+	go s.runElection("", elected, complete)
+
+	err := <-elected
+	return rf, err
+}
+
+//Elect elect me
+func (s *GoServer) ElectKey(key string) (func(), error) {
+	elected := make(chan error)
+	complete := make(chan bool)
+	rf := func() {
+		complete <- true
+	}
+
+	go s.runElection(key, elected, complete)
 
 	err := <-elected
 	return rf, err
