@@ -908,8 +908,8 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 			return
 		}
 
-		// Unregister us from discovery
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		// Unregister us from discovery - give us a long timeout
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
 
 		conn, err := s.FDialServer(ctx, "discover")
