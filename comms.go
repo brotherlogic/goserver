@@ -13,7 +13,7 @@ import (
 
 // FDialServer dial a specific job
 func (s *GoServer) FDialServer(ctx context.Context, servername string) (*grpc.ClientConn, error) {
-	if servername == "discover" {
+	if servername == "discovery" {
 		return s.FDial(fmt.Sprintf("%v:%v", utils.LocalIP, utils.RegistryPort))
 	}
 
@@ -36,7 +36,7 @@ func (s *GoServer) FDialServer(ctx context.Context, servername string) (*grpc.Cl
 
 // FFind finds all servers
 func (s *GoServer) FFind(ctx context.Context, servername string) ([]string, error) {
-	if servername == "discover" {
+	if servername == "discovery" {
 		return []string{}, fmt.Errorf("Cannot multi dial discovery")
 	}
 
@@ -62,7 +62,7 @@ func (s *GoServer) FFind(ctx context.Context, servername string) ([]string, erro
 
 // FDialSpecificServer dial a specific job on a specific host
 func (s *GoServer) FDialSpecificServer(ctx context.Context, servername string, host string) (*grpc.ClientConn, error) {
-	if servername == "discover" {
+	if servername == "discovery" {
 		return s.FDial(fmt.Sprintf("%v:%v", utils.LocalIP, utils.RegistryPort))
 	}
 

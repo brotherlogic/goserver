@@ -1469,7 +1469,7 @@ func (s *GoServer) Elect() (func(), error) {
 	return rf, err
 }
 
-//Elect elect me
+//ElectKey elect me with a key
 func (s *GoServer) ElectKey(key string) (func(), error) {
 	elected := make(chan error)
 	complete := make(chan bool)
