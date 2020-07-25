@@ -912,7 +912,7 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
 
-		conn, err := s.FDialServer(ctx, "discover")
+		conn, err := s.FDialServer(ctx, "discovery")
 		if err != nil {
 			s.Log(fmt.Sprintf("Unable to shutdown: %v", err))
 			return
