@@ -1407,7 +1407,14 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 	return r.GetService().Port, nil
 }
 
+var election = promauto.NewGauge(prometheus.GaugeOpts{
+	Name: "server_election",
+	Help: "The number of active election waits",
+})
+
 func (s *GoServer) runElection(key string, elected chan error, complete chan bool) {
+	election.Inc()
+	defer election.Dec()
 	command := exec.Command("etcdctl", "elect", s.Registry.Name+key, s.Registry.Identifier)
 	out, _ := command.StdoutPipe()
 	if out != nil {
