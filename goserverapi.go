@@ -1285,20 +1285,19 @@ func (s *GoServer) BounceIssue(title, body string, job string) {
 	s.AlertsFired++
 	go func() {
 		if !s.SkipLog {
-			ip, port, _ := utils.Resolve("githubcard", s.Registry.Name+"-bi")
-			if port > 0 {
-				conn, err := s.FDial(ip + ":" + strconv.Itoa(int(port)))
-				if err == nil {
-					defer conn.Close()
-					client := pbgh.NewGithubClient(conn)
-					ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-					defer cancel()
+			ctx, cancel := utils.ManualContext(s.Registry.GetName(), "issue", time.Minute, false)
+			defer cancel()
+			conn, err := s.FDialServer(ctx, "githubcard")
+			if err == nil {
+				defer conn.Close()
+				client := pbgh.NewGithubClient(conn)
+				ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+				defer cancel()
 
-					_, err := client.AddIssue(ctx, &pbgh.Issue{Service: job, Title: title, Body: body}, grpc.FailFast(false))
-					issueBounces.With(prometheus.Labels{"error": fmt.Sprintf("%v", err)}).Inc()
-					if err != nil {
+				_, err := client.AddIssue(ctx, &pbgh.Issue{Service: job, Title: title, Body: body}, grpc.FailFast(false))
+				issueBounces.With(prometheus.Labels{"error": fmt.Sprintf("%v", err)}).Inc()
+				if err != nil {
 						s.alertError = fmt.Sprintf("Failure to add issue: %v", err)
-					}
 				}
 			} else {
 				s.alertError = fmt.Sprintf("Cannot locate githubcard")
