@@ -1275,8 +1275,13 @@ func (s *GoServer) RaiseIssue(title, body string) {
 	}()
 }
 
+var issueBounces = promauto.NewCounterVec(prometheus.CounterOpts{
+	Name: "server_bounces",
+	Help: "The number of server requests",
+}, []string{"error"})
+
 //BounceIssue raises an issue for a different source
-func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job string) {
+func (s *GoServer) BounceIssue(title, body string, job string) {
 	s.AlertsFired++
 	go func() {
 		if !s.SkipLog {
@@ -1290,8 +1295,9 @@ func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job stri
 				defer cancel()
 
 				_, err := client.AddIssue(ctx, &pbgh.Issue{Service: job, Title: title, Body: body}, grpc.FailFast(false))
+				issueBounces.With(prometheus.Labels{"error": fmt.Sprintf("%v", err)}).Inc()
 				if err != nil {
-					s.alertError = fmt.Sprintf("Failure to add issue: %v", err)
+						s.alertError = fmt.Sprintf("Failure to add issue: %v", err)
 				}
 			} else {
 				s.alertError = fmt.Sprintf("Cannot locate githubcard")
