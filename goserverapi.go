@@ -1240,7 +1240,6 @@ func init() {
 func (s *GoServer) RaiseIssue(title, body string) {
 	if time.Now().Before(s.alertWait) {
 		s.AlertsSkipped++
-		return
 	}
 
 	s.alertWait = time.Now().Add(time.Minute * 10)
@@ -1297,7 +1296,7 @@ func (s *GoServer) BounceIssue(title, body string, job string) {
 				_, err := client.AddIssue(ctx, &pbgh.Issue{Service: job, Title: title, Body: body}, grpc.FailFast(false))
 				issueBounces.With(prometheus.Labels{"error": fmt.Sprintf("%v", err)}).Inc()
 				if err != nil {
-						s.alertError = fmt.Sprintf("Failure to add issue: %v", err)
+					s.alertError = fmt.Sprintf("Failure to add issue: %v", err)
 				}
 			} else {
 				s.alertError = fmt.Sprintf("Cannot locate githubcard")
