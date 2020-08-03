@@ -1258,6 +1258,7 @@ func (s *GoServer) RaiseIssue(title, body string) {
 				s.alertError = fmt.Sprintf("Cannot locate githubcard")
 
 				if err != nil {
+					s.Log(fmt.Sprintf("Error adding issue: %v", err))
 					st := status.Convert(err)
 					if st.Code() == codes.ResourceExhausted {
 						s.alertWait = time.Now().Add(time.Minute * 10)
