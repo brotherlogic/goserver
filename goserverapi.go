@@ -1311,6 +1311,9 @@ func (s *GoServer) BounceIssue(title, body string, job string) {
 //SendCrash reports a crash
 func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.Crash_CrashType) {
 	conn, err := s.FDialServer(ctx, "buildserver")
+	if err != nil {
+		s.Log(fmt.Sprintf("Unable to dial buildserver: %v", err))
+	}
 	if err == nil {
 		defer conn.Close()
 		client := pbbs.NewBuildServiceClient(conn)
@@ -1322,7 +1325,7 @@ func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.C
 			infoString += fmt.Sprintf("%v = %v\n", str.Key, str)
 		}
 
-		client.ReportCrash(ctx, &pbbs.CrashRequest{
+		_, err := client.ReportCrash(ctx, &pbbs.CrashRequest{
 			Version: s.RunningFile,
 			Origin:  s.Registry.Name,
 			Job: &pbgbs.Job{
@@ -1331,6 +1334,7 @@ func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.C
 			Crash: &pbbs.Crash{
 				ErrorMessage: crashText + "\n" + infoString,
 				CrashType:    ctype}})
+		s.Log(fmt.Sprintf("Reported crash: %v", err))
 	}
 }
 
