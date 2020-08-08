@@ -296,6 +296,7 @@ func (s *GoServer) BaseDial(c string) (*grpc.ClientConn, error) {
 func (s *GoServer) NewBaseDial(c string) (*grpc.ClientConn, error) {
 	badDial.With(prometheus.Labels{"call": "newbasedial-" + c}).Inc()
 	s.RaiseIssue("BadNewBaseDial", fmt.Sprintf("%v has called NewBaseDial", s.Registry))
+	s.Log(fmt.Sprintf("%v is calling %v via NewBaseDial", s.Registry.Name, c))
 	return grpc.Dial("discovery:///"+c,
 		grpc.WithInsecure(),
 		s.withClientUnaryInterceptor(),
