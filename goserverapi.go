@@ -1248,7 +1248,7 @@ func (s *GoServer) RaiseIssue(title, body string) {
 
 	go func() {
 		if !s.SkipIssue || len(body) == 0 {
-			ctx, cancel := utils.ManualContext(s.Registry.GetName(), "issue", time.Minute, false)
+			ctx, cancel := utils.ManualContext(s.Registry.GetName(), "issue", time.Second*5, false)
 			defer cancel()
 			conn, err := s.FDialServer(ctx, "githubcard")
 			if err == nil {
