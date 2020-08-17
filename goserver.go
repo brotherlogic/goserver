@@ -134,6 +134,7 @@ type GoServer struct {
 	serverr                 int
 	serverrmax              int
 	clientr                 int
+	DiskLog                 bool
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
@@ -209,6 +210,10 @@ func (s *GoServer) prepareServer(register bool) {
 	s.KSclient = *keystoreclient.GetClient(s.FDialServer)
 
 	s.masterMutex = &sync.Mutex{}
+
+	if s.DiskLog {
+		s.prepDLog()
+	}
 }
 
 func (s *GoServer) teardown() {
