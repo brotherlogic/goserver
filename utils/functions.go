@@ -335,6 +335,7 @@ func LFDialServer(ctx context.Context, servername string) (*grpc.ClientConn, err
 	}
 
 	// Pick a server at random
+	rand.Seed(time.Now().UnixNano())
 	servernum := rand.Intn(len(val.GetServices()))
 	return LFDial(fmt.Sprintf("%v:%v", val.GetServices()[servernum].GetIp(), val.GetServices()[servernum].GetPort()))
 }
