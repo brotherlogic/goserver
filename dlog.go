@@ -4,8 +4,12 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 func (s *GoServer) hasScratch() bool {
@@ -30,9 +34,38 @@ func (s *GoServer) hasScratch() bool {
 
 }
 
+var (
+	logSize = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "dlog_size",
+		Help: "The number of server requests",
+	})
+)
+
+func dirSize(path string) (int64, error) {
+	var size int64
+	err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			size += info.Size()
+		}
+		return err
+	})
+	return size, err
+}
+
 func (s *GoServer) DLog(text string) {
 	if s.dlogHandle != nil {
 		s.dlogHandle.WriteString(fmt.Sprintf("%v %v\n", time.Now().Unix(), text))
+
+		size, err := dirSize(fmt.Sprintf("/media/scratch/dlogs/%v", s.Registry.GetName()))
+		if err != nil {
+			s.RaiseIssue("Bad log problem", fmt.Sprintf("Error reeading logs: %v", err))
+		} else {
+			logSize.Set(float64(size))
+		}
+
 	}
 }
 
