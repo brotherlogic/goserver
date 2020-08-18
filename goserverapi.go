@@ -1222,6 +1222,10 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 		http.ListenAndServe(fmt.Sprintf(":%v", s.Port+2), nil)
 	}()
 
+	if s.DiskLog {
+		s.prepDLog()
+	}
+
 	// Background all the serving funcs
 	for _, f := range s.servingFuncs {
 		go s.run(f)
