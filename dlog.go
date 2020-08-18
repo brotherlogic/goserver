@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 func (s *GoServer) hasScratch() bool {
@@ -31,7 +32,13 @@ func (s *GoServer) hasScratch() bool {
 
 func (s *GoServer) prepDLog() {
 	if s.hasScratch() {
-		s.Log(fmt.Sprintf("Prepping for Disk Logging"))
+		filename := fmt.Sprintf("/media/scratch/dlogs/%v/%v.logs", s.Registry.GetName(), time.Now().Unix())
+		os.MkdirAll(fmt.Sprintf("/media/scratch/dlogs/%v", s.Registry.GetName()), 0777)
+		fhandle, err := os.Create(filename)
+		if err != nil {
+			s.Log(fmt.Sprintf("Unable to open file: %v", err))
+		}
+		s.dlogHandle = fhandle
 	} else {
 		s.Log(fmt.Sprintf("Scratch not found, no disk logging"))
 	}

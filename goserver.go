@@ -135,6 +135,7 @@ type GoServer struct {
 	serverrmax              int
 	clientr                 int
 	DiskLog                 bool
+	dlogHandle              *os.File
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
