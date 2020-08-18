@@ -33,7 +33,7 @@ func (s *GoServer) hasScratch() bool {
 func (s *GoServer) prepDLog() {
 	if s.hasScratch() {
 		filename := fmt.Sprintf("/media/scratch/dlogs/%v/%v.logs", s.Registry.GetName(), time.Now().Unix())
-		os.MkdirAll(fmt.Sprintf("/media/scratch/dlogs/%v", s.Registry.GetName()), 0777)
+		os.MkdirAll(fmt.Sprintf("/media/scratch/dlogs/%v-dlogs/", s.Registry.GetName()), 0777)
 		fhandle, err := os.Create(filename)
 		if err != nil {
 			s.Log(fmt.Sprintf("Unable to open file: %v", err))
