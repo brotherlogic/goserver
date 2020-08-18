@@ -364,6 +364,7 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	invoker grpc.UnaryInvoker,
 	opts ...grpc.CallOption,
 ) error {
+	s.DLog(fmt.Sprintf("C: %v <- %v", method, req))
 
 	s.clientr++
 	if s.clientr > 50 {
@@ -402,6 +403,8 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	s.activeRPCsMutex.Lock()
 	s.activeRPCs[method]--
 	s.activeRPCsMutex.Unlock()
+
+	s.DLog(fmt.Sprintf("C: %v -> %v", method, err))
 	return err
 }
 
@@ -465,6 +468,8 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (interface{}, error) {
 
+	s.DLog(fmt.Sprintf("S: %v <- %v", info.FullMethod, req))
+
 	s.serverr++
 	if s.serverr > s.serverrmax {
 		s.serverrmax = s.serverr
@@ -500,6 +505,9 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	s.activeRPCsMutex.Lock()
 	s.activeRPCs[info.FullMethod]--
 	s.activeRPCsMutex.Unlock()
+
+	s.DLog(fmt.Sprintf("S: %v -> %v", info.FullMethod, err))
+
 	return h, err
 }
 
