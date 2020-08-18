@@ -211,10 +211,6 @@ func (s *GoServer) prepareServer(register bool) {
 	s.KSclient = *keystoreclient.GetClient(s.FDialServer)
 
 	s.masterMutex = &sync.Mutex{}
-
-	if s.DiskLog {
-		s.prepDLog()
-	}
 }
 
 func (s *GoServer) teardown() {
