@@ -57,7 +57,7 @@ func dirSize(path string) (int64, error) {
 
 func (s *GoServer) DLog(text string) {
 	if s.dlogHandle != nil {
-		s.dlogHandle.WriteString(fmt.Sprintf("%v %v\n", time.Now().Unix(), text))
+		s.dlogHandle.WriteString(fmt.Sprintf("%v %v\n", time.Now(), text))
 
 		size, err := dirSize(fmt.Sprintf("/media/scratch/dlogs/%v", s.Registry.GetName()))
 		if err != nil {
