@@ -189,6 +189,7 @@ func (s *GoServer) prepareServer(register bool) {
 	s.traces = []*rpcStats{}
 	s.alertWait = time.Now()
 	s.noRegister = register
+	s.DiskLog = true
 
 	//Turn off grpc logging
 	grpclog.SetLogger(log.New(ioutil.Discard, "", -1))
