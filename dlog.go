@@ -72,7 +72,10 @@ func (s *GoServer) DLog(text string) {
 func (s *GoServer) prepDLog() {
 	if s.hasScratch() {
 		filename := fmt.Sprintf("/media/scratch/dlogs/%v/%v.logs", s.Registry.GetName(), time.Now().Unix())
-		os.MkdirAll(fmt.Sprintf("/media/scratch/dlogs/%v/", s.Registry.GetName()), 0777)
+		err := os.MkdirAll(fmt.Sprintf("/media/scratch/dlogs/%v/", s.Registry.GetName()), 0777)
+		if err != nil {
+			s.Log(fmt.Sprintf("Unable to create log dir: %v", err))
+		}
 		fhandle, err := os.Create(filename)
 		if err != nil {
 			s.Log(fmt.Sprintf("Unable to open file: %v", err))
