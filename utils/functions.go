@@ -48,6 +48,9 @@ func FuzzyMatch(matcher, matchee proto.Message) error {
 }
 
 func matchStruct(in, out reflect.Value) error {
+	if in == nil || out == nil {
+		return fmt.Errorf("Bad field: %v and %v", in, out)
+	}
 	if in.NumField() != out.NumField() {
 		return fmt.Errorf("Field numbers do not match : %v and %v", in.NumField(), out.NumField())
 	}
