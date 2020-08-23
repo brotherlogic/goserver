@@ -11,7 +11,7 @@ const (
 	RegistryPort = 50055
 
 	// Discover the overall thing for discover
-	Discover = "runner:50055"
+	Discover = "argon:50055"
 
 	// LocalDiscover the overall thing for discover
 	LocalDiscover = "127.0.0.1:50055"
