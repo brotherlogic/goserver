@@ -468,7 +468,11 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (interface{}, error) {
 
-	s.DLog(fmt.Sprintf("S: %v <- %v", info.FullMethod, req))
+	if s.NoBody {
+		s.DLog(fmt.Sprintf("S: %v <- bytes %v", info.FullMethod, proto.Size(req.(proto.Message))))
+	} else {
+		s.DLog(fmt.Sprintf("S: %v <- %v", info.FullMethod, req))
+	}
 
 	s.serverr++
 	if s.serverr > s.serverrmax {
