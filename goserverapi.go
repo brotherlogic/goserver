@@ -673,6 +673,10 @@ func (s *GoServer) RegisterServer(servername string, external bool) error {
 func (s *GoServer) RegisterServerIgnore(servername string, external bool, ignore bool) error {
 	s.Servername = servername
 
+	if s.preppedDLog && s.DiskLog {
+		s.prepDLog()
+	}
+
 	// Short circuit if we don't need to register
 	if s.noRegister {
 		IP := getLocalIP()
@@ -1204,10 +1208,6 @@ func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
 
 // Serve Runs the server
 func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
-	if s.DiskLog {
-		s.prepDLog()
-	}
-
 	s.Log(fmt.Sprintf("Starting %v on port %v", s.RunningFile, s.Registry.Port))
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.Port)))
