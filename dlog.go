@@ -70,6 +70,7 @@ func (s *GoServer) DLog(text string) {
 }
 
 func (s *GoServer) prepDLog() {
+	s.preppedDLog = true
 	if s.hasScratch() {
 		filename := fmt.Sprintf("/media/scratch/dlogs/%v/%v.logs", s.Registry.GetName(), time.Now().Unix())
 		err := os.MkdirAll(fmt.Sprintf("/media/scratch/dlogs/%v/", s.Registry.GetName()), 0777)

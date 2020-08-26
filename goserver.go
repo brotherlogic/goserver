@@ -137,6 +137,7 @@ type GoServer struct {
 	DiskLog                 bool
 	dlogHandle              *os.File
 	NoBody                  bool
+	preppedDLog             bool
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
