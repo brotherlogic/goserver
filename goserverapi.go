@@ -1459,7 +1459,7 @@ func (s *GoServer) runElection(key string, elected chan error, complete chan boo
 				if strings.HasPrefix(text, s.Registry.Name) {
 					elected <- nil
 				} else {
-					elected <- fmt.Errorf("Unable to elect: %v", scanner.Text())
+					elected <- fmt.Errorf("Unable to elect (%v): %v", s.Registry.Name+key, scanner.Text())
 				}
 			}
 			out.Close()
@@ -1476,7 +1476,7 @@ func (s *GoServer) runElection(key string, elected chan error, complete chan boo
 				if strings.HasPrefix(text, s.Registry.Name) {
 					elected <- nil
 				} else {
-					elected <- fmt.Errorf("Unable to from err elect: %v", scanner.Text())
+					elected <- fmt.Errorf("Unable to from err elect (%v): %v", s.Registry.Name+key, scanner.Text())
 				}
 			}
 			out2.Close()
