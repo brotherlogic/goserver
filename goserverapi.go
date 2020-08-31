@@ -1401,7 +1401,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 		defer cancel()
 		t := time.Now()
-		r, err := registry.RegisterV2(ctx, &pb.RegisterRequest{Service: &entry}, grpc.FailFast(false))
+		r, err := registry.RegisterV2(ctx, &pb.RegisterRequest{Service: &entry})
 		s.regTime = time.Now().Sub(t)
 		if err != nil {
 			return -1, err
