@@ -1190,10 +1190,10 @@ func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
 		registry := s.clientBuilder.NewDiscoveryServiceClient(conn)
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		r, err := registry.ListAllServices(ctx, &pb.ListRequest{}, grpc.FailFast(false))
+		r, err := registry.ListAllServices(ctx, &pb.ListRequest{})
 		e, ok := status.FromError(err)
 		if ok && e.Code() == codes.Unavailable {
-			r, err = registry.ListAllServices(ctx, &pb.ListRequest{}, grpc.FailFast(false))
+			r, err = registry.ListAllServices(ctx, &pb.ListRequest{})
 		}
 
 		if err == nil {
@@ -1272,7 +1272,7 @@ func (s *GoServer) RaiseIssue(title, body string) {
 			if err == nil {
 				defer conn.Close()
 				client := pbgh.NewGithubClient(conn)
-				_, err := client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: false}, grpc.FailFast(false))
+				_, err := client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: false})
 				s.alertWait = time.Now().Add(time.Minute * 10)
 				s.alertError = fmt.Sprintf("Cannot locate githubcard")
 
@@ -1313,7 +1313,7 @@ func (s *GoServer) BounceIssue(title, body string, job string) {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 				defer cancel()
 
-				_, err := client.AddIssue(ctx, &pbgh.Issue{Service: job, Title: title, Body: body}, grpc.FailFast(false))
+				_, err := client.AddIssue(ctx, &pbgh.Issue{Service: job, Title: title, Body: body})
 				issueBounces.With(prometheus.Labels{"error": fmt.Sprintf("%v", err)}).Inc()
 				if err != nil {
 					s.alertError = fmt.Sprintf("Failure to add issue: %v", err)
@@ -1430,7 +1430,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	t := time.Now()
-	r, err := registry.RegisterService(ctx, &pb.RegisterRequest{Service: &entry}, grpc.FailFast(false))
+	r, err := registry.RegisterService(ctx, &pb.RegisterRequest{Service: &entry})
 	s.regTime = time.Now().Sub(t)
 	if err != nil {
 		return -1, err
