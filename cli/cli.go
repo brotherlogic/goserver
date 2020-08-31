@@ -76,6 +76,12 @@ func main() {
 		ctx, cancel := utils.ManualContext("goserver-cli", "goserver-cli", time.Minute*10, false)
 		defer cancel()
 
+		if len(*action) > 0 {
+			val, err := check.Shutdown(context.Background(), &pb.ShutdownRequest{})
+			fmt.Printf("Shutdown: %v, %v", val, err)
+			return
+		}
+
 		state, err := check.State(ctx, &pb.Empty{})
 		if err != nil {
 			log.Fatalf("Unable to read state: %v", err)

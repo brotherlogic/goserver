@@ -282,10 +282,10 @@ func (s *GoServer) GetIP(servername string) (string, int) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 		s.RaiseIssue("GetIp Call", fmt.Sprintf("Called GetIP"))
-		r, err := registry.Discover(ctx, &pb.DiscoverRequest{Request: entry}, grpc.FailFast(false))
+		r, err := registry.Discover(ctx, &pb.DiscoverRequest{Request: entry})
 		e, ok := status.FromError(err)
 		if ok && e.Code() == codes.Unavailable {
-			r, err = registry.Discover(ctx, &pb.DiscoverRequest{Request: entry}, grpc.FailFast(false))
+			r, err = registry.Discover(ctx, &pb.DiscoverRequest{Request: entry})
 		}
 
 		if err == nil {
@@ -343,7 +343,7 @@ func (s *GoServer) Dial(server string, dialler dialler, builder clientBuilder) (
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	s.RaiseIssue("Called Dial", fmt.Sprintf("Called Dial"))
-	r, err := registry.Discover(ctx, &pb.DiscoverRequest{Request: &entry}, grpc.FailFast(false))
+	r, err := registry.Discover(ctx, &pb.DiscoverRequest{Request: &entry})
 	if err != nil {
 		return nil, err
 	}
