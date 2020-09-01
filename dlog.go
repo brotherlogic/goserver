@@ -82,6 +82,7 @@ func (s *GoServer) prepDLog() {
 			s.Log(fmt.Sprintf("Unable to open file: %v", err))
 		}
 		s.dlogHandle = fhandle
+		s.Log(fmt.Sprintf("Prepped dlog"))
 	} else {
 		s.Log(fmt.Sprintf("Scratch not found, no disk logging"))
 	}
