@@ -675,6 +675,8 @@ func (s *GoServer) RegisterServerIgnore(servername string, external bool, ignore
 
 	if s.preppedDLog && s.DiskLog {
 		s.prepDLog()
+	} else {
+		s.Log(fmt.Sprintf("Not setting up disk logging %v and %v", s.preppedDLog, s.DiskLog))
 	}
 
 	// Short circuit if we don't need to register
