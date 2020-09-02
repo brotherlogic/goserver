@@ -1406,7 +1406,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 		s.Registry = r.GetService()
 
 		// Now we can prep the dlog
-		if s.preppedDLog && s.DiskLog {
+		if !s.preppedDLog && s.DiskLog {
 			s.prepDLog()
 		} else {
 			s.Log(fmt.Sprintf("Not setting up disk logging %v and %v", s.preppedDLog, s.DiskLog))
