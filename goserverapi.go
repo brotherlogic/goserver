@@ -673,12 +673,6 @@ func (s *GoServer) RegisterServer(servername string, external bool) error {
 func (s *GoServer) RegisterServerIgnore(servername string, external bool, ignore bool) error {
 	s.Servername = servername
 
-	if s.preppedDLog && s.DiskLog {
-		s.prepDLog()
-	} else {
-		s.Log(fmt.Sprintf("Not setting up disk logging %v and %v", s.preppedDLog, s.DiskLog))
-	}
-
 	// Short circuit if we don't need to register
 	if s.noRegister {
 		IP := getLocalIP()
@@ -1410,6 +1404,13 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 			return -1, err
 		}
 		s.Registry = r.GetService()
+
+		// Now we can prep the dlog
+		if s.preppedDLog && s.DiskLog {
+			s.prepDLog()
+		} else {
+			s.Log(fmt.Sprintf("Not setting up disk logging %v and %v", s.preppedDLog, s.DiskLog))
+		}
 
 		if !entry.GetIgnoresMaster() {
 			s.RaiseIssue("Bad server", fmt.Sprintf("%v needs to be converted into a non-masterful server", entry))
