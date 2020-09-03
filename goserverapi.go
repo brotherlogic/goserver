@@ -289,7 +289,7 @@ func (s *GoServer) DoDial(entry *pb.RegistryEntry) (*grpc.ClientConn, error) {
 func (s *GoServer) BaseDial(c string) (*grpc.ClientConn, error) {
 	badDial.With(prometheus.Labels{"call": "basedial-" + c}).Inc()
 	s.RaiseIssue("BadBaseDial", fmt.Sprintf("%v has called BaseDial -> %v", s.Registry, c))
-	return grpc.Dial(c, grpc.WithInsecure(), s.withClientUnaryInterceptor(), grpc.WithMaxsgSize(1024*1024*1024))
+	return grpc.Dial(c, grpc.WithInsecure(), s.withClientUnaryInterceptor())
 }
 
 // NewBaseDial dials a connection
