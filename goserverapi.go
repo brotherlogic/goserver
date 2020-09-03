@@ -630,6 +630,8 @@ func (s *GoServer) suicideWatch() {
 				p, err := ps.FindProcess(os.Getppid())
 				if err == nil && p.PPid() == 1 {
 					os.Exit(1)
+				} else {
+					s.Log(fmt.Sprintf("Not exiting: %v, %+v", err, p))
 				}
 			} else {
 				if os.Getppid() == 1 && s.Killme {
