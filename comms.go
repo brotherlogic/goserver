@@ -86,6 +86,32 @@ func (s *GoServer) FDialSpecificServer(ctx context.Context, servername string, h
 	return s.FDial(fmt.Sprintf("%v:%v", val.GetServices()[0].GetIp(), val.GetServices()[0].GetPort()))
 }
 
+// FDialSpecificServer dial a specific job on a specific host
+func (s *GoServer) FFindSpecificServer(ctx context.Context, servername string, host string) (*dpb.RegistryEntry, error) {
+	if servername == "discovery" {
+		return &dpb.RegistryEntry{Ip: utils.LocalIP, Port: utils.RegistryPort}, nil
+	}
+
+	conn, err := s.FDial(utils.LocalDiscover)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	registry := dpb.NewDiscoveryServiceV2Client(conn)
+	val, err := registry.Get(ctx, &dpb.GetRequest{Job: servername, Server: host})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(val.GetServices()) == 0 {
+		return nil, fmt.Errorf("Cannot locate server: %v,%v", servername, host)
+	}
+
+	// Pick a server at random
+	return val.GetServices()[0], nil
+}
+
 // FDial fundamental dial
 func (s *GoServer) FDial(host string) (*grpc.ClientConn, error) {
 	return grpc.Dial(host, grpc.WithInsecure(), s.withClientUnaryInterceptor())
