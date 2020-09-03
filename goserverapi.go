@@ -281,15 +281,15 @@ func (s *GoServer) sendMark(c context.Context, t time.Duration, message string) 
 
 // DoDial dials a server
 func (s *GoServer) DoDial(entry *pb.RegistryEntry) (*grpc.ClientConn, error) {
-	s.RaiseIssue("Do Dial", "Has called Do Dial")
+	s.RaiseIssue("Do Dial", fmt.Sprintf("Has called Do Dial -> %v", entry))
 	return s.BaseDial(entry.Ip + ":" + strconv.Itoa(int(entry.Port)))
 }
 
 // BaseDial dials a connection
 func (s *GoServer) BaseDial(c string) (*grpc.ClientConn, error) {
 	badDial.With(prometheus.Labels{"call": "basedial-" + c}).Inc()
-	s.RaiseIssue("BadBaseDial", fmt.Sprintf("%v has called BaseDial", s.Registry))
-	return grpc.Dial(c, grpc.WithInsecure(), s.withClientUnaryInterceptor(), grpc.WithMaxMsgSize(1024*1024*1024))
+	s.RaiseIssue("BadBaseDial", fmt.Sprintf("%v has called BaseDial -> %v", s.Registry, c))
+	return grpc.Dial(c, grpc.WithInsecure(), s.withClientUnaryInterceptor(), grpc.WithMaxsgSize(1024*1024*1024))
 }
 
 // NewBaseDial dials a connection
