@@ -204,8 +204,8 @@ func (s *GoServer) prepareServer(register bool) {
 	runningBinaryTimestamp.Set(float64(info.ModTime().Unix()))
 
 	// Enable RPC tracing
-	s.RPCTracing = true
-	s.SendTrace = true
+	s.RPCTracing = false
+	s.SendTrace = false
 
 	s.runTimes = make(map[string]time.Time)
 	s.runTimesMutex = &sync.Mutex{}
