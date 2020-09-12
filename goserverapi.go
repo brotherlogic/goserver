@@ -368,11 +368,7 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 
 	s.clientr++
 	if s.clientr > 50 {
-		if !strings.Contains(method, "githubcard") {
-			s.RaiseIssue("Overloaded server", fmt.Sprintf("%v is running %v client requests -> %v", s.Registry, s.clientr, method))
-		} else {
-			s.Log(fmt.Sprintf("%v is running %v client requests -> %v", s.Registry, s.clientr, method))
-		}
+		s.Log(fmt.Sprintf("%v is running %v client requests -> %v", s.Registry, s.clientr, method))
 	}
 	defer func() {
 		s.clientr--
