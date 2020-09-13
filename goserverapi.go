@@ -368,7 +368,7 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 
 	s.clientr++
 	if s.clientr > 50 {
-		s.Log(fmt.Sprintf("%v is running %v client requests -> %v", s.Registry, s.clientr, method))
+		s.Log(fmt.Sprintf("%v is running %v client requests -> %v [%+xv]", s.Registry, s.clientr, method, ctx))
 	}
 	defer func() {
 		s.clientr--
