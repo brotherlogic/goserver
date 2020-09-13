@@ -55,6 +55,7 @@ func dirSize(path string) (int64, error) {
 	return size, err
 }
 
+//DLog writes to the dlog
 func (s *GoServer) DLog(text string) {
 	if s.dlogHandle != nil {
 		s.dlogHandle.WriteString(fmt.Sprintf("%v %v\n", time.Now(), text))
