@@ -3,6 +3,7 @@ package goserver
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -78,6 +79,21 @@ func (s *GoServer) prepDLog() {
 		if err != nil {
 			s.Log(fmt.Sprintf("Unable to create log dir: %v", err))
 		}
+
+		//Delete all files a week old
+		files, err := ioutil.ReadDir(fmt.Sprintf("/media/scratch/dlogs/%v/", s.Registry.GetName()))
+		if err != nil {
+			s.Log(fmt.Sprintf("Unable to list log files?", err))
+		}
+		count := 0
+		for _, file := range files {
+			if time.Now().Sub(file.ModTime()) > time.Hour*24*7 {
+				os.Remove(fmt.Sprintf("/media/scratch/dlogs/%v/%v", s.Registry.GetName(), file.Name()))
+				count++
+			}
+		}
+		s.Log(fmt.Sprintf("Removed %v files", count))
+
 		fhandle, err := os.Create(filename)
 		if err != nil {
 			s.Log(fmt.Sprintf("Unable to open file: %v", err))
