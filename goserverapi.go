@@ -1358,11 +1358,6 @@ func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.C
 
 //PLog a simple string message with priority
 func (s *GoServer) PLog(message string, level pbd.LogLevel) {
-	if !s.SkipLog {
-		go func() {
-			s.DLog(message)
-		}()
-	}
 	go func() {
 		if !s.SkipLog && s.Registry != nil {
 			ctx, cancel := utils.ManualContext(s.Registry.GetName(), "logging", time.Second, false)
