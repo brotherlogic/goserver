@@ -366,6 +366,10 @@ var (
 
 //Log a simple string message
 func (s *GoServer) Log(message string) {
+	if !s.SkipLog {
+		s.DLog(message)
+	}
+
 	if time.Now().Before(s.logWait) {
 		skipLog.Inc()
 		return
