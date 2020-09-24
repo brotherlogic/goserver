@@ -364,7 +364,12 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	invoker grpc.UnaryInvoker,
 	opts ...grpc.CallOption,
 ) error {
-	s.DLog(fmt.Sprintf("C: %v <- %v", method, req))
+	rSize := proto.Size(req.(proto.Message))
+	if rSize > 100 {
+		s.DLog(fmt.Sprintf("C: %v <- %v bytes", method, rSize))
+	} else {
+		s.DLog(fmt.Sprintf("C: %v <- %v bytes", method, req))
+	}
 
 	s.clientr++
 	if s.clientr > 50 {
@@ -471,7 +476,12 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	if s.NoBody {
 		s.DLog(fmt.Sprintf("S: %v <- bytes %v", info.FullMethod, proto.Size(req.(proto.Message))))
 	} else {
-		s.DLog(fmt.Sprintf("S: %v <- %v", info.FullMethod, req))
+		rSize := proto.Size(req.(proto.Message))
+		if rSize > 100 {
+			s.DLog(fmt.Sprintf("S: %v <- %v bytes", info.FullMethod, rSize))
+		} else {
+			s.DLog(fmt.Sprintf("S: %v <- %v bytes", info.FullMethod, req))
+		}
 	}
 
 	s.serverr++
