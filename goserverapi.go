@@ -1227,9 +1227,9 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 		// Print some debug output on a listen fail
 		output, err2 := exec.Command("ps", "-ef").Output()
 		fmt.Printf("RAN PS: %v\n", err2)
-		if err2 != nil {
+		if err2 == nil {
 			for _, line := range strings.Split(string(output), "\n") {
-				fmt.Printf("ERROR: %v\n", line)
+				fmt.Printf("LINE: %v\n", line)
 			}
 		}
 
@@ -1470,6 +1470,7 @@ func (s *GoServer) runElection(key string, elected chan error, complete chan boo
 	defer election.Dec()
 	command := exec.Command("etcdctl", "elect", s.Registry.Name+key, s.Registry.Identifier)
 	out, _ := command.StdoutPipe()
+	defer out.Close()
 	if out != nil {
 		scanner := bufio.NewScanner(out)
 		go func() {
@@ -1482,11 +1483,11 @@ func (s *GoServer) runElection(key string, elected chan error, complete chan boo
 					elected <- fmt.Errorf("Unable to elect (%v): %v", s.Registry.Name+key, scanner.Text())
 				}
 			}
-			out.Close()
 		}()
 	}
 
 	out2, _ := command.StderrPipe()
+	defer out2.Close()
 	if out2 != nil {
 		scanner := bufio.NewScanner(out2)
 		go func() {
@@ -1499,7 +1500,6 @@ func (s *GoServer) runElection(key string, elected chan error, complete chan boo
 					elected <- fmt.Errorf("Unable to from err elect (%v): %v", s.Registry.Name+key, scanner.Text())
 				}
 			}
-			out2.Close()
 		}()
 	}
 
