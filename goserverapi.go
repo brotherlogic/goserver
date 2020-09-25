@@ -1225,7 +1225,7 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.Port)))
 	if err != nil {
 		// Print some debug output on a listen fail
-		output, err2 := exec.Command("ps", "-ef").Output()
+		output, err2 := exec.Command("lsof", "-i", "TCP").Output()
 		fmt.Printf("RAN PS: %v\n", err2)
 		if err2 == nil {
 			for _, line := range strings.Split(string(output), "\n") {
