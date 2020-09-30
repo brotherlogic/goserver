@@ -92,17 +92,17 @@ var (
 	serverLatency = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "rpc_server_latency",
 		Help:    "The latency of server requests",
-		Buckets: []float64{.005 * 1000, .01 * 1000, .025 * 1000, .05 * 1000, .1 * 1000, .25 * 1000, .5 * 1000, 1 * 1000, 2.5 * 1000, 5 * 1000, 10 * 1000},
+		Buckets: []float64{.005 * 1000, .01 * 1000, .025 * 1000, .05 * 1000, .1 * 1000, .25 * 1000, .5 * 1000, 1 * 1000, 2.5 * 1000, 5 * 1000, 10 * 1000, 100 * 1000},
 	}, []string{"method"})
 	clientLatency = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "rpc_client_latency",
 		Help:    "The latency of client requests",
-		Buckets: []float64{.005 * 1000, .01 * 1000, .025 * 1000, .05 * 1000, .1 * 1000, .25 * 1000, .5 * 1000, 1 * 1000, 2.5 * 1000, 5 * 1000, 10 * 1000},
+		Buckets: []float64{.005 * 1000, .01 * 1000, .025 * 1000, .05 * 1000, .1 * 1000, .25 * 1000, .5 * 1000, 1 * 1000, 2.5 * 1000, 5 * 1000, 10 * 1000, 100 * 1000},
 	}, []string{"method"})
 	repeatLatency = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "rpc_repeat_latency",
 		Help:    "The latency of repeat requests",
-		Buckets: []float64{.005 * 1000, .01 * 1000, .025 * 1000, .05 * 1000, .1 * 1000, .25 * 1000, .5 * 1000, 1 * 1000, 2.5 * 1000, 5 * 1000, 10 * 1000},
+		Buckets: []float64{.005 * 1000, .01 * 1000, .025 * 1000, .05 * 1000, .1 * 1000, .25 * 1000, .5 * 1000, 1 * 1000, 2.5 * 1000, 5 * 1000, 10 * 1000, 100 * 1000},
 	}, []string{"method"})
 )
 
