@@ -931,7 +931,7 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 		//Acquire a shutdown lock
 		_, err := s.ElectKey("shutdown")
 		if err != nil {
-			s.RaiseIssue("Shutdown Lock", fmt.Sprintf("Cannot lock %v for shutdown", s.Register))
+			s.RaiseIssue("Shutdown Lock", fmt.Sprintf("Cannot lock %v for shutdown: %v", s.Registry, err))
 			return
 		}
 
