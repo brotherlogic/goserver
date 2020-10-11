@@ -77,6 +77,12 @@ func main() {
 		defer cancel()
 
 		if len(*action) > 0 {
+			if *action == "reregister" {
+				val, err := check.Reregister(context.Background(), &pb.ReregisterRequest{})
+				fmt.Printf("Reregister: %v, %v", val, err)
+				return
+			}
+
 			val, err := check.Shutdown(context.Background(), &pb.ShutdownRequest{})
 			fmt.Printf("Shutdown: %v, %v", val, err)
 			return
@@ -163,9 +169,15 @@ func main() {
 				check := pb.NewGoserverServiceClient(conn)
 
 				if len(*action) > 0 {
+					if *action == "reregister" {
+						val, err := check.Reregister(context.Background(), &pb.ReregisterRequest{})
+						fmt.Printf("Reregister: %v, %v", val, err)
+						return
+					}
 					val, err := check.Shutdown(context.Background(), &pb.ShutdownRequest{})
 					fmt.Printf("Shutdown: %v, %v", val, err)
 					return
+
 				}
 
 				state, err := check.State(context.Background(), &pb.Empty{})

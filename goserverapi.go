@@ -928,8 +928,14 @@ func (s *GoServer) Reregister(ctx context.Context, in *pbl.ReregisterRequest) (*
 func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.ShutdownResponse, error) {
 	s.LameDuck = true
 	go func() {
-		time.Sleep(time.Minute)
-		err := s.Register.Shutdown(ctx)
+		//Acquire a shutdown lock
+		_, err := s.ElectKey("shutdown")
+		if err != nil {
+			s.RaiseIssue("Shutdown Lock", fmt.Sprintf("Cannot lock %v for shutdown", s.Register))
+			return
+		}
+
+		err = s.Register.Shutdown(ctx)
 		if err != nil {
 			s.Log(fmt.Sprintf("Shutdown cancelled: %v", err))
 			return
