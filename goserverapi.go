@@ -1472,6 +1472,10 @@ var election = promauto.NewGauge(prometheus.GaugeOpts{
 })
 
 func (s *GoServer) runElection(key string, elected chan error, complete chan bool) {
+	if s.SkipElect {
+		elected <- nil
+		return
+	}
 	election.Inc()
 	defer election.Dec()
 	command := exec.Command("etcdctl", "elect", s.Registry.Name+key, s.Registry.Identifier)
@@ -1523,6 +1527,11 @@ func (s *GoServer) runElection(key string, elected chan error, complete chan boo
 
 //Elect elect me
 func (s *GoServer) Elect() (func(), error) {
+	if s.SkipElect {
+		return func() {
+
+		}, nil
+	}
 	elected := make(chan error)
 	complete := make(chan bool)
 	rf := func() {
@@ -1537,6 +1546,11 @@ func (s *GoServer) Elect() (func(), error) {
 
 //ElectKey elect me with a key
 func (s *GoServer) ElectKey(key string) (func(), error) {
+	if s.SkipElect {
+		return func() {
+
+		}, nil
+	}
 	elected := make(chan error)
 	complete := make(chan bool)
 	rf := func() {

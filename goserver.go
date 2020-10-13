@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/brotherlogic/keystore/client"
+	keystoreclient "github.com/brotherlogic/keystore/client"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"google.golang.org/grpc"
@@ -138,6 +138,7 @@ type GoServer struct {
 	dlogHandle              *os.File
 	NoBody                  bool
 	preppedDLog             bool
+	SkipElect               bool
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
