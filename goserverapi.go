@@ -918,7 +918,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 // Reregister this server
 func (s *GoServer) Reregister(ctx context.Context, in *pbl.ReregisterRequest) (*pbl.ReregisterResponse, error) {
 	if s.Registry == nil {
-		return nil, fmt.Errorf("You haven't registered yet!")
+		return nil, fmt.Errorf("You haven't registered yet")
 	}
 	err := s.RegisterServerV2(s.Registry.Name, s.Registry.ExternalPort, s.Registry.IgnoresMaster)
 	return &pbl.ReregisterResponse{}, err
