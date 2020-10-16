@@ -918,7 +918,7 @@ func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, 
 // Reregister this server
 func (s *GoServer) Reregister(ctx context.Context, in *pbl.ReregisterRequest) (*pbl.ReregisterResponse, error) {
 	if s.Registry == nil {
-		return nil, fmt.Errorf("You haven't registered yet!")
+		return nil, fmt.Errorf("You haven't registered yet")
 	}
 	err := s.RegisterServerV2(s.Registry.Name, s.Registry.ExternalPort, s.Registry.IgnoresMaster)
 	return &pbl.ReregisterResponse{}, err
@@ -1230,15 +1230,7 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.Port)))
 	if err != nil {
-		// Print some debug output on a listen fail
-		output, err2 := exec.Command("lsof", "-i", "TCP").Output()
-		fmt.Printf("RAN PS: %v\n", err2)
-		if err2 == nil {
-			for _, line := range strings.Split(string(output), "\n") {
-				fmt.Printf("LINE: %v\n", line)
-			}
-		}
-
+		s.Log(fmt.Sprintf("Unable to start: %v", err))
 		return err
 	}
 	fullOpts := append(opt,

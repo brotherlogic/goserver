@@ -86,7 +86,7 @@ func (s *GoServer) FDialSpecificServer(ctx context.Context, servername string, h
 	return s.FDial(fmt.Sprintf("%v:%v", val.GetServices()[0].GetIp(), val.GetServices()[0].GetPort()))
 }
 
-// FDialSpecificServer dial a specific job on a specific host
+// FFindSpecificServer dial a specific job on a specific host
 func (s *GoServer) FFindSpecificServer(ctx context.Context, servername string, host string) (*dpb.RegistryEntry, error) {
 	if servername == "discovery" {
 		return &dpb.RegistryEntry{Ip: utils.LocalIP, Port: utils.RegistryPort}, nil
