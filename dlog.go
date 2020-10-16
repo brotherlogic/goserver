@@ -83,7 +83,7 @@ func (s *GoServer) prepDLog() {
 		//Delete all files a week old
 		files, err := ioutil.ReadDir(fmt.Sprintf("/media/scratch/dlogs/%v/", s.Registry.GetName()))
 		if err != nil {
-			s.Log(fmt.Sprintf("Unable to list log files?", err))
+			s.Log(fmt.Sprintf("Unable to list log files: %v", err))
 		}
 		count := 0
 		for _, file := range files {
