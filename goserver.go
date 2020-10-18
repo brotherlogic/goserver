@@ -367,6 +367,10 @@ var (
 
 //Log a simple string message
 func (s *GoServer) Log(message string) {
+	if s.SkipLog {
+		log.Printf(message)
+	}
+
 	if !s.SkipLog {
 		s.DLog(message)
 	}
