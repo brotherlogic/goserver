@@ -511,6 +511,10 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	serverRequests.With(prometheus.Labels{"status": status.Convert(err).Code().String(), "method": info.FullMethod}).Inc()
 	serverLatency.With(prometheus.Labels{"method": info.FullMethod}).Observe(float64(time.Now().Sub(t).Nanoseconds() / 1000000))
 
+	if time.Now().Sub(t) > time.Minute {
+		s.RaiseIssue("Slow Request", fmt.Sprintf("%v on %v/%v took %v", info.FullMethod, s.Registry.GetName(), s.Registry.GetIdentifier(), time.Now().Sub(t)))
+	}
+
 	if err == nil && h != nil {
 		if proto.Size(h.(proto.Message)) > 1024*1024 {
 			s.RaiseIssue("Large Response", fmt.Sprintf("%v has produced a large response from %v (%vMb) -> %v", info.FullMethod, req, proto.Size(h.(proto.Message))/(1024*1024), ctx))
@@ -1281,7 +1285,7 @@ func (s *GoServer) RaiseIssue(title, body string) {
 	s.AlertsFired++
 
 	go func() {
-		if !s.SkipIssue || len(body) == 0 {
+		if !s.SkipIssue && len(body) != 0 {
 			ctx, cancel := utils.ManualContext(s.Registry.GetName(), "issue", time.Minute, false)
 			defer cancel()
 			conn, err := s.FDialServer(ctx, "githubcard")
