@@ -116,3 +116,10 @@ func (s *GoServer) FFindSpecificServer(ctx context.Context, servername string, h
 func (s *GoServer) FDial(host string) (*grpc.ClientConn, error) {
 	return grpc.Dial(host, grpc.WithInsecure(), s.withClientUnaryInterceptor())
 }
+
+// FPDial fundamental dial
+func (s *GoServer) FPDial(host string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
+	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, s.withClientUnaryInterceptor())
+	return grpc.Dial(host, opts...)
+}
