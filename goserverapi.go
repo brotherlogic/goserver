@@ -933,7 +933,7 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 	s.LameDuck = true
 	go func() {
 		//Acquire a shutdown lock
-		_, err := s.ElectKey("shutdown")
+		canceler, err := s.ElectKey("shutdown")
 		if err != nil {
 			s.RaiseIssue("Shutdown Lock", fmt.Sprintf("Cannot lock %v for shutdown: %v", s.Registry, err))
 			return
@@ -942,6 +942,7 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 		err = s.Register.Shutdown(ctx)
 		if err != nil {
 			s.Log(fmt.Sprintf("Shutdown cancelled: %v", err))
+			canceler()
 			return
 		}
 
@@ -952,6 +953,7 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 		conn, err := s.FDialServer(ctx, "discovery")
 		if err != nil {
 			s.Log(fmt.Sprintf("Unable to shutdown: %v", err))
+			canceler()
 			return
 		}
 		defer conn.Close()
