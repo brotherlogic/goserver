@@ -1533,8 +1533,8 @@ func (s *GoServer) Elect() (func(), error) {
 
 		}, nil
 	}
-	elected := make(chan error)
-	complete := make(chan bool)
+	elected := make(chan error, 1)
+	complete := make(chan bool, 1)
 	rf := func() {
 		complete <- true
 	}
