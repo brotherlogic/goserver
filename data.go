@@ -2,16 +2,61 @@ package goserver
 
 import (
 	"context"
+	"fmt"
 
 	"google.golang.org/grpc"
 
 	kspb "github.com/brotherlogic/keystore/proto"
+	"github.com/golang/protobuf/proto"
 	google_protobuf "github.com/golang/protobuf/ptypes/any"
 )
+
+type translatedStore interface {
+	load(ctx context.Context, key string, message proto.Message) error
+	save(ctx context.Context, key string, message *proto.Message) error
+}
+
+type mts struct {
+	store byteStore
+}
+
+func (mts *mts) load(ctx context.Context, key string, message proto.Message) error {
+	data, err := mts.store.load(ctx, key)
+	if err != nil {
+		return err
+	}
+
+	return proto.Unmarshal(data.GetValue(), message)
+}
+
+func (mts *mts) save(ctx context.Context, key string, message proto.Message) error {
+	bytes, err := proto.Marshal(message)
+	if err != nil {
+		return err
+	}
+	return mts.store.save(ctx, key, &google_protobuf.Any{Value: bytes})
+}
 
 type byteStore interface {
 	load(ctx context.Context, key string) (*google_protobuf.Any, error)
 	save(ctx context.Context, key string, data *google_protobuf.Any) error
+}
+
+type memstore struct {
+	mem map[string]*google_protobuf.Any
+}
+
+func (m *memstore) load(ctx context.Context, key string) (*google_protobuf.Any, error) {
+	if val, ok := m.mem[key]; ok {
+		return val, nil
+	}
+
+	return nil, fmt.Errorf("Not found")
+}
+
+func (m *memstore) save(ctx context.Context, key string, data *google_protobuf.Any) error {
+	m.mem[key] = data
+	return nil
 }
 
 type keystore struct {
