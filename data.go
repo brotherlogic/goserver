@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	dspb "github.com/brotherlogic/datastore/proto"
 	kspb "github.com/brotherlogic/keystore/proto"
@@ -12,9 +14,29 @@ import (
 	google_protobuf "github.com/golang/protobuf/ptypes/any"
 )
 
+//NewMemoryStore build a memory store for testing
+func (s *GoServer) NewMemoryStore() translatedStore {
+	return &mts{store: &memstore{mem: make(map[string]*google_protobuf.Any)}}
+}
+
+//NewFailMemoryStore fails
+func (s *GoServer) NewFailMemoryStore() translatedStore {
+	return &fts{}
+}
+
 type translatedStore interface {
 	Load(ctx context.Context, key string, message proto.Message) error
 	Save(ctx context.Context, key string, message proto.Message) error
+}
+
+type fts struct{}
+
+func (fts *fts) Load(ctx context.Context, key string, message proto.Message) error {
+	return fmt.Errorf("Built to fail")
+}
+
+func (fts *fts) Save(ctx context.Context, key string, message proto.Message) error {
+	return fmt.Errorf("Built to fail")
 }
 
 type mts struct {
@@ -52,7 +74,7 @@ func (m *memstore) load(ctx context.Context, key string) (*google_protobuf.Any, 
 		return val, nil
 	}
 
-	return nil, fmt.Errorf("Not found")
+	return nil, status.Errorf(codes.InvalidArgument, "Not found")
 }
 
 func (m *memstore) save(ctx context.Context, key string, data *google_protobuf.Any) error {
