@@ -139,6 +139,7 @@ type GoServer struct {
 	NoBody                  bool
 	preppedDLog             bool
 	SkipElect               bool
+	Store                   translatedStore
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {
@@ -217,6 +218,8 @@ func (s *GoServer) prepareServer(register bool) {
 	s.KSclient = *keystoreclient.GetClient(s.FDialServer)
 
 	s.masterMutex = &sync.Mutex{}
+
+	s.Store = &mts{store: &keystore{s.FDialServer}}
 }
 
 func (s *GoServer) teardown() {
