@@ -14,7 +14,7 @@ import (
 
 type translatedStore interface {
 	load(ctx context.Context, key string, message proto.Message) error
-	save(ctx context.Context, key string, message *proto.Message) error
+	save(ctx context.Context, key string, message proto.Message) error
 }
 
 type mts struct {
