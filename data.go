@@ -13,15 +13,15 @@ import (
 )
 
 type translatedStore interface {
-	load(ctx context.Context, key string, message proto.Message) error
-	save(ctx context.Context, key string, message proto.Message) error
+	Load(ctx context.Context, key string, message proto.Message) error
+	Save(ctx context.Context, key string, message proto.Message) error
 }
 
 type mts struct {
 	store byteStore
 }
 
-func (mts *mts) load(ctx context.Context, key string, message proto.Message) error {
+func (mts *mts) Load(ctx context.Context, key string, message proto.Message) error {
 	data, err := mts.store.load(ctx, key)
 	if err != nil {
 		return err
@@ -30,7 +30,7 @@ func (mts *mts) load(ctx context.Context, key string, message proto.Message) err
 	return proto.Unmarshal(data.GetValue(), message)
 }
 
-func (mts *mts) save(ctx context.Context, key string, message proto.Message) error {
+func (mts *mts) Save(ctx context.Context, key string, message proto.Message) error {
 	bytes, err := proto.Marshal(message)
 	if err != nil {
 		return err

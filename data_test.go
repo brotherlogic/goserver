@@ -13,13 +13,13 @@ func TestBasicStore(t *testing.T) {
 
 	test := &pb.Alive{Name: "testing"}
 
-	err := mts.save(context.Background(), "test", test)
+	err := mts.Save(context.Background(), "test", test)
 	if err != nil {
 		t.Fatalf("Unable to save: %v", err)
 	}
 
 	t2 := &pb.Alive{}
-	err = mts.load(context.Background(), "test", t2)
+	err = mts.Load(context.Background(), "test", t2)
 	if err != nil {
 		t.Fatalf("Unable to load: %v", err)
 	}
