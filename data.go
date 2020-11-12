@@ -6,6 +6,7 @@ import (
 
 	"google.golang.org/grpc"
 
+	dspb "github.com/brotherlogic/datastore/proto"
 	kspb "github.com/brotherlogic/keystore/proto"
 	"github.com/golang/protobuf/proto"
 	google_protobuf "github.com/golang/protobuf/ptypes/any"
@@ -81,6 +82,38 @@ func (k *keystore) load(ctx context.Context, key string) (*google_protobuf.Any, 
 
 func (k *keystore) save(ctx context.Context, key string, value *google_protobuf.Any) error {
 	conn, err := k.dial(ctx, "keystore")
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	store := dspb.NewDatastoreServiceClient(conn)
+	_, err = store.Write(ctx, &dspb.WriteRequest{Key: key, Value: value})
+	return err
+}
+
+type datastore struct {
+	dial func(ctx context.Context, server string) (*grpc.ClientConn, error)
+}
+
+func (d *datastore) load(ctx context.Context, key string) (*google_protobuf.Any, error) {
+	conn, err := d.dial(ctx, "datastore")
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	store := dspb.NewDatastoreServiceClient(conn)
+	resp, err := store.Read(ctx, &dspb.ReadRequest{Key: key})
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.GetValue(), err
+}
+
+func (d *datastore) save(ctx context.Context, key string, value *google_protobuf.Any) error {
+	conn, err := d.dial(ctx, "datastore")
 	if err != nil {
 		return err
 	}
