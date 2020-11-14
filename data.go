@@ -141,7 +141,7 @@ func (d *datastore) save(ctx context.Context, key string, value *google_protobuf
 	}
 	defer conn.Close()
 
-	store := kspb.NewKeyStoreServiceClient(conn)
-	_, err = store.Save(ctx, &kspb.SaveRequest{Key: key, Value: value})
+	store := dspb.NewDatastoreServiceClient(conn)
+	_, err = store.Write(ctx, &dspb.WriteRequest{Key: key, Value: value})
 	return err
 }
