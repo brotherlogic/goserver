@@ -511,7 +511,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	serverRequests.With(prometheus.Labels{"status": status.Convert(err).Code().String(), "method": info.FullMethod}).Inc()
 	serverLatency.With(prometheus.Labels{"method": info.FullMethod}).Observe(float64(time.Now().Sub(t).Nanoseconds() / 1000000))
 
-	if time.Now().Sub(t) > time.Minute {
+	if time.Now().Sub(t) > time.Hour {
 		s.RaiseIssue("Slow Request", fmt.Sprintf("%v on %v/%v took %v (%v)", info.FullMethod, s.Registry.GetName(), s.Registry.GetIdentifier(), time.Now().Sub(t), req))
 	}
 
