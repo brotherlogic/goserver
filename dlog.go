@@ -2,6 +2,7 @@ package goserver
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/brotherlogic/goserver/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -57,9 +59,13 @@ func dirSize(path string) (int64, error) {
 }
 
 //DLog writes to the dlog
-func (s *GoServer) DLog(text string) {
+func (s *GoServer) DLog(ctx context.Context, text string) {
 	if s.dlogHandle != nil {
-		s.dlogHandle.WriteString(fmt.Sprintf("%v %v\n", time.Now(), text))
+		code, err := utils.GetContextKey(ctx)
+		if err != nil {
+			code = "NONE"
+		}
+		s.dlogHandle.WriteString(fmt.Sprintf("%v|%v|%v\n", time.Now(), code, text))
 
 		size, err := dirSize(fmt.Sprintf("/media/scratch/dlogs/%v", s.Registry.GetName()))
 		if err != nil {

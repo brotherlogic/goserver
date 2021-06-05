@@ -373,14 +373,17 @@ var (
 	})
 )
 
-//Log a simple string message
 func (s *GoServer) Log(message string) {
+	s.CtxLog(context.Background(), message)
+}
+
+func (s *GoServer) CtxLog(ctx context.Context, message string) {
 	if s.SkipLog {
 		log.Printf(message)
 	}
 
 	if !s.SkipLog {
-		s.DLog(message)
+		s.DLog(ctx, message)
 	}
 
 	if time.Now().Before(s.logWait) {
@@ -388,5 +391,5 @@ func (s *GoServer) Log(message string) {
 		return
 	}
 	s.logWait = time.Now().Add(time.Second)
-	s.PLog(message, pbd.LogLevel_DISCARD)
+	s.PLog(ctx, message, pbd.LogLevel_DISCARD)
 }

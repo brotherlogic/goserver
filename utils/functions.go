@@ -19,24 +19,35 @@ import (
 
 // BuildContext builds a context object for use
 func BuildContext(label, origin string) (context.Context, context.CancelFunc) {
-	con, can := generateContext(origin, time.Hour, false)
+	con, can := generateContext(origin, time.Hour)
 	return con, can
 }
 
 // ManualContext builds a context object for use
-func ManualContext(label, origin string, t time.Duration, force bool) (context.Context, context.CancelFunc) {
-	con, can := generateContext(origin, t, force)
+func ManualContext(label string, t time.Duration) (context.Context, context.CancelFunc) {
+	con, can := generateContext(label, t)
 	return con, can
 }
 
-func generateContext(origin string, t time.Duration, force bool) (context.Context, context.CancelFunc) {
-	if force || rand.Float32() < 0.1 {
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
-		tracev := fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), r.Int63())
-		mContext := metadata.AppendToOutgoingContext(context.Background(), "trace-id", tracev)
-		return context.WithTimeout(mContext, t)
+func generateContext(origin string, t time.Duration) (context.Context, context.CancelFunc) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	tracev := fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), r.Int63())
+	mContext := metadata.AppendToOutgoingContext(context.Background(), "trace-id", tracev)
+	return context.WithTimeout(mContext, t)
+}
+
+func GetContextKey(ctx context.Context) (string, error) {
+	md, found := metadata.FromIncomingContext(ctx)
+	if found {
+		if _, ok := md["trace-id"]; ok {
+			idt := md["trace-id"][0]
+
+			if idt != "" {
+				return idt, nil
+			}
+		}
 	}
-	return context.WithTimeout(context.Background(), t)
+	return "", status.Errorf(codes.NotFound, "Could not extract trace-id")
 }
 
 //FuzzyMatch experimental fuzzy match

@@ -366,9 +366,9 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 ) error {
 	rSize := proto.Size(req.(proto.Message))
 	if rSize > 100 {
-		s.DLog(fmt.Sprintf("C: %v <- %v bytes", method, rSize))
+		s.DLog(ctx, fmt.Sprintf("C: %v <- %v bytes", method, rSize))
 	} else {
-		s.DLog(fmt.Sprintf("C: %v <- %v bytes", method, req))
+		s.DLog(ctx, fmt.Sprintf("C: %v <- %v bytes", method, req))
 	}
 
 	s.clientr++
@@ -409,7 +409,7 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	s.activeRPCs[method]--
 	s.activeRPCsMutex.Unlock()
 
-	s.DLog(fmt.Sprintf("C: %v -> %v", method, err))
+	s.DLog(ctx, fmt.Sprintf("C: %v -> %v", method, err))
 	return err
 }
 
@@ -474,13 +474,13 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	handler grpc.UnaryHandler) (interface{}, error) {
 
 	if s.NoBody {
-		s.DLog(fmt.Sprintf("S: %v <- bytes %v", info.FullMethod, proto.Size(req.(proto.Message))))
+		s.DLog(ctx, fmt.Sprintf("S: %v <- bytes %v", info.FullMethod, proto.Size(req.(proto.Message))))
 	} else {
 		rSize := proto.Size(req.(proto.Message))
 		if rSize > 100 {
-			s.DLog(fmt.Sprintf("S: %v <- %v bytes", info.FullMethod, rSize))
+			s.DLog(ctx, fmt.Sprintf("S: %v <- %v bytes", info.FullMethod, rSize))
 		} else {
-			s.DLog(fmt.Sprintf("S: %v <- %v bytes", info.FullMethod, req))
+			s.DLog(ctx, fmt.Sprintf("S: %v <- %v bytes", info.FullMethod, req))
 		}
 	}
 
@@ -524,7 +524,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	s.activeRPCs[info.FullMethod]--
 	s.activeRPCsMutex.Unlock()
 
-	s.DLog(fmt.Sprintf("S: %v -> %v", info.FullMethod, err))
+	s.DLog(ctx, fmt.Sprintf("S: %v -> %v", info.FullMethod, err))
 
 	return h, err
 }
@@ -1015,7 +1015,7 @@ func (s *GoServer) RunBackgroundTask(task func(ctx context.Context) error, name 
 
 // Acquires a distributed lock for an hour
 func (s *GoServer) acquireLock(lockName string) (time.Time, bool, error) {
-	ctx, cancel := utils.ManualContext(lockName, lockName, time.Minute, false)
+	ctx, cancel := utils.ManualContext(lockName, time.Minute)
 	defer cancel()
 
 	conn, err := s.FDialServer(ctx, "versionserver")
@@ -1062,7 +1062,7 @@ func (s *GoServer) runLockTask(lockName string, t sFunc) (time.Time, error) {
 
 // Acquires a distributed lock for an hour
 func (s *GoServer) setLock(lockName string, ti time.Time) error {
-	ctx, cancel := utils.ManualContext(lockName, lockName, time.Minute, false)
+	ctx, cancel := utils.ManualContext(lockName, time.Minute)
 	defer cancel()
 
 	conn, err := s.FDialServer(ctx, "versionserver")
@@ -1290,7 +1290,7 @@ func (s *GoServer) RaiseIssue(title, body string) {
 
 	go func() {
 		if !s.SkipIssue && len(body) != 0 {
-			ctx, cancel := utils.ManualContext(s.Registry.GetName(), "issue", time.Minute, false)
+			ctx, cancel := utils.ManualContext(fmt.Sprintf("%v-%v", s.Registry.GetName(), "issue"), time.Minute)
 			defer cancel()
 			conn, err := s.FDialServer(ctx, "githubcard")
 			if err == nil {
@@ -1328,7 +1328,7 @@ func (s *GoServer) BounceIssue(title, body string, job string) {
 	s.AlertsFired++
 	go func() {
 		if !s.SkipLog {
-			ctx, cancel := utils.ManualContext(s.Registry.GetName(), "issue", time.Minute, false)
+			ctx, cancel := utils.ManualContext(fmt.Sprintf("%v-%v", s.Registry.GetName(), "issue"), time.Minute)
 			defer cancel()
 			conn, err := s.FDialServer(ctx, "githubcard")
 			if err == nil {
@@ -1382,10 +1382,10 @@ func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.C
 }
 
 //PLog a simple string message with priority
-func (s *GoServer) PLog(message string, level pbd.LogLevel) {
+func (s *GoServer) PLog(ictx context.Context, message string, level pbd.LogLevel) {
 	go func() {
 		if !s.SkipLog && s.Registry != nil {
-			ctx, cancel := utils.ManualContext(s.Registry.GetName(), "logging", time.Second, false)
+			ctx, cancel := utils.ManualContext(fmt.Sprintf("%v-%v", s.Registry.GetName(), "logging"), time.Second)
 			defer cancel()
 			conn, err := s.FDialServer(ctx, "logging")
 			if err == nil {
