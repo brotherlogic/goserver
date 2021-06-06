@@ -65,7 +65,7 @@ func (s *GoServer) DLog(ctx context.Context, text string) {
 		if err != nil {
 			code = "NONE"
 		}
-		s.dlogHandle.WriteString(fmt.Sprintf("%v|%v|%v\n", time.Now(), code, text))
+		s.dlogHandle.WriteString(fmt.Sprintf("%v|%v|%v\n", time.Now().Format(time.RFC3339Nano), code, text))
 
 		size, err := dirSize(fmt.Sprintf("/media/scratch/dlogs/%v", s.Registry.GetName()))
 		if err != nil {
