@@ -47,7 +47,19 @@ func GetContextKey(ctx context.Context) (string, error) {
 			}
 		}
 	}
-	return "", status.Errorf(codes.NotFound, "Could not extract trace-id")
+
+	md, found = metadata.FromOutgoingContext(ctx)
+	if found {
+		if _, ok := md["trace-id"]; ok {
+			idt := md["trace-id"][0]
+
+			if idt != "" {
+				return idt, nil
+			}
+		}
+	}
+
+	return "", status.Errorf(codes.NotFound, "Could not extract trace-id from incoming or outgoing")
 }
 
 //FuzzyMatch experimental fuzzy match
