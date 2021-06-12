@@ -1481,6 +1481,9 @@ func (s *GoServer) runElection(key string, elected chan error, complete chan boo
 	election.Inc()
 	defer election.Dec()
 	command := exec.Command("etcdctl", "elect", s.Registry.Name+key, s.Registry.Identifier)
+	command.Env = append(os.Environ(),
+		"ETCDCTL_API=3",
+	)
 	out, _ := command.StdoutPipe()
 	defer out.Close()
 	if out != nil {
