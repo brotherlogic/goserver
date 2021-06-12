@@ -1508,7 +1508,7 @@ func (s *GoServer) runElection(key string, elected chan error, complete chan boo
 		go func() {
 			for scanner != nil && scanner.Scan() {
 				text := scanner.Text()
-				s.Log(fmt.Sprintf("ERR %v", text))
+				s.Log(fmt.Sprintf("ERR run %v", text))
 				if strings.HasPrefix(text, s.Registry.Name) {
 					elected <- nil
 				} else {
