@@ -645,7 +645,9 @@ func (s *GoServer) suicideWatch() {
 				if err == nil && p.PPid() == 1 {
 					os.Exit(1)
 				} else {
-					s.Log(fmt.Sprintf("Not exiting: %v, %+v", err, p))
+					if p.Executable() != "sudo" {
+						s.Log(fmt.Sprintf("Not exiting: %v, %+v", err, p))
+					}
 				}
 			} else {
 				if os.Getppid() == 1 && s.Killme {
