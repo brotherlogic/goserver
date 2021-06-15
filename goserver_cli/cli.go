@@ -73,7 +73,7 @@ func main() {
 
 		check := pb.NewGoserverServiceClient(conn)
 
-		ctx, cancel := utils.ManualContext("goserver-cli", "goserver-cli", time.Minute*10, false)
+		ctx, cancel := utils.ManualContext("goserver-cli", time.Minute*10)
 		defer cancel()
 
 		if len(*action) > 0 {
@@ -110,7 +110,7 @@ func main() {
 
 		check := pb.NewGoserverServiceClient(conn)
 
-		ctx, cancel := utils.ManualContext("goserver-cli", "goserver-cli", time.Minute*10, false)
+		ctx, cancel := utils.ManualContext("goserver-cli", time.Minute*10)
 		defer cancel()
 
 		state, err := check.IsAlive(ctx, &pb.Alive{})
