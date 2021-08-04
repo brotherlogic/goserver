@@ -936,32 +936,28 @@ func (s *GoServer) Reregister(ctx context.Context, in *pbl.ReregisterRequest) (*
 // Shutdown brings the server down
 func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.ShutdownResponse, error) {
 	s.LameDuck = true
+
+	err := s.Register.Shutdown(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := s.FDialServer(ctx, "discovery")
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	registry := pb.NewDiscoveryServiceV2Client(conn)
+
+	_, err = registry.Unregister(ctx, &pb.UnregisterRequest{Service: s.Registry})
+	if err != nil {
+		return nil, err
+	}
+
 	go func() {
-		err := s.Register.Shutdown(ctx)
-		if err != nil {
-			s.Log(fmt.Sprintf("Shutdown cancelled: %v", err))
-			return
-		}
-
-		// Unregister us from discovery - give us a long timeout
-		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-		defer cancel()
-
-		conn, err := s.FDialServer(ctx, "discovery")
-		if err != nil {
-			s.Log(fmt.Sprintf("Unable to shutdown: %v", err))
-			return
-		}
-		defer conn.Close()
-
-		registry := pb.NewDiscoveryServiceV2Client(conn)
-
-		_, err = registry.Unregister(ctx, &pb.UnregisterRequest{Service: s.Registry})
-		if err == nil {
-			os.Exit(1)
-		}
-
-		s.Log(fmt.Sprintf("Cannot shutdown: %v, %v", err, ctx))
+		time.Sleep(time.Second * 5)
+		os.Exit(1)
 	}()
 	return &pbl.ShutdownResponse{}, nil
 }
