@@ -25,3 +25,4 @@ _testmain.go
 
 cli/cli
 *~
+goserver_cli/goserver_cli
