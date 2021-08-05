@@ -59,6 +59,7 @@ func (s *GoServer) ElectKey(key string) (func(), error) {
 }
 
 func (s *GoServer) runElection(key string, elected chan error, complete chan bool) {
+	s.RaiseIssue(fmt.Sprintf("%v is running election", s.Registry.Identifier), fmt.Sprintf("The key is %v", key))
 	if s.SkipElect {
 		elected <- nil
 		return
@@ -115,7 +116,7 @@ func (s *GoServer) runElection(key string, elected chan error, complete chan boo
 	command.Wait()
 }
 
-func (s *GoServer) runLockingElection(ctx context.Context, key string) (string, error) {
+func (s *GoServer) RunLockingElection(ctx context.Context, key string) (string, error) {
 	conn, err := s.FDialServer(ctx, "lock")
 	if err != nil {
 		return "", err
@@ -141,7 +142,7 @@ func (s *GoServer) runLockingElection(ctx context.Context, key string) (string, 
 	return res.GetLock().GetLockKey(), nil
 }
 
-func (s *GoServer) releaseLockingElection(ctx context.Context, key string, lockKey string) error {
+func (s *GoServer) ReleaseLockingElection(ctx context.Context, key string, lockKey string) error {
 	conn, err := s.FDialServer(ctx, "lock")
 	if err != nil {
 		return err
