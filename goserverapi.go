@@ -1272,6 +1272,17 @@ func init() {
 	resolver.Register(&utils.DiscoveryServerResolverBuilder{})
 }
 
+func (s *GoServer) ImmediateIssue(ctx context.Context, title, body string) (*pbgh.Issue, error) {
+	conn, err := s.FDialServer(ctx, "githubcard")
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	client := pbgh.NewGithubClient(conn)
+	return client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: false})
+}
+
 //RaiseIssue raises an issue
 func (s *GoServer) RaiseIssue(title, body string) {
 	if s.SkipIssue {
@@ -1288,27 +1299,8 @@ func (s *GoServer) RaiseIssue(title, body string) {
 		if !s.SkipIssue && len(body) != 0 {
 			ctx, cancel := utils.ManualContext(fmt.Sprintf("%v-%v", s.Registry.GetName(), "issue"), time.Minute)
 			defer cancel()
-			conn, err := s.FDialServer(ctx, "githubcard")
-			if err == nil {
-				defer conn.Close()
-				client := pbgh.NewGithubClient(conn)
-				_, err := client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: false})
-				s.alertWait = time.Now().Add(time.Minute * 10)
-				s.alertError = fmt.Sprintf("Cannot locate githubcard")
-
-				if err != nil {
-					s.Log(fmt.Sprintf("Error adding issue: %v", err))
-					st := status.Convert(err)
-					if st.Code() == codes.ResourceExhausted {
-						s.alertWait = time.Now().Add(time.Minute * 10)
-					} else {
-						s.alertError = fmt.Sprintf("Failure to add issue: %v", err)
-					}
-				}
-
-			}
+			s.ImmediateIssue(ctx, title, body)
 		} else {
-
 			s.alertError = "Skip log enabled"
 		}
 	}()
