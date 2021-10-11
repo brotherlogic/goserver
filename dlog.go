@@ -77,24 +77,24 @@ func (s *GoServer) DLog(ctx context.Context, text string) {
 	}
 }
 
-func (s *GoServer) prepDLog() {
+func (s *GoServer) prepDLog(serviceName string) {
 	s.preppedDLog = true
 	if s.hasScratch() {
-		filename := fmt.Sprintf("/media/scratch/dlogs/%v/%v.logs", s.Registry.GetName(), time.Now().Unix())
-		err := os.MkdirAll(fmt.Sprintf("/media/scratch/dlogs/%v/", s.Registry.GetName()), 0777)
+		filename := fmt.Sprintf("/media/scratch/dlogs/%v/%v.logs", serviceName, time.Now().Unix())
+		err := os.MkdirAll(fmt.Sprintf("/media/scratch/dlogs/%v/", serviceName), 0777)
 		if err != nil {
 			s.Log(fmt.Sprintf("Unable to create log dir: %v", err))
 		}
 
 		//Delete all files a week old
-		files, err := ioutil.ReadDir(fmt.Sprintf("/media/scratch/dlogs/%v/", s.Registry.GetName()))
+		files, err := ioutil.ReadDir(fmt.Sprintf("/media/scratch/dlogs/%v/", serviceName))
 		if err != nil {
 			s.Log(fmt.Sprintf("Unable to list log files: %v", err))
 		}
 		count := 0
 		for _, file := range files {
 			if time.Now().Sub(file.ModTime()) > time.Hour*24*7 {
-				os.Remove(fmt.Sprintf("/media/scratch/dlogs/%v/%v", s.Registry.GetName(), file.Name()))
+				os.Remove(fmt.Sprintf("/media/scratch/dlogs/%v/%v", serviceName, file.Name()))
 				count++
 			}
 		}
@@ -108,6 +108,6 @@ func (s *GoServer) prepDLog() {
 		s.Log(fmt.Sprintf("Prepped dlog"))
 	} else {
 		s.Log(fmt.Sprintf("Scratch not found, no disk logging"))
-		s.RaiseIssue("Missing Disk Logs", fmt.Sprintf("%v has not disk logging potential", s.Registry.Identifier))
+		s.RaiseIssue("Missing Disk Logs", fmt.Sprintf("%v has not disk logging potential", s.Registry.GetIdentifier()))
 	}
 }

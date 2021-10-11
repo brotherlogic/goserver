@@ -1409,6 +1409,13 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 		s.RaiseIssue("Trying to register as v1", "Is trying to register")
 	}
 	if v2 {
+		// Now we can prep the dlog
+		if !s.preppedDLog && s.DiskLog {
+			s.prepDLog(servername)
+		} else {
+			s.Log(fmt.Sprintf("Not setting up disk logging %v and %v", s.preppedDLog, s.DiskLog))
+		}
+
 		conn, err := dialler.Dial(utils.LocalDiscover, grpc.WithInsecure())
 		defer s.close(conn)
 		registry := pb.NewDiscoveryServiceV2Client(conn)
@@ -1426,13 +1433,6 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 			return -1, err
 		}
 		s.Registry = r.GetService()
-
-		// Now we can prep the dlog
-		if !s.preppedDLog && s.DiskLog {
-			s.prepDLog()
-		} else {
-			s.Log(fmt.Sprintf("Not setting up disk logging %v and %v", s.preppedDLog, s.DiskLog))
-		}
 
 		if !entry.GetIgnoresMaster() {
 			s.RaiseIssue("Bad server", fmt.Sprintf("%v needs to be converted into a non-masterful server", entry))
