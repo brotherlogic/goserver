@@ -398,7 +398,7 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	s.outgoing++
 	openClients.With(prometheus.Labels{"method": method}).Inc()
 	tracev, err := utils.GetContextKey(ctx)
-	if err != nil {
+	if err == nil {
 		ctx = metadata.AppendToOutgoingContext(ctx, "trace-id", tracev)
 	}
 	err = invoker(ctx, method, req, reply, cc, opts...)
