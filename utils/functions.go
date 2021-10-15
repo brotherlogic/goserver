@@ -368,3 +368,28 @@ func LFDialServer(ctx context.Context, servername string) (*grpc.ClientConn, err
 	servernum := rand.Intn(len(val.GetServices()))
 	return LFDial(fmt.Sprintf("%v:%v", val.GetServices()[servernum].GetIp(), val.GetServices()[servernum].GetPort()))
 }
+
+// LFDialServer dial a specific job
+func LFDialSpecificServer(ctx context.Context, servername, host string) (*grpc.ClientConn, error) {
+	conn, err := LFDial(Discover)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	registry := pbdi.NewDiscoveryServiceV2Client(conn)
+	val, err := registry.Get(ctx, &pbdi.GetRequest{Job: servername})
+	if err != nil {
+		return nil, err
+	}
+
+	// Pick a server at random
+	rand.Seed(time.Now().UnixNano())
+	for _, server := range val.GetServices() {
+		if server.GetIdentifier() == host {
+			return LFDial(fmt.Sprintf("%v:%v", server.GetIp(), server.GetPort()))
+		}
+	}
+
+	return nil, fmt.Errorf("Unable to locate %v on %v", servername, host)
+}
