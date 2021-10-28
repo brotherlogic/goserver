@@ -65,7 +65,7 @@ func (s *GoServer) DLog(ctx context.Context, text string) {
 		if err != nil {
 			code = "NONE"
 		}
-		s.dlogHandle.WriteString(fmt.Sprintf("%v|%v|%v\n", time.Now().Format(time.RFC3339Nano), code, text))
+		s.dlogHandle.WriteString(fmt.Sprintf("%v|%v|%v|%v\n", time.Now().Format(time.RFC3339Nano), s.Registry.GetIdentifier(), code, text))
 
 		size, err := dirSize(fmt.Sprintf("/media/scratch/dlogs/%v", s.Registry.GetName()))
 		if err != nil {
@@ -93,7 +93,7 @@ func (s *GoServer) prepDLog(serviceName string) {
 		}
 		count := 0
 		for _, file := range files {
-			if time.Now().Sub(file.ModTime()) > time.Hour*24*7 {
+			if time.Since(file.ModTime()) > time.Hour*24*7 {
 				os.Remove(fmt.Sprintf("/media/scratch/dlogs/%v/%v", serviceName, file.Name()))
 				count++
 			}
