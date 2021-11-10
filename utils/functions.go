@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"os"
 	"reflect"
 	"time"
 
@@ -31,7 +32,11 @@ func ManualContext(label string, t time.Duration) (context.Context, context.Canc
 
 func generateContext(origin string, t time.Duration) (context.Context, context.CancelFunc) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	tracev := fmt.Sprintf("%v-%v-%v", origin, time.Now().Unix(), r.Int63())
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = fmt.Sprintf("BadHostGet-%v", err)
+	}
+	tracev := fmt.Sprintf("%v-%v-%v-%v", origin, time.Now().Unix(), r.Int63(), hostname)
 	mContext := metadata.AppendToOutgoingContext(context.Background(), "trace-id", tracev)
 	return context.WithTimeout(mContext, t)
 }
