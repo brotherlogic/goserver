@@ -202,6 +202,7 @@ func (s *GoServer) runSimpleElection() {
 	}
 
 	for _, friend := range friends {
+		s.Log(fmt.Sprintf("ChooseLead comparison %v and %v", friend, s.Registry.Identifier))
 		if !strings.HasPrefix(friend, s.Registry.Identifier) {
 			conn, err := s.FDial(friend)
 			if err != nil {
