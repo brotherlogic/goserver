@@ -180,6 +180,7 @@ func (s *GoServer) verifyFollower() bool {
 	if err != nil {
 		return false
 	}
+	defer conn.Close()
 
 	gsclient := pbg.NewGoserverServiceClient(conn)
 	_, err = gsclient.IsAlive(ctx, &pbg.Alive{})
@@ -206,6 +207,7 @@ func (s *GoServer) runSimpleElection() {
 			if err != nil {
 				return
 			}
+			defer conn.Close()
 
 			gsclient := pbg.NewGoserverServiceClient(conn)
 			win, err := gsclient.ChooseLead(ctx, &pbg.ChooseLeadRequest{Server: s.Registry.Identifier})
