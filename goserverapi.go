@@ -109,6 +109,14 @@ var (
 	}, []string{"method"})
 )
 
+func (s *GoServer) ChooseLead(ctx context.Context, req *pbl.ChooseLeadRequest) (*pbl.ChooseLeadResponse, error) {
+	if strings.Compare(req.GetServer(), s.Registry.Identifier) > 0 {
+		return &pbl.ChooseLeadResponse{Chosen: s.Registry.Identifier}, nil
+	}
+
+	return &pbl.ChooseLeadResponse{Chosen: req.GetServer()}, nil
+}
+
 func init() {
 	resolver.Register(&utils.DiscoveryServerResolverBuilder{})
 }
@@ -1249,6 +1257,7 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 		}
 	}
 	go s.suicideWatch()
+	go s.pickLead()
 
 	// Enable profiling
 	go http.ListenAndServe(fmt.Sprintf(":%v", s.Port+1), nil)

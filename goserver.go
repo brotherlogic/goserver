@@ -141,6 +141,84 @@ type GoServer struct {
 	SkipElect               bool
 	Store                   translatedStore
 	FlagUseDataStore        bool
+	NeedsLead               bool
+	CurrentLead             string
+	LeadState               pbg.LeadState
+	LeadFails               int
+}
+
+func (s *GoServer) pickLead() {
+	if !s.NeedsLead {
+		return
+	}
+
+	for !s.LameDuck {
+		s.Log(fmt.Sprintf("ElectionState %v -> %v", s.LeadState, s.CurrentLead))
+		switch s.LeadState {
+		case pbg.LeadState_ELECTING:
+			s.runSimpleElection()
+		case pbg.LeadState_FOLLOWER:
+			if !s.verifyFollower() {
+				s.LeadFails++
+			}
+
+			if s.LeadFails > 10 {
+				s.LeadState = pbg.LeadState_ELECTING
+			}
+		}
+
+		time.Sleep(time.Second * 30)
+	}
+}
+
+func (s *GoServer) verifyFollower() bool {
+	ctx, cancel := utils.ManualContext("verifying", time.Second*30)
+	defer cancel()
+
+	conn, err := s.FDialSpecificServer(ctx, s.Registry.Name, s.CurrentLead)
+	if err != nil {
+		return false
+	}
+
+	gsclient := pbg.NewGoserverServiceClient(conn)
+	_, err = gsclient.IsAlive(ctx, &pbg.Alive{})
+	if err != nil {
+		return false
+	}
+
+	return true
+}
+
+func (s *GoServer) runSimpleElection() {
+	ctx, cancel := utils.ManualContext("electing", time.Second*30)
+	defer cancel()
+
+	friends, err := s.FFind(ctx, s.Registry.Name)
+	if err != nil {
+		s.Log(fmt.Sprintf("Unable to list friends for election: %v", err))
+		return
+	}
+
+	for _, friend := range friends {
+		conn, err := s.FDial(friend)
+		if err != nil {
+			return
+		}
+
+		gsclient := pbg.NewGoserverServiceClient(conn)
+		win, err := gsclient.ChooseLead(ctx, &pbg.ChooseLeadRequest{Server: s.Registry.Name})
+		if err != nil {
+			return
+		}
+
+		if win.GetChosen() != s.Registry.Name {
+			s.LeadState = pbg.LeadState_FOLLOWER
+			s.CurrentLead = win.GetChosen()
+			return
+		}
+	}
+
+	s.LeadState = pbg.LeadState_LEADER
 }
 
 func (s *GoServer) getCPUUsage() (float64, float64) {

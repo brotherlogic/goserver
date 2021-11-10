@@ -56,10 +56,25 @@ message ShutdownResponse{}
 message ReregisterRequest{}
 message ReregisterResponse{}
 
+message ChooseLeadRequest {
+  string server = 1;
+}
+
+message ChooseLeadResponse {
+  string chosen = 2;
+}
+
+enum LeadState {
+  ELECTING = 0;
+  FOLLOWER = 1;
+  LEADER = 2;
+}
+
 service goserverService {
   rpc IsAlive (Alive) returns (Alive) {};
   rpc Mote(MoteRequest) returns (Empty) {};
   rpc State(Empty) returns (ServerState) {};
   rpc Shutdown(ShutdownRequest) returns (ShutdownResponse) {};
   rpc Reregister(ReregisterRequest) returns (ReregisterResponse) {};
+  rpc ChooseLead(ChooseLeadRequest) returns (ChooseLeadResponse) {};
 }
