@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -200,21 +201,23 @@ func (s *GoServer) runSimpleElection() {
 	}
 
 	for _, friend := range friends {
-		conn, err := s.FDial(friend)
-		if err != nil {
-			return
-		}
+		if !strings.HasPrefix(friend, s.Registry.Identifier) {
+			conn, err := s.FDial(friend)
+			if err != nil {
+				return
+			}
 
-		gsclient := pbg.NewGoserverServiceClient(conn)
-		win, err := gsclient.ChooseLead(ctx, &pbg.ChooseLeadRequest{Server: s.Registry.Name})
-		if err != nil {
-			return
-		}
+			gsclient := pbg.NewGoserverServiceClient(conn)
+			win, err := gsclient.ChooseLead(ctx, &pbg.ChooseLeadRequest{Server: s.Registry.Name})
+			if err != nil {
+				return
+			}
 
-		if win.GetChosen() != s.Registry.Name {
-			s.LeadState = pbg.LeadState_FOLLOWER
-			s.CurrentLead = win.GetChosen()
-			return
+			if win.GetChosen() != s.Registry.Name {
+				s.LeadState = pbg.LeadState_FOLLOWER
+				s.CurrentLead = win.GetChosen()
+				return
+			}
 		}
 	}
 
