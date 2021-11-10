@@ -216,7 +216,7 @@ func (s *GoServer) runSimpleElection() {
 				return
 			}
 
-			if win.GetChosen() != s.Registry.Name {
+			if win.GetChosen() != s.Registry.Identifier {
 				s.LeadState = pbg.LeadState_FOLLOWER
 				s.CurrentLead = win.GetChosen()
 				return
