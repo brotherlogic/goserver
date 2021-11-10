@@ -110,6 +110,7 @@ var (
 )
 
 func (s *GoServer) ChooseLead(ctx context.Context, req *pbl.ChooseLeadRequest) (*pbl.ChooseLeadResponse, error) {
+	s.Log(fmt.Sprintf("ChooseLead %v and %v -> %v", req.GetServer(), s.Registry.Identifier, strings.Compare(req.GetServer(), s.Registry.Identifier)))
 	if strings.Compare(req.GetServer(), s.Registry.Identifier) > 0 {
 		return &pbl.ChooseLeadResponse{Chosen: s.Registry.Identifier}, nil
 	}
