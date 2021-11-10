@@ -208,7 +208,7 @@ func (s *GoServer) runSimpleElection() {
 			}
 
 			gsclient := pbg.NewGoserverServiceClient(conn)
-			win, err := gsclient.ChooseLead(ctx, &pbg.ChooseLeadRequest{Server: s.Registry.Name})
+			win, err := gsclient.ChooseLead(ctx, &pbg.ChooseLeadRequest{Server: s.Registry.Identifier})
 			if err != nil {
 				return
 			}
