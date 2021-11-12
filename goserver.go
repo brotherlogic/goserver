@@ -64,6 +64,10 @@ var (
 		Name: "bad_dial",
 		Help: "Calls into bad dials",
 	}, []string{"call"})
+	elections = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "elections",
+		Help: "Calls into bad dials",
+	})
 )
 
 // GoServer The basic server construct
@@ -178,6 +182,7 @@ func (s *GoServer) verifyFollower() bool {
 
 	conn, err := s.FDialSpecificServer(ctx, s.Registry.Name, s.CurrentLead)
 	if err != nil {
+		s.Log(fmt.Sprintf("Unable to dial leader: %v -> %v", s.CurrentLead, err))
 		return false
 	}
 	defer conn.Close()
@@ -185,6 +190,7 @@ func (s *GoServer) verifyFollower() bool {
 	gsclient := pbg.NewGoserverServiceClient(conn)
 	_, err = gsclient.IsAlive(ctx, &pbg.Alive{})
 	if err != nil {
+		s.Log(fmt.Sprintf("Leader is not alive: %v -> %v", s.CurrentLead, err))
 		return false
 	}
 
@@ -192,6 +198,7 @@ func (s *GoServer) verifyFollower() bool {
 }
 
 func (s *GoServer) runSimpleElection() {
+	elections.Inc()
 	ctx, cancel := utils.ManualContext("electing", time.Second*30)
 	defer cancel()
 
