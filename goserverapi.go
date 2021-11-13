@@ -668,7 +668,7 @@ func (s *GoServer) suicideWatch() {
 					}
 				}
 			} else {
-				s.Log(fmt.Sprintf("NOSUDO PARENT: %v and %v", os.Getppid(), s.Killme))
+				s.DLog(context.Background(), fmt.Sprintf("NOSUDO PARENT: %v and %v", os.Getppid(), s.Killme))
 				if os.Getppid() == 1 && s.Killme {
 					os.Exit(1)
 				}
