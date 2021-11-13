@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	dspb "github.com/brotherlogic/datastore/proto"
+	dpb "github.com/brotherlogic/dstore/proto"
 	kspb "github.com/brotherlogic/keystore/proto"
 	"github.com/golang/protobuf/proto"
 	google_protobuf "github.com/golang/protobuf/ptypes/any"
@@ -143,5 +144,45 @@ func (d *datastore) save(ctx context.Context, key string, value *google_protobuf
 
 	store := dspb.NewDatastoreServiceClient(conn)
 	_, err = store.Write(ctx, &dspb.WriteRequest{Key: key, Value: value})
+	return err
+}
+
+type dstore struct {
+	dial func(ctx context.Context, server string) (*grpc.ClientConn, error)
+}
+
+func (d *dstore) load(ctx context.Context, key string) (*google_protobuf.Any, error) {
+	conn, err := d.dial(ctx, "dstore")
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	store := dpb.NewDStoreServiceClient(conn)
+	resp, err := store.Read(ctx, &dpb.ReadRequest{Key: key})
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.GetConsensus() < 0.5 {
+		return nil, fmt.Errorf("Unable to get read consensus: %v", resp.GetConsensus())
+	}
+
+	return resp.GetValue(), err
+}
+
+func (d *dstore) save(ctx context.Context, key string, value *google_protobuf.Any) error {
+	conn, err := d.dial(ctx, "dstore")
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	store := dpb.NewDStoreServiceClient(conn)
+	r, err := store.Write(ctx, &dpb.WriteRequest{Key: key, Value: value})
+
+	if r.GetConsensus() < 0.5 {
+		return fmt.Errorf("Unable to get write consensus: %v", r.GetConsensus())
+	}
 	return err
 }

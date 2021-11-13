@@ -146,6 +146,7 @@ type GoServer struct {
 	SkipElect               bool
 	Store                   translatedStore
 	FlagUseDataStore        bool
+	FlagUseDStore           bool
 	NeedsLead               bool
 	CurrentLead             string
 	LeadState               pbg.LeadState
@@ -311,7 +312,9 @@ func (s *GoServer) prepareServer(register bool) {
 
 	s.masterMutex = &sync.Mutex{}
 
-	if s.FlagUseDataStore {
+	if s.FlagUseDStore {
+		s.Store = &mts{store: &dstore{s.FDialServer}}
+	} else if s.FlagUseDataStore {
 		s.Store = &mts{store: &datastore{s.FDialServer}}
 	} else {
 		s.Store = &mts{store: &keystore{s.FDialServer}}
