@@ -953,8 +953,10 @@ func (s *GoServer) Reregister(ctx context.Context, in *pbl.ReregisterRequest) (*
 func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.ShutdownResponse, error) {
 	s.LameDuck = true
 	defer func() {
-		time.Sleep(time.Second * 5)
-		os.Exit(1)
+		go func() {
+			time.Sleep(time.Second * 5)
+			os.Exit(1)
+		}()
 	}()
 
 	err := s.Register.Shutdown(ctx)
