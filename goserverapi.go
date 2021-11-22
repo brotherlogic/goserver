@@ -751,6 +751,13 @@ func (s *GoServer) RegisterServerV2(servername string, external bool, ignore boo
 		entry := &pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: false, Identifier: hostname, Port: s.Port, Version: pb.RegistryEntry_V2, IgnoresMaster: ignore}
 		s.Registry = entry
 
+		//Prep the dlog since we're not on the register path
+		if !s.preppedDLog && s.DiskLog {
+			s.prepDLog(servername)
+		} else {
+			s.Log(fmt.Sprintf("Not setting up disk logging %v and %v", s.preppedDLog, s.DiskLog))
+		}
+
 		return nil
 	}
 
