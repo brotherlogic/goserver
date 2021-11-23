@@ -166,6 +166,8 @@ func (s *GoServer) pickLead() {
 		case pbg.LeadState_FOLLOWER:
 			if !s.verifyFollower() {
 				s.LeadFails++
+			} else {
+				s.LeadFails = 0
 			}
 
 			if s.LeadFails > 10 {
