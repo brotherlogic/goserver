@@ -1306,7 +1306,6 @@ func (s *GoServer) ImmediateIssue(ctx context.Context, title, body string) (*pbg
 	defer conn.Close()
 
 	client := pbgh.NewGithubClient(conn)
-	key, err := utils.GetContextKey(ctx)
 	return client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: false})
 }
 
