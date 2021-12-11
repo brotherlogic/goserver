@@ -526,7 +526,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	t := time.Now()
 	h, err := s.runHandle(ctx, handler, req, tracer, info.FullMethod)
 
-	if info.FullMethod != "/goserver.goserverService/IsAlive" || err == nil {
+	if info.FullMethod != "/goserver.goserverService/IsAlive" || err != nil {
 		serverRequests.With(prometheus.Labels{"status": status.Convert(err).Code().String(), "method": info.FullMethod}).Inc()
 		serverLatency.With(prometheus.Labels{"method": info.FullMethod}).Observe(float64(time.Now().Sub(t).Nanoseconds() / 1000000))
 	}
