@@ -525,8 +525,11 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	}
 	t := time.Now()
 	h, err := s.runHandle(ctx, handler, req, tracer, info.FullMethod)
-	serverRequests.With(prometheus.Labels{"status": status.Convert(err).Code().String(), "method": info.FullMethod}).Inc()
-	serverLatency.With(prometheus.Labels{"method": info.FullMethod}).Observe(float64(time.Now().Sub(t).Nanoseconds() / 1000000))
+
+	if info.FullMethod != "/goserver.goserverService/IsAlive" || err == nil {
+		serverRequests.With(prometheus.Labels{"status": status.Convert(err).Code().String(), "method": info.FullMethod}).Inc()
+		serverLatency.With(prometheus.Labels{"method": info.FullMethod}).Observe(float64(time.Now().Sub(t).Nanoseconds() / 1000000))
+	}
 
 	if time.Now().Sub(t) > time.Hour {
 		s.RaiseIssue("Slow Request", fmt.Sprintf("%v on %v/%v took %v (%v)", info.FullMethod, s.Registry.GetName(), s.Registry.GetIdentifier(), time.Now().Sub(t), req))
