@@ -662,7 +662,7 @@ func (s *GoServer) suicideWatch() {
 		if s.Killme {
 			if s.Sudo {
 				p, err := ps.FindProcess(os.Getppid())
-				s.Log(fmt.Sprintf("SUDO PARENT: %v and %v", p, err))
+				s.DLog(context.Background(), fmt.Sprintf("SUDO PARENT: %v and %v", p, err))
 				if err == nil && p.PPid() == 1 {
 					os.Exit(1)
 				} else {
