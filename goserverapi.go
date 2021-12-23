@@ -1416,7 +1416,7 @@ func (s *GoServer) PLog(ictx context.Context, message string, level pbd.LogLevel
 		if !s.SkipLog && s.Registry != nil {
 			ctx, cancel := utils.ManualContext(fmt.Sprintf("%v-%v", s.Registry.GetName(), "logging"), time.Second)
 			defer cancel()
-			conn, err := s.FDialServer(ctx, "logging")
+			conn, err := s.FDialSpecificServer(ctx, "logging", s.Registry.Identifier)
 			if err == nil {
 				defer conn.Close()
 				logger := lpb.NewLoggingServiceClient(conn)
