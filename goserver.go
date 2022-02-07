@@ -151,6 +151,7 @@ type GoServer struct {
 	CurrentLead             string
 	LeadState               pbg.LeadState
 	LeadFails               int
+	lastLogCheck            time.Time
 }
 
 func (s *GoServer) pickLead() {
@@ -321,6 +322,8 @@ func (s *GoServer) prepareServer(register bool) {
 	} else {
 		s.Store = &mts{store: &keystore{s.FDialServer}}
 	}
+
+	s.lastLogCheck = time.Now()
 }
 
 func (s *GoServer) teardown() {
