@@ -1282,10 +1282,12 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 	go http.ListenAndServe(fmt.Sprintf(":%v", s.Port+1), nil)
 
 	// Enable prometheus
-	http.Handle("/metrics", promhttp.Handler())
-	go func() {
-		http.ListenAndServe(fmt.Sprintf(":%v", s.Port+2), nil)
-	}()
+	if !s.noProm {
+		http.Handle("/metrics", promhttp.Handler())
+		go func() {
+			http.ListenAndServe(fmt.Sprintf(":%v", s.Port+2), nil)
+		}()
+	}
 
 	// Background all the serving funcs
 	for _, f := range s.servingFuncs {
