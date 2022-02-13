@@ -152,7 +152,7 @@ type GoServer struct {
 	LeadState               pbg.LeadState
 	LeadFails               int
 	lastLogCheck            time.Time
-	noProm                  bool
+	NoProm                  bool
 }
 
 func (s *GoServer) pickLead() {
