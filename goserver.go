@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
@@ -66,6 +67,10 @@ var (
 	}, []string{"call"})
 	elections = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "elections",
+		Help: "Calls into bad dials",
+	})
+	bits = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "running_bits",
 		Help: "Calls into bad dials",
 	})
 )
@@ -153,6 +158,7 @@ type GoServer struct {
 	LeadFails               int
 	lastLogCheck            time.Time
 	NoProm                  bool
+	Bits                    int
 }
 
 func (s *GoServer) pickLead() {
@@ -325,6 +331,18 @@ func (s *GoServer) prepareServer(register bool) {
 	}
 
 	s.lastLogCheck = time.Now()
+
+	output, err := exec.Command("cat", "/proc/version").CombinedOutput()
+	if err != nil {
+		log.Fatalf("Cannot run job: %v", err)
+	}
+
+	if strings.Contains(string(output), "aarch64") {
+		s.Bits = 64
+	} else {
+		s.Bits = 32
+	}
+	bits.Set(float64(s.Bits))
 }
 
 func (s *GoServer) teardown() {
