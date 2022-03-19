@@ -159,6 +159,7 @@ type GoServer struct {
 	lastLogCheck            time.Time
 	NoProm                  bool
 	Bits                    int
+	runner                  string
 }
 
 func (s *GoServer) pickLead() {
@@ -305,6 +306,7 @@ func (s *GoServer) prepareServer(register bool) {
 	ex, _ := os.Executable()
 	data, _ := ioutil.ReadFile(ex)
 	info, _ := os.Stat(ex)
+	s.runner = ex
 	s.RunningFile = fmt.Sprintf("%x", md5.Sum(data))
 	runningBinaryTimestamp.Set(float64(info.ModTime().Unix()))
 

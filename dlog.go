@@ -108,7 +108,15 @@ func (s *GoServer) prepDLog(serviceName string) {
 		}
 		s.dlogHandle = fhandle
 		s.Log(fmt.Sprintf("Prepped dlog"))
-	} else {
+	} else if strings.HasSuffix(s.runner, "gobuildslave") {
+		filename := fmt.Sprintf("/home/simon/gobuildslave.tlog")
+		fhandle, err := os.Create(filename)
+		if err != nil {
+			s.Log(fmt.Sprintf("Unable to open file: %v", err))
+		}
+		s.dlogHandle = fhandle
+		s.Log(fmt.Sprintf("Prepped temp dlog"))
+	}
 		s.Log(fmt.Sprintf("Scratch not found, no disk logging"))
 		hn, err := os.Hostname()
 		s.RaiseIssue("Missing Disk Logs", fmt.Sprintf("%v,%v,%v has not disk logging potential", hn, err, s.Registry.GetIdentifier()))
