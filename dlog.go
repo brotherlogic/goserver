@@ -116,7 +116,7 @@ func (s *GoServer) prepDLog(serviceName string) {
 		}
 		s.dlogHandle = fhandle
 		s.Log(fmt.Sprintf("Prepped temp dlog"))
-	}
+	} else {
 		s.Log(fmt.Sprintf("Scratch not found, no disk logging"))
 		hn, err := os.Hostname()
 		s.RaiseIssue("Missing Disk Logs", fmt.Sprintf("%v,%v,%v has not disk logging potential", hn, err, s.Registry.GetIdentifier()))
