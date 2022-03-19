@@ -1330,6 +1330,7 @@ func (s *GoServer) DeleteIssue(ctx context.Context, number int32) error {
 
 //RaiseIssue raises an issue
 func (s *GoServer) RaiseIssue(title, body string) {
+	s.Log(fmt.Sprintf("Attemping to raise issue: %v -> %v", title, body))
 	if s.SkipIssue {
 		log.Printf("Raising Issue %v -> %v", title, body)
 	}
