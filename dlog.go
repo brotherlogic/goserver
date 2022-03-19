@@ -70,7 +70,9 @@ func (s *GoServer) DLog(ctx context.Context, text string) {
 		if time.Since(s.lastLogCheck) > time.Minute {
 			size, err := dirSize(fmt.Sprintf("/media/scratch/dlogs/%v", s.Registry.GetName()))
 			if err != nil {
-				s.RaiseIssue("Bad log problem", fmt.Sprintf("Error reeading logs on %v: %v", s.Registry.Identifier, err))
+				if s.Registry != nil {
+					s.RaiseIssue("Bad log problem", fmt.Sprintf("Error reeading logs on %v: %v", s.Registry.Identifier, err))
+				}
 			} else {
 				s.lastLogCheck = time.Now()
 				logSize.Set(float64(size))
@@ -108,7 +110,7 @@ func (s *GoServer) prepDLog(serviceName string) {
 		}
 		s.dlogHandle = fhandle
 		s.Log(fmt.Sprintf("Prepped dlog"))
-	} else if strings.HasSuffix(s.runner, "gobuildslave") {
+	} else if serviceName == "gobuildslave" {
 		filename := fmt.Sprintf("/home/simon/gobuildslave.tlog")
 		fhandle, err := os.Create(filename)
 		if err != nil {
