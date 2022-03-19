@@ -68,14 +68,16 @@ func (s *GoServer) DLog(ctx context.Context, text string) {
 		s.dlogHandle.WriteString(fmt.Sprintf("%v|%v|%v|%v\n", time.Now().Format(time.RFC3339Nano), s.Registry.GetIdentifier(), code, text))
 
 		if time.Since(s.lastLogCheck) > time.Minute {
-			size, err := dirSize(fmt.Sprintf("/media/scratch/dlogs/%v", s.Registry.GetName()))
-			if err != nil {
-				if s.Registry != nil {
-					s.RaiseIssue("Bad log problem", fmt.Sprintf("Error reeading logs on %v: %v", s.Registry.Identifier, err))
+			if _, err := os.Stat("/path/to/whatever"); !os.IsNotExist(err) {
+				size, err := dirSize(fmt.Sprintf("/media/scratch/dlogs/%v", s.Registry.GetName()))
+				if err != nil {
+					if s.Registry != nil {
+						s.RaiseIssue("Bad log problem", fmt.Sprintf("Error reeading logs on %v: %v", s.Registry.Identifier, err))
+					}
+				} else {
+					s.lastLogCheck = time.Now()
+					logSize.Set(float64(size))
 				}
-			} else {
-				s.lastLogCheck = time.Now()
-				logSize.Set(float64(size))
 			}
 		}
 	}
