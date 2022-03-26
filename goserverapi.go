@@ -966,6 +966,7 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 	defer func() {
 		go func() {
 			time.Sleep(time.Second * 5)
+			s.DLog(ctx, "Doing shutdown now")
 			os.Exit(1)
 		}()
 	}()
