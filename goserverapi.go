@@ -1258,8 +1258,8 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.Port)))
 	if err != nil {
-		deets, err2 := exec.Command("lsof", "-i", fmt.Sprintf(":%v", s.Port)).Output()
-		s.Log(fmt.Sprintf("Unable to start: %v (%v), %v", err, deets, err2))
+		deets, err2 := exec.Command("sudo", "lsof", "-i", fmt.Sprintf(":%v", s.Port)).Output()
+		s.Log(fmt.Sprintf("Unable to start: %v (%v), %v", err, string(deets), err2))
 		return fmt.Errorf("Bad startup (%v) -> %v, %v", string(deets), err, err2)
 	}
 	fullOpts := append(opt,
