@@ -119,9 +119,6 @@ func (s *GoServer) ChooseLead(ctx context.Context, req *pbl.ChooseLeadRequest) (
 	return &pbl.ChooseLeadResponse{Chosen: req.GetServer()}, nil
 }
 
-func init() {
-	resolver.Register(&utils.DiscoveryServerResolverBuilder{})
-}
 func (s *GoServer) trace(c context.Context, name string) context.Context {
 	go func() {
 		s.sendTrace(c, name, time.Now())
@@ -312,8 +309,7 @@ func (s *GoServer) NewBaseDial(c string) (*grpc.ClientConn, error) {
 	s.Log(fmt.Sprintf("%v is calling %v via NewBaseDial", s.Registry.Name, c))
 	return grpc.Dial("discovery:///"+c,
 		grpc.WithInsecure(),
-		s.withClientUnaryInterceptor(),
-		grpc.WithBalancerName("my_pick_first"))
+		s.withClientUnaryInterceptor())
 }
 
 // DialServer dials a given server

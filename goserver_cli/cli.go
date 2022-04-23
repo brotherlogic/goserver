@@ -13,7 +13,6 @@ import (
 	pb "github.com/brotherlogic/goserver/proto"
 	"github.com/brotherlogic/goserver/utils"
 	_ "google.golang.org/grpc/encoding/gzip"
-	"google.golang.org/grpc/resolver"
 )
 
 func buildState(s *pb.State, uptime int64) string {
@@ -47,10 +46,6 @@ func getUptime(states []*pb.State) int64 {
 		}
 	}
 	return 1
-}
-
-func init() {
-	resolver.Register(&utils.DiscoveryClientResolverBuilder{})
 }
 
 func main() {
@@ -121,7 +116,7 @@ func main() {
 		fmt.Printf("%v and %v", state, err)
 
 	} else if len(*name) > 0 {
-		conn, err := grpc.Dial("discovery:///"+*name, grpc.WithInsecure(), grpc.WithBalancerName("my_pick_first"), grpc.WithMaxMsgSize(1024*1024))
+		conn, err := grpc.Dial("discovery:///"+*name, grpc.WithInsecure(), grpc.WithMaxMsgSize(1024*1024))
 		if err != nil {
 			log.Fatalf("Unable to reach server: %v", err)
 		}
