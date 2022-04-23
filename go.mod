@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/brotherlogic/buildserver v0.0.0-20220327203934-47a8f084464f
 	github.com/brotherlogic/datastore v0.0.0-20210713131041-be3230cc69b8
-	github.com/brotherlogic/discovery v0.0.0-20220305205509-0d9c25e7c1e0
+	github.com/brotherlogic/discovery v0.0.0-20220423185342-df7f9672adda
 	github.com/brotherlogic/dstore v0.0.0-20220306232627-401104470a9f
 	github.com/brotherlogic/githubcard v0.0.0-20220403221958-0e280ca1c5e6
 	github.com/brotherlogic/gobuildslave v0.0.0-20220410191505-77019b54ee94
@@ -20,11 +20,8 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/prometheus/client_golang v1.12.1
-	github.com/prometheus/common v0.34.0 // indirect
 	github.com/struCoder/pidusage v0.2.1
 	golang.org/x/net v0.0.0-20220421235706-1d1ef9303861
-	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150 // indirect
-	google.golang.org/genproto v0.0.0-20220422154200-b37d22cd5731 // indirect
 	google.golang.org/grpc v1.46.0
 	google.golang.org/protobuf v1.28.0
 )

@@ -980,7 +980,7 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 
 	registry := pb.NewDiscoveryServiceV2Client(conn)
 
-	_, err = registry.Unregister(ctx, &pb.UnregisterRequest{Service: s.Registry})
+	_, err = registry.Unregister(ctx, &pb.UnregisterRequest{Reason: "requested-shutdown", Service: s.Registry})
 	if err != nil {
 		return nil, err
 	}
