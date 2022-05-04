@@ -1277,7 +1277,7 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 	go http.ListenAndServe(fmt.Sprintf(":%v", s.Port+1), nil)
 
 	// Enable prometheus
-	if !s.NoProm || s.Registry.Identifier != "rdisplay" {
+	if !s.NoProm && s.Registry.Identifier != "rdisplay" {
 		http.Handle("/metrics", promhttp.Handler())
 		go func() {
 			http.ListenAndServe(fmt.Sprintf(":%v", s.Port+2), nil)
