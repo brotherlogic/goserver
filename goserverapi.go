@@ -1256,6 +1256,12 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 	if err != nil {
 		deets, err2 := exec.Command("sudo", "lsof", "-i", fmt.Sprintf(":%v", s.Port)).Output()
 		s.Log(fmt.Sprintf("Unable to start: %v (%v), %v", err, string(deets), err2))
+
+		// Silent exit
+		if strings.Contains(string(deets), "address already in use") {
+			return nil
+		}
+
 		return fmt.Errorf("Bad startup (%v) -> %v, %v", string(deets), err, err2)
 	}
 	fullOpts := append(opt,
