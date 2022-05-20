@@ -1258,7 +1258,7 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 		s.Log(fmt.Sprintf("Unable to start: %v (%v), %v", err, string(deets), err2))
 
 		// Silent exit
-		if strings.Contains(string(deets), "address already in use") {
+		if strings.Contains(fmt.Sprintf("%v", err2), "address already in use") {
 			return nil
 		}
 
