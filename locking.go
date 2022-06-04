@@ -116,7 +116,7 @@ func (s *GoServer) runElection(key string, elected chan error, complete chan boo
 	command.Wait()
 }
 
-func (s *GoServer) RunLockingElection(ctx context.Context, key string) (string, error) {
+func (s *GoServer) RunLockingElection(ctx context.Context, key string, detail string) (string, error) {
 	conn, err := s.FDialServer(ctx, "lock")
 	if err != nil {
 		return "", err
@@ -134,6 +134,7 @@ func (s *GoServer) RunLockingElection(ctx context.Context, key string) (string, 
 	res, err := client.AcquireLock(ctx, &lpb.AcquireLockRequest{
 		Key:                   key,
 		LockDurationInSeconds: int64(duration.Seconds()),
+		Purpose:               detail,
 	})
 	if err != nil {
 		return "", err
