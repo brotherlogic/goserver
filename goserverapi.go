@@ -653,7 +653,9 @@ func (s *GoServer) suicideWatch() {
 		}
 
 		if mem > float64(15000000) {
-			s.RaiseIssue("Memory Pressure", fmt.Sprintf("Memory is high: %v bytes", mem))
+			var m runtime.MemStats
+			runtime.ReadMemStats(&m)
+			s.RaiseIssue("Memory Pressure", fmt.Sprintf("Memory is high: %v bytes but hang on: %v", mem, m.HeapAlloc))
 		}
 
 		s.checkMem(mem)
