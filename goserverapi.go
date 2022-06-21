@@ -650,7 +650,10 @@ func (s *GoServer) suicideWatch() {
 			s.latestMem = int(mem2)
 			s.Log(fmt.Sprintf("Running GC with memory %v (took %v) %v -> %v", mem, time.Now().Sub(t), mem, mem2))
 			mem = mem2
+		}
 
+		if mem > float64(15000000) {
+			s.RaiseIssue("Memory Pressure", fmt.Sprintf("Memory is high: %v bytes", mem))
 		}
 
 		s.checkMem(mem)

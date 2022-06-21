@@ -32,6 +32,7 @@ func ManualContext(label string, t time.Duration) (context.Context, context.Canc
 
 func generateContext(origin string, t time.Duration) (context.Context, context.CancelFunc) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
 	hostname, err := os.Hostname()
 	if err != nil {
 		hostname = fmt.Sprintf("BadHostGet-%v", err)
