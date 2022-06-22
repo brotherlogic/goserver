@@ -1431,7 +1431,7 @@ func (s *GoServer) PLog(ictx context.Context, message string, level pbd.LogLevel
 				defer conn.Close()
 				logger := lpb.NewLoggingServiceClient(conn)
 
-				_, err := logger.Log(ctx, &lpb.LogRequest{Log: &lpb.Log{Timestamp: time.Now().Unix(), Origin: s.Registry.GetName(), Server: s.Registry.GetIdentifier(), Log: message, Ttl: int32((time.Hour * 24).Seconds())}})
+				_, err := logger.Log(ctx, &lpb.LogRequest{Log: &lpb.Log{Timestamp: time.Now().UnixNano(), Origin: s.Registry.GetName(), Server: s.Registry.GetIdentifier(), Log: message, Ttl: int32((time.Hour * 24).Seconds())}})
 				e, ok := status.FromError(err)
 				if ok && err != nil && e.Code() != codes.DeadlineExceeded {
 					s.failLogs++
