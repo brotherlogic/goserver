@@ -1421,6 +1421,9 @@ func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.C
 
 //PLog a simple string message with priority
 func (s *GoServer) PLog(ictx context.Context, message string, level pbd.LogLevel) {
+	if s.SkipLog {
+		log.Printf("LOG %v ->%v with %v", message, s.activeRPCsMutex, s.SkipLog)
+	}
 	go func() {
 		if !s.SkipLog && s.Registry != nil {
 			ctx, cancel := utils.ManualContext(fmt.Sprintf("%v-%v", s.Registry.GetName(), "logging"), time.Second)
