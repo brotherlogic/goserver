@@ -489,12 +489,7 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	if s.NoBody {
 		s.DLog(ctx, fmt.Sprintf("S: %v <- bytes %v", info.FullMethod, proto.Size(req.(proto.Message))))
 	} else {
-		rSize := proto.Size(req.(proto.Message))
-		if rSize > 100 {
-			s.DLog(ctx, fmt.Sprintf("S: %v <- %v bytes", info.FullMethod, rSize))
-		} else {
-			s.DLog(ctx, fmt.Sprintf("S: %v <- %v bytes", info.FullMethod, req))
-		}
+		s.DLog(ctx, fmt.Sprintf("S: %v <- %v", info.FullMethod, req))
 	}
 
 	s.serverr++
