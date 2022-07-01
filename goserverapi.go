@@ -1314,7 +1314,7 @@ func init() {
 	resolver.Register(&utils.DiscoveryServerResolverBuilder{})
 }
 
-func (s *GoServer) ImmediateIssue(ctx context.Context, title, body string) (*pbgh.Issue, error) {
+func (s *GoServer) ImmediateIssue(ctx context.Context, title, body string, print bool) (*pbgh.Issue, error) {
 	conn, err := s.FDialServer(ctx, "githubcard")
 	if err != nil {
 		return nil, err
@@ -1322,7 +1322,7 @@ func (s *GoServer) ImmediateIssue(ctx context.Context, title, body string) (*pbg
 	defer conn.Close()
 
 	client := pbgh.NewGithubClient(conn)
-	return client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: false})
+	return client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: false, PrintImmediately: print})
 }
 
 func (s *GoServer) DeleteIssue(ctx context.Context, number int32) error {
@@ -1353,7 +1353,7 @@ func (s *GoServer) RaiseIssue(title, body string) {
 		if !s.SkipIssue && len(body) != 0 {
 			ctx, cancel := utils.ManualContext(fmt.Sprintf("%v-%v", s.Registry.GetName(), "issue"), time.Minute)
 			defer cancel()
-			s.ImmediateIssue(ctx, title, body)
+			s.ImmediateIssue(ctx, title, body, false)
 		} else {
 			s.alertError = "Skip log enabled"
 		}
