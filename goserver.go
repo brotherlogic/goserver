@@ -274,8 +274,10 @@ func (s *GoServer) PrepServer(name string) {
 }
 
 // PrepServerNoRegister builds out a server that doesn't register
-func (s *GoServer) PrepServerNoRegister(port int32) {
+func (s *GoServer) PrepServerNoRegister(name string, port int32) {
 	s.Port = port
+	s.registerTime = time.Now()
+	s.serverName = name
 	s.prepareServer(true)
 }
 
