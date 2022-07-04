@@ -759,10 +759,6 @@ func (s *GoServer) RegisterServerV2(external bool) error {
 		s.Port = port
 	}
 
-	if err == nil {
-		s.registerTime = time.Now()
-	}
-
 	return err
 }
 

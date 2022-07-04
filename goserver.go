@@ -262,6 +262,8 @@ func (s *GoServer) RunSudo() {
 
 // PrepServer builds out the server for use.
 func (s *GoServer) PrepServer(name string) {
+	s.registerTime = time.Now()
+
 	s.serverName = name
 	s.prepareServer(false)
 
