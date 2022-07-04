@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/brotherlogic/buildserver v0.0.0-20220612172013-def00cb1be17
 	github.com/brotherlogic/datastore v0.0.0-20220604175725-6d0854cc39a8
-	github.com/brotherlogic/discovery v0.0.0-20220704180331-02cd443dd2b4
+	github.com/brotherlogic/discovery v0.0.0-20220704181845-6b1c7260aee2
 	github.com/brotherlogic/dstore v0.0.0-20220619031907-31d4fd2446ca
 	github.com/brotherlogic/githubcard v0.0.0-20220701151835-d6b2fb75cd3f
 	github.com/brotherlogic/gobuildslave v0.0.0-20220704150406-bf8b3e163f21
