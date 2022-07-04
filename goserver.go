@@ -160,6 +160,7 @@ type GoServer struct {
 	NoProm                  bool
 	Bits                    int
 	runner                  string
+	registerTime            time.Time
 }
 
 func (s *GoServer) pickLead() {

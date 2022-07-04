@@ -76,6 +76,11 @@ var (
 		Help: "The number of running routines at startup",
 	})
 
+	startupTime = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "startup_time",
+		Help: "The number of running routines at startup",
+	})
+
 	clientRequests = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "rpc_client_requests",
 		Help: "The number of server requests",
@@ -770,6 +775,11 @@ func (s *GoServer) RegisterServerV2(servername string, external bool, ignore boo
 		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external, true, ignore)
 		s.Port = port
 	}
+
+	if err == nil {
+		s.registerTime = time.Now()
+	}
+
 	return err
 }
 
@@ -1251,7 +1261,8 @@ func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
 // Serve Runs the server
 func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 	time.Sleep(time.Second * 2)
-	s.Log(fmt.Sprintf("Starting (new) %v on port %v", s.RunningFile, s.Registry.Port))
+	s.Log(fmt.Sprintf("Starting (new) %v on port %v startup (%v)", s.RunningFile, s.Registry.Port, time.Since(s.registerTime)))
+	startupTime.Set(float64(time.Since(s.registerTime).Milliseconds()))
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.Port)))
 	if err != nil {
