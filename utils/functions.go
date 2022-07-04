@@ -178,12 +178,6 @@ func ResolveV2(name string) (*pbdi.RegistryEntry, error) {
 		return nil, err
 	}
 
-	// Get master
-	for _, service := range val.GetServices() {
-		if service.Master {
-			return service, nil
-		}
-	}
 	return nil, status.Errorf(codes.NotFound, "Found %v services but no master", len(val.GetServices()))
 }
 
@@ -210,14 +204,7 @@ func ResolveV3(name string) ([]*pbdi.RegistryEntry, error) {
 	services := make([]*pbdi.RegistryEntry, 0)
 	// Get master
 	for _, service := range val.GetServices() {
-		if service.Master {
-			services = append(services, service)
-		}
-	}
-	for _, service := range val.GetServices() {
-		if !service.Master {
-			services = append(services, service)
-		}
+		services = append(services, service)
 	}
 
 	return services, nil
@@ -246,14 +233,7 @@ func ResolveV3Client(name string) ([]*pbdi.RegistryEntry, error) {
 	services := make([]*pbdi.RegistryEntry, 0)
 	// Get master
 	for _, service := range val.GetServices() {
-		if service.Master {
-			services = append(services, service)
-		}
-	}
-	for _, service := range val.GetServices() {
-		if !service.Master {
-			services = append(services, service)
-		}
+		services = append(services, service)
 	}
 
 	return services, nil

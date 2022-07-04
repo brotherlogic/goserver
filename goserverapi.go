@@ -151,81 +151,6 @@ func (s *GoServer) alive(ctx context.Context, entry *pb.RegistryEntry) error {
 	return err
 }
 
-func (s *GoServer) validateMaster(ctx context.Context) error {
-	s.RaiseIssue("Validate Master", "Is trying to validate as master")
-	//Master ignores don't validate
-	if s.Registry.IgnoresMaster {
-		return nil
-	}
-
-	if s.Registry.Version == pb.RegistryEntry_V2 {
-		//Acquire a validation lock
-		s.masterMutex.Lock()
-		defer s.masterMutex.Unlock()
-
-		entry, err := utils.ResolveV2(s.Registry.Name)
-		if err == nil {
-			err = s.alive(ctx, entry)
-		}
-		if err != nil {
-			//Let's master elect if we can't find a master
-			if code := status.Convert(err); code.Code() == codes.NotFound || code.Code() == codes.Unavailable {
-				err := s.masterElect(ctx)
-				return err
-			}
-
-			return err
-		}
-
-		if entry.Identifier != s.Registry.Identifier {
-			return status.Errorf(codes.FailedPrecondition, "We are no longer master but %v is", entry)
-		}
-	} else {
-		ip, _, err := utils.Resolve(s.Registry.Name, s.Registry.Name)
-		if err != nil {
-			return err
-		}
-
-		if s.Registry.Ip != ip {
-			return fmt.Errorf("We are no longer master, %v is", ip)
-		}
-	}
-
-	return nil
-}
-
-func (s *GoServer) masterElect(ctx context.Context) error {
-	s.RaiseIssue("Master Elect", "Is trying to elect as master")
-	if s.Registry.Version == pb.RegistryEntry_V1 {
-		return fmt.Errorf("V1 does not perform master election")
-	}
-
-	conn, err := s.DoDial(s.Registry)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-	client := pbl.NewGoserverServiceClient(conn)
-	_, err = client.Mote(ctx, &pbl.MoteRequest{Master: true})
-	if err != nil {
-		return err
-	}
-
-	conn2, err := s.DialLocal("discover")
-	if err != nil {
-		return err
-	}
-	defer conn2.Close()
-
-	client2 := pb.NewDiscoveryServiceV2Client(conn2)
-	resp, err := client2.MasterElect(ctx, &pb.MasterRequest{Service: s.Registry, MasterElect: true})
-	s.Log(fmt.Sprintf("Master elect response: %v, %v", resp, err))
-	if err == nil {
-		s.Registry = resp.GetService()
-	}
-	return err
-}
-
 func (s *GoServer) sendTrace(c context.Context, name string, t time.Time) error {
 	md, found := metadata.FromIncomingContext(c)
 	if found {
@@ -547,23 +472,6 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 
 func (s *GoServer) runHandle(ctx context.Context, handler grpc.UnaryHandler, req interface{}, tracer *rpcStats, name string) (resp interface{}, err error) {
 	ti := time.Now()
-
-	// Immediate return without trace if we're not master and we expect to be so
-	// Or if we expect to be able to master, try electing to be master
-	if !s.Registry.IgnoresMaster && !s.Registry.Master && !strings.HasPrefix(name, "/goserver") {
-		if s.Registry.Version == pb.RegistryEntry_V1 {
-			err = fmt.Errorf("Cannot handle %v - we are not master", name)
-		} else if s.Registry.Version == pb.RegistryEntry_V2 {
-			s.masterv++
-			err = s.validateMaster(ctx)
-			if err != nil {
-				s.mastervfail++
-			}
-		}
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	defer func() {
 		if s.RPCTracing {
@@ -978,30 +886,6 @@ func (s *GoServer) Shutdown(ctx context.Context, in *pbl.ShutdownRequest) (*pbl.
 	return &pbl.ShutdownResponse{}, nil
 }
 
-// Mote promotes or demotes a server into production
-func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, error) {
-	s.RaiseIssue("Trying to Mote", "Is trying to mote")
-	st := time.Now()
-	s.moteCount++
-
-	// We can't mote to master if we're lame ducking
-	err := s.Register.Mote(ctx, in.Master && !s.LameDuck)
-
-	// If we were able to mote then we should inform discovery if we're running in V1
-	if err == nil && s.Registry.Version == pb.RegistryEntry_V1 {
-		s.Registry.Master = in.Master
-		s.reregister(s.dialler, s.clientBuilder)
-	}
-
-	if err == nil {
-		s.Registry.Master = in.Master
-	}
-
-	s.lastMoteTime = time.Now().Sub(st)
-	s.lastMoteFail = fmt.Sprintf("%v", err)
-	return &pbl.Empty{}, err
-}
-
 func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool, v2 bool) (int32, error) {
 	return s.registerServer(IP, servername, external, v2, grpcDialler{}, mainBuilder{}, osHostGetter{})
 }
@@ -1126,13 +1010,6 @@ func (s *GoServer) runFuncInternal(t sFunc) {
 	defer cancel()
 
 	var err error
-	if !t.nm {
-		s.masterv++
-		err = s.validateMaster(ctx)
-		if err != nil {
-			s.mastervfail++
-		}
-	}
 	if err == nil {
 		s.activeRPCsMutex.Lock()
 		s.activeRPCs[name]++

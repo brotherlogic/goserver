@@ -18,7 +18,6 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GoserverServiceClient interface {
 	IsAlive(ctx context.Context, in *Alive, opts ...grpc.CallOption) (*Alive, error)
-	Mote(ctx context.Context, in *MoteRequest, opts ...grpc.CallOption) (*Empty, error)
 	State(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ServerState, error)
 	Shutdown(ctx context.Context, in *ShutdownRequest, opts ...grpc.CallOption) (*ShutdownResponse, error)
 	Reregister(ctx context.Context, in *ReregisterRequest, opts ...grpc.CallOption) (*ReregisterResponse, error)
@@ -36,15 +35,6 @@ func NewGoserverServiceClient(cc grpc.ClientConnInterface) GoserverServiceClient
 func (c *goserverServiceClient) IsAlive(ctx context.Context, in *Alive, opts ...grpc.CallOption) (*Alive, error) {
 	out := new(Alive)
 	err := c.cc.Invoke(ctx, "/goserver.goserverService/IsAlive", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *goserverServiceClient) Mote(ctx context.Context, in *MoteRequest, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/goserver.goserverService/Mote", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +82,6 @@ func (c *goserverServiceClient) ChooseLead(ctx context.Context, in *ChooseLeadRe
 // for forward compatibility
 type GoserverServiceServer interface {
 	IsAlive(context.Context, *Alive) (*Alive, error)
-	Mote(context.Context, *MoteRequest) (*Empty, error)
 	State(context.Context, *Empty) (*ServerState, error)
 	Shutdown(context.Context, *ShutdownRequest) (*ShutdownResponse, error)
 	Reregister(context.Context, *ReregisterRequest) (*ReregisterResponse, error)
@@ -105,9 +94,6 @@ type UnimplementedGoserverServiceServer struct {
 
 func (UnimplementedGoserverServiceServer) IsAlive(context.Context, *Alive) (*Alive, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsAlive not implemented")
-}
-func (UnimplementedGoserverServiceServer) Mote(context.Context, *MoteRequest) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Mote not implemented")
 }
 func (UnimplementedGoserverServiceServer) State(context.Context, *Empty) (*ServerState, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method State not implemented")
@@ -147,24 +133,6 @@ func _GoserverService_IsAlive_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GoserverServiceServer).IsAlive(ctx, req.(*Alive))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _GoserverService_Mote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MoteRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GoserverServiceServer).Mote(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/goserver.goserverService/Mote",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GoserverServiceServer).Mote(ctx, req.(*MoteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -248,10 +216,6 @@ var _GoserverService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "IsAlive",
 			Handler:    _GoserverService_IsAlive_Handler,
-		},
-		{
-			MethodName: "Mote",
-			Handler:    _GoserverService_Mote_Handler,
 		},
 		{
 			MethodName: "State",

@@ -34,7 +34,6 @@ import (
 type Registerable interface {
 	DoRegister(server *grpc.Server)
 	ReportHealth() bool
-	Mote(ctx context.Context, master bool) error
 	GetState() []*pbg.State
 	Shutdown(ctx context.Context) error
 }
@@ -378,11 +377,6 @@ func (s *GoServer) heartbeat() {
 
 func (s *GoServer) reregister(d dialler, b clientBuilder) {
 	if s.Registry != nil {
-		//We can't be master if we're lame ducking
-		if s.LameDuck {
-			s.Registry.Master = false
-		}
-
 		conn, err := s.FDial(utils.RegistryIP + ":" + strconv.Itoa(utils.RegistryPort))
 		if err == nil {
 			defer s.close(conn)
@@ -395,10 +389,6 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 				if s.Registry.Port > 0 && s.Registry.Port != r.GetService().Port {
 					s.badPorts++
 				}
-				if !s.Registry.Master && r.GetService().WeakMaster && !r.GetService().Master {
-					s.masterRequests++
-					r.GetService().Master = false
-				}
 				s.Registry = r.GetService()
 			} else {
 				s.BadHearts++
@@ -406,7 +396,6 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 			e, ok := status.FromError(err)
 			if ok && (e.Code() != codes.DeadlineExceeded && e.Code() != codes.OK && e.Code() != codes.Unavailable) {
 				s.badHeartMessage = fmt.Sprintf("%v", err)
-				s.Registry.Master = false
 				s.failMaster++
 			}
 		}

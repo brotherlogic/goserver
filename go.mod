@@ -5,14 +5,14 @@ go 1.15
 require (
 	github.com/brotherlogic/buildserver v0.0.0-20220612172013-def00cb1be17
 	github.com/brotherlogic/datastore v0.0.0-20220604175725-6d0854cc39a8
-	github.com/brotherlogic/discovery v0.0.0-20220701133954-9f9cbe72efc2
+	github.com/brotherlogic/discovery v0.0.0-20220704180331-02cd443dd2b4
 	github.com/brotherlogic/dstore v0.0.0-20220619031907-31d4fd2446ca
 	github.com/brotherlogic/githubcard v0.0.0-20220701151835-d6b2fb75cd3f
-	github.com/brotherlogic/gobuildslave v0.0.0-20220612171706-49d328c2f5c2
+	github.com/brotherlogic/gobuildslave v0.0.0-20220704150406-bf8b3e163f21
 	github.com/brotherlogic/godiscogs v0.0.0-20220523152004-1a5f78dd88d3
 	github.com/brotherlogic/keystore v0.0.0-20220621052415-70ae78501e3c
 	github.com/brotherlogic/lock v0.0.0-20220604175100-dceb5703f818
-	github.com/brotherlogic/logging v0.0.0-20220621023351-0e680bb454b9
+	github.com/brotherlogic/logging v0.0.0-20220704171146-73ea6aeb7d76
 	github.com/brotherlogic/monitor v0.0.0-20200610021023-f01db8d3fdc3
 	github.com/brotherlogic/recordcollection v0.0.0-20220523152032-8bbc7e07eba1
 	github.com/brotherlogic/tracer v0.0.0-20200519014902-f0edd3e0722a

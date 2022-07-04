@@ -184,9 +184,6 @@ func main() {
 					state := buildState(st, uptime)
 					if len(state) > 0 {
 						prechar := ""
-						if s.Master {
-							prechar = "*"
-						}
 						fmt.Printf("%v%v (%v): %v -> %v\n", prechar, s.Identifier, s.Name, st.GetKey(), state)
 					}
 
