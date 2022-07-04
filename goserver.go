@@ -77,7 +77,6 @@ var (
 
 // GoServer The basic server construct
 type GoServer struct {
-	Servername              string
 	Port                    int32
 	Registry                *pb.RegistryEntry
 	dialler                 dialler

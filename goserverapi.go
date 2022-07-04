@@ -709,7 +709,7 @@ func (clientBuilder mainBuilder) NewDiscoveryServiceClient(conn *grpc.ClientConn
 
 // RegisterServerIgnore registers this server with ignore master set.
 func (s *GoServer) RegisterServer(servername string, external bool) error {
-	s.Servername = servername
+	s.serverName = servername
 
 	// Short circuit if we don't need to register
 	if s.noRegister {
@@ -729,7 +729,7 @@ func (s *GoServer) RegisterServer(servername string, external bool) error {
 	start := s.registerAttempts
 	for err != nil && s.registerAttempts-start < 10 {
 		s.registerAttempts++
-		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external, false)
+		port, err = s.getRegisteredServerPort(getLocalIP(), s.serverName, external, false)
 		s.Port = port
 	}
 	return err
@@ -755,7 +755,7 @@ func (s *GoServer) RegisterServerV2(external bool) error {
 	start := s.registerAttempts
 	for err != nil && s.registerAttempts-start < 10 {
 		s.registerAttempts++
-		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external, true)
+		port, err = s.getRegisteredServerPort(getLocalIP(), s.serverName, external, true)
 		s.Port = port
 	}
 
@@ -1307,7 +1307,7 @@ func (s *GoServer) ImmediateIssue(ctx context.Context, title, body string, print
 	defer conn.Close()
 
 	client := pbgh.NewGithubClient(conn)
-	return client.AddIssue(ctx, &pbgh.Issue{Service: s.Servername, Title: title, Body: body, Sticky: false, PrintImmediately: print})
+	return client.AddIssue(ctx, &pbgh.Issue{Service: s.serverName, Title: title, Body: body, Sticky: false, PrintImmediately: print})
 }
 
 func (s *GoServer) DeleteIssue(ctx context.Context, number int32) error {
@@ -1318,7 +1318,7 @@ func (s *GoServer) DeleteIssue(ctx context.Context, number int32) error {
 	defer conn.Close()
 
 	client := pbgh.NewGithubClient(conn)
-	_, err = client.DeleteIssue(ctx, &pbgh.DeleteRequest{Issue: &pbgh.Issue{Service: s.Servername, Number: number}})
+	_, err = client.DeleteIssue(ctx, &pbgh.DeleteRequest{Issue: &pbgh.Issue{Service: s.serverName, Number: number}})
 	return err
 }
 
@@ -1459,10 +1459,6 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 			return -1, err
 		}
 		s.Registry = r.GetService()
-
-		if !entry.GetIgnoresMaster() {
-			s.RaiseIssue("Bad server", fmt.Sprintf("%v needs to be converted into a non-masterful server", entry))
-		}
 
 		return r.GetService().Port, nil
 	}
