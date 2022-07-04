@@ -707,13 +707,8 @@ func (clientBuilder mainBuilder) NewDiscoveryServiceClient(conn *grpc.ClientConn
 	return pb.NewDiscoveryServiceClient(conn)
 }
 
-// RegisterServer registers this server
-func (s *GoServer) RegisterServer(servername string, external bool) error {
-	return s.RegisterServerIgnore(servername, external, false)
-}
-
 // RegisterServerIgnore registers this server with ignore master set.
-func (s *GoServer) RegisterServerIgnore(servername string, external bool, ignore bool) error {
+func (s *GoServer) RegisterServer(servername string, external bool) error {
 	s.Servername = servername
 
 	// Short circuit if we don't need to register
@@ -723,7 +718,7 @@ func (s *GoServer) RegisterServerIgnore(servername string, external bool, ignore
 		if err != nil {
 			hostname = "Server-" + IP
 		}
-		entry := &pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: false, Identifier: hostname, Port: s.Port, IgnoresMaster: ignore}
+		entry := &pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: false, Identifier: hostname, Port: s.Port}
 		s.Registry = entry
 
 		return nil
@@ -734,19 +729,14 @@ func (s *GoServer) RegisterServerIgnore(servername string, external bool, ignore
 	start := s.registerAttempts
 	for err != nil && s.registerAttempts-start < 10 {
 		s.registerAttempts++
-		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external, false, ignore)
+		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external, false)
 		s.Port = port
 	}
 	return err
 }
 
 // RegisterServerV2 registers this server under the v2 protocol
-func (s *GoServer) RegisterServerV2(servername string, external bool, ignore bool) error {
-	if !ignore {
-		s.RaiseIssue("Bad register", "doing a non master register")
-	}
-	s.Servername = servername
-
+func (s *GoServer) RegisterServerV2(external bool) error {
 	// Short circuit if we don't need to register
 	if s.noRegister {
 		IP := getLocalIP()
@@ -754,15 +744,8 @@ func (s *GoServer) RegisterServerV2(servername string, external bool, ignore boo
 		if err != nil {
 			hostname = "Server-" + IP
 		}
-		entry := &pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: false, Identifier: hostname, Port: s.Port, Version: pb.RegistryEntry_V2, IgnoresMaster: ignore}
+		entry := &pb.RegistryEntry{Ip: IP, Name: s.serverName, ExternalPort: false, Identifier: hostname, Port: s.Port, Version: pb.RegistryEntry_V2}
 		s.Registry = entry
-
-		//Prep the dlog since we're not on the register path
-		if !s.preppedDLog && s.DiskLog {
-			s.prepDLog(servername)
-		} else {
-			s.Log(fmt.Sprintf("Not setting up disk logging %v and %v", s.preppedDLog, s.DiskLog))
-		}
 
 		return nil
 	}
@@ -772,7 +755,7 @@ func (s *GoServer) RegisterServerV2(servername string, external bool, ignore boo
 	start := s.registerAttempts
 	for err != nil && s.registerAttempts-start < 10 {
 		s.registerAttempts++
-		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external, true, ignore)
+		port, err = s.getRegisteredServerPort(getLocalIP(), s.Servername, external, true)
 		s.Port = port
 	}
 
@@ -963,7 +946,7 @@ func (s *GoServer) Reregister(ctx context.Context, in *pbl.ReregisterRequest) (*
 	if s.Registry == nil {
 		return nil, fmt.Errorf("You haven't registered yet")
 	}
-	err := s.RegisterServerV2(s.Registry.Name, s.Registry.ExternalPort, s.Registry.IgnoresMaster)
+	err := s.RegisterServerV2(s.Registry.ExternalPort)
 	return &pbl.ReregisterResponse{}, err
 }
 
@@ -1023,8 +1006,8 @@ func (s *GoServer) Mote(ctx context.Context, in *pbl.MoteRequest) (*pbl.Empty, e
 	return &pbl.Empty{}, err
 }
 
-func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool, v2 bool, im bool) (int32, error) {
-	return s.registerServer(IP, servername, external, v2, im, grpcDialler{}, mainBuilder{}, osHostGetter{})
+func (s *GoServer) getRegisteredServerPort(IP string, servername string, external bool, v2 bool) (int32, error) {
+	return s.registerServer(IP, servername, external, v2, grpcDialler{}, mainBuilder{}, osHostGetter{})
 }
 
 //Save a protobuf
@@ -1451,7 +1434,7 @@ func (s *GoServer) PLog(ictx context.Context, message string, level pbd.LogLevel
 }
 
 // RegisterServer Registers a server with the system and gets the port number it should use
-func (s *GoServer) registerServer(IP string, servername string, external bool, v2 bool, im bool, dialler dialler, builder clientBuilder, getter hostGetter) (int32, error) {
+func (s *GoServer) registerServer(IP string, servername string, external bool, v2 bool, dialler dialler, builder clientBuilder, getter hostGetter) (int32, error) {
 	if !v2 {
 		s.RaiseIssue("Trying to register as v1", "Is trying to register")
 	}
@@ -1470,7 +1453,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 		if err != nil {
 			hostname = "Server-" + IP
 		}
-		entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname, TimeToClean: 5000, Version: pb.RegistryEntry_V2, IgnoresMaster: im}
+		entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname, TimeToClean: 5000, Version: pb.RegistryEntry_V2}
 		ctx, cancel := utils.ManualContext("register-"+servername, time.Second*30)
 		defer cancel()
 		t := time.Now()
@@ -1499,7 +1482,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 	if err != nil {
 		hostname = "Server-" + IP
 	}
-	entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname, TimeToClean: 5000, IgnoresMaster: im}
+	entry := pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname, TimeToClean: 5000}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	t := time.Now()

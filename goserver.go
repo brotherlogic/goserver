@@ -161,6 +161,7 @@ type GoServer struct {
 	Bits                    int
 	runner                  string
 	registerTime            time.Time
+	serverName              string
 }
 
 func (s *GoServer) pickLead() {
@@ -260,8 +261,16 @@ func (s *GoServer) RunSudo() {
 }
 
 // PrepServer builds out the server for use.
-func (s *GoServer) PrepServer() {
+func (s *GoServer) PrepServer(name string) {
+	s.serverName = name
 	s.prepareServer(false)
+
+	//Prep the dlog since we're not on the register path
+	if !s.preppedDLog && s.DiskLog {
+		s.prepDLog(name)
+	} else {
+		s.Log(fmt.Sprintf("Not setting up disk logging %v and %v", s.preppedDLog, s.DiskLog))
+	}
 }
 
 // PrepServerNoRegister builds out a server that doesn't register
