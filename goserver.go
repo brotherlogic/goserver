@@ -160,6 +160,7 @@ type GoServer struct {
 	runner                  string
 	registerTime            time.Time
 	serverName              string
+	IssueCount              int
 }
 
 func (s *GoServer) pickLead() {
