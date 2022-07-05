@@ -264,13 +264,6 @@ func (s *GoServer) PrepServer(name string) {
 
 	s.serverName = name
 	s.prepareServer(false)
-
-	//Prep the dlog since we're not on the register path
-	if !s.preppedDLog && s.DiskLog {
-		s.prepDLog(name)
-	} else {
-		s.Log(fmt.Sprintf("Not setting up disk logging %v and %v", s.preppedDLog, s.DiskLog))
-	}
 }
 
 // PrepServerNoRegister builds out a server that doesn't register
@@ -357,6 +350,13 @@ func (s *GoServer) prepareServer(register bool) {
 		s.Bits = 32
 	}
 	bits.Set(float64(s.Bits))
+
+	//Prep the dlog since we're not on the register path
+	if !s.preppedDLog {
+		s.prepDLog(s.serverName)
+	} else {
+		s.Log(fmt.Sprintf("Not setting up disk logging %v and %v", s.preppedDLog, s.DiskLog))
+	}
 }
 
 func (s *GoServer) teardown() {
