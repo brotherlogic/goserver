@@ -555,7 +555,7 @@ func (s *GoServer) suicideWatch() {
 			runtime.GC()
 			_, mem2 := s.getCPUUsage()
 			s.latestMem = int(mem2)
-			s.Log(fmt.Sprintf("Running GC with memory %v (took %v) %v -> %v", mem, time.Now().Sub(t), mem, mem2))
+			s.Log(fmt.Sprintf("Running GC with memory %v (took %v) %v -> %v", mem, time.Since(t), mem, mem2))
 			mem = mem2
 		}
 
@@ -564,7 +564,7 @@ func (s *GoServer) suicideWatch() {
 		if m.HeapAlloc > 15000000 {
 			var m runtime.MemStats
 			runtime.ReadMemStats(&m)
-			s.RaiseIssue("Memory Pressure", fmt.Sprintf("Memory is high: %v bytes but hang on: %v", mem, m.HeapAlloc))
+			s.RaiseIssue("Memory Pressure", fmt.Sprintf("Memory is high: %v bytes but hang on: %v (%v/%v)", mem, m.HeapAlloc, s.Registry.Identifier, s.Registry.Name))
 		}
 
 		s.checkMem(mem)
