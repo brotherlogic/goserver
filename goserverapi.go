@@ -1177,6 +1177,9 @@ func init() {
 }
 
 func (s *GoServer) ImmediateIssue(ctx context.Context, title, body string, print bool) (*pbgh.Issue, error) {
+	if s.SkipIssue {
+		return &pbgh.Issue{Number: 12}, nil
+	}
 	conn, err := s.FDialServer(ctx, "githubcard")
 	if err != nil {
 		return nil, err
@@ -1188,6 +1191,9 @@ func (s *GoServer) ImmediateIssue(ctx context.Context, title, body string, print
 }
 
 func (s *GoServer) DeleteIssue(ctx context.Context, number int32) error {
+	if s.SkipIssue {
+		return nil
+	}
 	conn, err := s.FDialServer(ctx, "githubcard")
 	if err != nil {
 		return err
