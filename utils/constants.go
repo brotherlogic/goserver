@@ -2,7 +2,7 @@ package utils
 
 const (
 	// RegistryIP - Local IP for discover
-	RegistryIP = "192.168.86.24"
+	RegistryIP = "192.168.86.100"
 
 	//LocalIP - Local IP for discover
 	LocalIP = "127.0.0.1"
@@ -11,7 +11,7 @@ const (
 	RegistryPort = 50055
 
 	// Discover the overall thing for discover
-	Discover = "monitoring:50055"
+	Discover = "newrunner:50055"
 
 	// LocalDiscover the overall thing for discover
 	LocalDiscover = "127.0.0.1:50055"
