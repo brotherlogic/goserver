@@ -63,6 +63,7 @@ func (s *GoServer) DLog(ctx context.Context, text string) {
 	if s.dlogHandle != nil {
 		code, err := utils.GetContextKey(ctx)
 		if err != nil {
+			s.RaiseIssue("Logging error", fmt.Sprintf("Log line %v had no context key", text))
 			code = "NONE"
 		}
 		s.dlogHandle.WriteString(fmt.Sprintf("%v|%v|%v|%v\n", time.Now().Format(time.RFC3339Nano), s.Registry.GetIdentifier(), code, text))
