@@ -161,6 +161,7 @@ type GoServer struct {
 	registerTime            time.Time
 	serverName              string
 	IssueCount              int
+	ElideRequests           bool
 }
 
 func (s *GoServer) pickLead() {
