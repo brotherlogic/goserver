@@ -66,13 +66,10 @@ func (s *GoServer) DLog(ctx context.Context, text string) {
 			code = "NONE"
 		}
 		s.dlogHandle.WriteString(fmt.Sprintf("%v|%v|%v|%v\n", time.Now().Format(time.RFC3339Nano), s.Registry.GetIdentifier(), code, text))
-		v1, v2 := os.Stat(fmt.Sprintf("/media/scratch/dlogs/%v", s.Registry.GetName()))
-		s.dlogHandle.WriteString(fmt.Sprintf("%v|%v|%v|%v\n", time.Now().Format(time.RFC3339Nano), s.Registry.GetIdentifier(), code, fmt.Sprintf("%v -> %v, %v", s.lastLogCheck, v1, v2)))
 
 		if time.Since(s.lastLogCheck) > time.Minute {
 			if _, err := os.Stat(fmt.Sprintf("/media/scratch/dlogs/%v", s.Registry.GetName())); !os.IsNotExist(err) {
 				size, err := dirSize(fmt.Sprintf("/media/scratch/dlogs/%v", s.Registry.GetName()))
-				s.dlogHandle.WriteString(fmt.Sprintf("%v|%v|%v|%v\n", time.Now().Format(time.RFC3339Nano), s.Registry.GetIdentifier(), code, fmt.Sprintf("GOTSIZE %v, %v", size, err)))
 				if err != nil {
 					if s.Registry != nil {
 						s.RaiseIssue("Bad log problem", fmt.Sprintf("Error reeading logs on %v: %v", s.Registry.Identifier, err))
