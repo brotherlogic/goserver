@@ -165,12 +165,14 @@ type GoServer struct {
 }
 
 func (s *GoServer) pickLead() {
+	ctx, cancel := utils.ManualContext("server-picklead", time.Minute)
+	defer cancel()
 	if !s.NeedsLead {
 		return
 	}
 
 	for !s.LameDuck {
-		s.Log(fmt.Sprintf("ElectionState %v -> %v", s.LeadState, s.CurrentLead))
+		s.CtxLog(ctx, fmt.Sprintf("ElectionState %v -> %v", s.LeadState, s.CurrentLead))
 		switch s.LeadState {
 		case pbg.LeadState_ELECTING:
 			s.runSimpleElection()
@@ -196,7 +198,7 @@ func (s *GoServer) verifyFollower() bool {
 
 	conn, err := s.FDialSpecificServer(ctx, s.Registry.Name, s.CurrentLead)
 	if err != nil {
-		s.Log(fmt.Sprintf("Unable to dial leader: %v -> %v", s.CurrentLead, err))
+		s.CtxLog(ctx, fmt.Sprintf("Unable to dial leader: %v -> %v", s.CurrentLead, err))
 		return false
 	}
 	defer conn.Close()
@@ -204,7 +206,7 @@ func (s *GoServer) verifyFollower() bool {
 	gsclient := pbg.NewGoserverServiceClient(conn)
 	_, err = gsclient.IsAlive(ctx, &pbg.Alive{})
 	if err != nil {
-		s.Log(fmt.Sprintf("Leader is not alive: %v -> %v", s.CurrentLead, err))
+		s.CtxLog(ctx, fmt.Sprintf("Leader is not alive: %v -> %v", s.CurrentLead, err))
 		return false
 	}
 
@@ -218,12 +220,12 @@ func (s *GoServer) runSimpleElection() {
 
 	friends, err := s.FFind(ctx, s.Registry.Name)
 	if err != nil {
-		s.Log(fmt.Sprintf("Unable to list friends for election: %v", err))
+		s.CtxLog(ctx, fmt.Sprintf("Unable to list friends for election: %v", err))
 		return
 	}
 
 	for _, friend := range friends {
-		s.Log(fmt.Sprintf("ChooseLead comparison %v and %v", friend, s.Registry.Identifier))
+		s.CtxLog(ctx, fmt.Sprintf("ChooseLead comparison %v and %v", friend, s.Registry.Identifier))
 		if !strings.HasPrefix(friend, s.Registry.Identifier) {
 			conn, err := s.FDial(friend)
 			if err != nil {
@@ -356,8 +358,6 @@ func (s *GoServer) prepareServer(register bool) {
 	//Prep the dlog since we're not on the register path
 	if !s.preppedDLog {
 		s.prepDLog(s.serverName)
-	} else {
-		s.Log(fmt.Sprintf("Not setting up disk logging %v and %v", s.preppedDLog, s.DiskLog))
 	}
 }
 
@@ -496,10 +496,6 @@ var (
 		Help: "Calls into bad dials",
 	})
 )
-
-func (s *GoServer) Log(message string) {
-	s.CtxLog(context.Background(), message)
-}
 
 func (s *GoServer) CtxLog(ctx context.Context, message string) {
 	if s.SkipLog {

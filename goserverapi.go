@@ -116,7 +116,7 @@ var (
 )
 
 func (s *GoServer) ChooseLead(ctx context.Context, req *pbl.ChooseLeadRequest) (*pbl.ChooseLeadResponse, error) {
-	s.Log(fmt.Sprintf("ChooseLead %v and %v -> %v", req.GetServer(), s.Registry.Identifier, strings.Compare(req.GetServer(), s.Registry.Identifier)))
+	s.CtxLog(ctx, fmt.Sprintf("ChooseLead %v and %v -> %v", req.GetServer(), s.Registry.Identifier, strings.Compare(req.GetServer(), s.Registry.Identifier)))
 	if strings.Compare(req.GetServer(), s.Registry.Identifier) > 0 {
 		return &pbl.ChooseLeadResponse{Chosen: s.Registry.Identifier}, nil
 	}
@@ -232,16 +232,6 @@ func (s *GoServer) BaseDial(c string) (*grpc.ClientConn, error) {
 	return grpc.Dial(c, grpc.WithInsecure(), s.withClientUnaryInterceptor())
 }
 
-// NewBaseDial dials a connection
-func (s *GoServer) NewBaseDial(c string) (*grpc.ClientConn, error) {
-	badDial.With(prometheus.Labels{"call": "newbasedial-" + c}).Inc()
-	s.RaiseIssue("BadNewBaseDial", fmt.Sprintf("%v has called NewBaseDial", s.Registry))
-	s.Log(fmt.Sprintf("%v is calling %v via NewBaseDial", s.Registry.Name, c))
-	return grpc.Dial("discovery:///"+c,
-		grpc.WithInsecure(),
-		s.withClientUnaryInterceptor())
-}
-
 // DialServer dials a given server
 func (s *GoServer) DialServer(server, host string) (*grpc.ClientConn, error) {
 	s.RaiseIssue("Dial Server", "Has called DialServer")
@@ -312,7 +302,7 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 
 	s.clientr++
 	if s.clientr > 50 {
-		s.Log(fmt.Sprintf("%v is running %v client requests -> %v (e.g. %v) [%+v]", s.Registry, s.clientr, method, req, ctx))
+		s.CtxLog(ctx, fmt.Sprintf("%v is running %v client requests -> %v (e.g. %v) [%+v]", s.Registry, s.clientr, method, req, ctx))
 	}
 	defer func() {
 		s.clientr--
@@ -404,7 +394,7 @@ func (s *GoServer) recordTrace(ctx context.Context, tracer *rpcStats, name strin
 			peer, found := peer.FromContext(ctx)
 
 			if found {
-				s.Log(fmt.Sprintf("High: (%+v), %v", peer.Addr, ctx))
+				s.CtxLog(ctx, fmt.Sprintf("High: (%+v), %v", peer.Addr, ctx))
 			}
 			s.RaiseIssue("Over Active Service", fmt.Sprintf("rpc_%v%v is busy -> %v QPS / %v QTie", tracer.source, tracer.rpcName, qps, tracer.timeIn/time.Now().Sub(s.startup)))
 		}
@@ -477,7 +467,7 @@ func (s *GoServer) runHandle(ctx context.Context, handler grpc.UnaryHandler, req
 		if s.RPCTracing {
 			if r := recover(); r != nil {
 				err = fmt.Errorf("%v", r)
-				s.Log(fmt.Sprintf("Crashed: %v", string(debug.Stack())))
+				s.CtxLog(ctx, fmt.Sprintf("Crashed: %v", string(debug.Stack())))
 				s.SendCrash(ctx, fmt.Sprintf("%v", string(debug.Stack())), pbbs.Crash_PANIC)
 				s.recordTrace(ctx, tracer, name, time.Now().Sub(ti), err, "", true)
 			} else {
@@ -524,8 +514,10 @@ func (s *GoServer) HTTPGet(ctx context.Context, url string, useragent string) (s
 }
 
 func (s *GoServer) checkMem(mem float64) {
+	ctx, cancel := utils.ManualContext("check-mem", time.Minute)
+	defer cancel()
 	if mem > float64(s.MemCap) {
-		s.Log(fmt.Sprintf("Memory exceeded, killing ourselves"))
+		s.CtxLog(ctx, fmt.Sprintf("Memory exceeded, killing ourselves"))
 		ctx, cancel := utils.BuildContext("goserver-crash", s.Registry.Name)
 		defer cancel()
 		s.SendCrash(ctx, "Memory is Too high", pbbs.Crash_MEMORY)
@@ -544,6 +536,7 @@ func (s *GoServer) checkMem(mem float64) {
 func (s *GoServer) suicideWatch() {
 	for true {
 		time.Sleep(s.suicideTime)
+		ctx, cancel := utils.ManualContext("goserver-suicide-"+s.Registry.Identifier, time.Minute)
 
 		// Commit suicide if our memory usage is high
 		_, mem := s.getCPUUsage()
@@ -555,7 +548,7 @@ func (s *GoServer) suicideWatch() {
 			runtime.GC()
 			_, mem2 := s.getCPUUsage()
 			s.latestMem = int(mem2)
-			s.Log(fmt.Sprintf("Running GC with memory %v (took %v) %v -> %v", mem, time.Since(t), mem, mem2))
+			s.CtxLog(ctx, fmt.Sprintf("Running GC with memory %v (took %v) %v -> %v", mem, time.Since(t), mem, mem2))
 			mem = mem2
 		}
 
@@ -571,7 +564,6 @@ func (s *GoServer) suicideWatch() {
 
 		//commit suicide if we're detached from the parent and we're not sudoing
 		if s.Killme {
-			ctx, cancel := utils.ManualContext("goserver-suicide-"+s.Registry.Identifier, time.Minute)
 			if s.Sudo {
 				p, err := ps.FindProcess(os.Getppid())
 				s.DLog(ctx, fmt.Sprintf("SUDO PARENT: %v and %v", p, err))
@@ -978,6 +970,8 @@ func (s *GoServer) setLock(lockName string, ti time.Time) error {
 }
 
 func (s *GoServer) runLockingTask(t sFunc) {
+	ctx, cancel := utils.ManualContext("run_locaking_task", time.Minute)
+	defer cancel()
 	lockName := s.Registry.Name + "-" + t.key
 	for true {
 		lockingRequests.With(prometheus.Labels{"lock": lockName}).Inc()
@@ -990,12 +984,12 @@ func (s *GoServer) runLockingTask(t sFunc) {
 				// Set the lock
 				err = s.setLock(lockName, ti)
 			} else {
-				s.Log(fmt.Sprintf("Failed to run task: %v, %v", t.key, err))
+				s.CtxLog(ctx, fmt.Sprintf("Failed to run task: %v, %v", t.key, err))
 			}
 		}
 
 		// Wait until we can possibly acquire the lock
-		s.Log(fmt.Sprintf("Sleeping for %v (%v) from %v", ti.Sub(time.Now())+time.Second*30, err, t.key))
+		s.CtxLog(ctx, fmt.Sprintf("Sleeping for %v (%v) from %v", ti.Sub(time.Now())+time.Second*30, err, t.key))
 		time.Sleep(ti.Sub(time.Now()) + time.Second*30)
 	}
 }
@@ -1118,14 +1112,16 @@ func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
 
 // Serve Runs the server
 func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
+	ctx, cancel := utils.ManualContext("goserver-server", time.Minute)
+	defer cancel()
 	time.Sleep(time.Second * 2)
-	s.Log(fmt.Sprintf("Starting (new) %v on port %v startup (%v)", s.RunningFile, s.Registry.Port, time.Since(s.registerTime)))
+	s.CtxLog(ctx, fmt.Sprintf("Starting (new) %v on port %v startup (%v)", s.RunningFile, s.Registry.Port, time.Since(s.registerTime)))
 	startupTime.Set(float64(time.Since(s.registerTime).Milliseconds()))
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(int(s.Port)))
 	if err != nil {
 		deets, err2 := exec.Command("sudo", "lsof", "-i", fmt.Sprintf(":%v", s.Port)).Output()
-		s.Log(fmt.Sprintf("Unable to start: %v (%v), %v", err, string(deets), err2))
+		s.CtxLog(ctx, fmt.Sprintf("Unable to start: %v (%v), %v", err, string(deets), err2))
 
 		// Silent exit
 		if strings.Contains(fmt.Sprintf("%v", err2), "address already in use") {
@@ -1268,7 +1264,7 @@ func (s *GoServer) BounceIssue(title, body string, job string) {
 func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.Crash_CrashType) {
 	conn, err := s.FDialServer(ctx, "buildserver")
 	if err != nil {
-		s.Log(fmt.Sprintf("Unable to dial buildserver: %v", err))
+		s.CtxLog(ctx, fmt.Sprintf("Unable to dial buildserver: %v", err))
 	}
 	if err == nil {
 		defer conn.Close()
@@ -1286,7 +1282,7 @@ func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.C
 			Crash: &pbbs.Crash{
 				ErrorMessage: crashText + "\n" + infoString,
 				CrashType:    ctype}})
-		s.Log(fmt.Sprintf("Reported crash: %v", err))
+		s.CtxLog(ctx, fmt.Sprintf("Reported crash: %v", err))
 	}
 }
 
@@ -1321,11 +1317,14 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 		s.RaiseIssue("Trying to register as v1", "Is trying to register")
 	}
 	if v2 {
+		ctx, cancel := utils.ManualContext("register-"+servername, time.Second*30)
+		defer cancel()
+
 		// Now we can prep the dlog
 		if !s.preppedDLog && s.DiskLog {
 			s.prepDLog(servername)
 		} else {
-			s.Log(fmt.Sprintf("Not setting up disk logging %v and %v", s.preppedDLog, s.DiskLog))
+			s.CtxLog(ctx, fmt.Sprintf("Not setting up disk logging %v and %v", s.preppedDLog, s.DiskLog))
 		}
 
 		conn, err := dialler.Dial(utils.LocalDiscover, grpc.WithInsecure())
@@ -1336,8 +1335,6 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 			hostname = "Server-" + IP
 		}
 		entry := &pb.RegistryEntry{Ip: IP, Name: servername, ExternalPort: external, Identifier: hostname, TimeToClean: 5000, Version: pb.RegistryEntry_V2}
-		ctx, cancel := utils.ManualContext("register-"+servername, time.Second*30)
-		defer cancel()
 		t := time.Now()
 		s.DLog(ctx, fmt.Sprintf("REGISTER: %v", entry))
 		r, err := registry.RegisterV2(ctx, &pb.RegisterRequest{Service: entry})

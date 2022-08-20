@@ -16,11 +16,7 @@ import (
 )
 
 func (s *GoServer) hasScratch() bool {
-	file, err := os.Open("/proc/mounts")
-
-	if err != nil {
-		s.Log(fmt.Sprintf("Unable to read mounts: %v", err))
-	}
+	file, _ := os.Open("/proc/mounts")
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
@@ -92,16 +88,11 @@ func (s *GoServer) prepDLog(serviceName string) {
 	s.preppedDLog = true
 	if s.hasScratch() {
 		filename := fmt.Sprintf("/media/scratch/dlogs/%v/%v.logs", serviceName, time.Now().Unix())
-		err := os.MkdirAll(fmt.Sprintf("/media/scratch/dlogs/%v/", serviceName), 0777)
-		if err != nil {
-			s.Log(fmt.Sprintf("Unable to create log dir: %v", err))
-		}
+		os.MkdirAll(fmt.Sprintf("/media/scratch/dlogs/%v/", serviceName), 0777)
 
 		//Delete all files a week old
-		files, err := ioutil.ReadDir(fmt.Sprintf("/media/scratch/dlogs/%v/", serviceName))
-		if err != nil {
-			s.Log(fmt.Sprintf("Unable to list log files: %v", err))
-		}
+		files, _ := ioutil.ReadDir(fmt.Sprintf("/media/scratch/dlogs/%v/", serviceName))
+
 		count := 0
 		for _, file := range files {
 			if time.Since(file.ModTime()) > time.Hour*24*7 {
@@ -109,24 +100,14 @@ func (s *GoServer) prepDLog(serviceName string) {
 				count++
 			}
 		}
-		s.Log(fmt.Sprintf("Removed %v files", count))
 
-		fhandle, err := os.Create(filename)
-		if err != nil {
-			s.Log(fmt.Sprintf("Unable to open file: %v", err))
-		}
+		fhandle, _ := os.Create(filename)
 		s.dlogHandle = fhandle
-		s.Log(fmt.Sprintf("Prepped dlog"))
 	} else if serviceName == "gobuildslave" {
 		filename := fmt.Sprintf("/home/simon/gobuildslave.tlog")
-		fhandle, err := os.Create(filename)
-		if err != nil {
-			s.Log(fmt.Sprintf("Unable to open file: %v", err))
-		}
+		fhandle, _ := os.Create(filename)
 		s.dlogHandle = fhandle
-		s.Log(fmt.Sprintf("Prepped temp dlog"))
 	} else {
-		s.Log(fmt.Sprintf("Scratch not found, no disk logging"))
 		hn, err := os.Hostname()
 		s.RaiseIssue("Missing Disk Logs", fmt.Sprintf("%v,%v,%v has not disk logging potential", hn, err, s.Registry.GetIdentifier()))
 	}
