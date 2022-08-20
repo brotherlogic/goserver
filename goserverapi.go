@@ -571,22 +571,24 @@ func (s *GoServer) suicideWatch() {
 
 		//commit suicide if we're detached from the parent and we're not sudoing
 		if s.Killme {
+			ctx, cancel := utils.ManualContext("goserver-suicide-"+s.Registry.Identifier, time.Minute)
 			if s.Sudo {
 				p, err := ps.FindProcess(os.Getppid())
-				s.DLog(context.Background(), fmt.Sprintf("SUDO PARENT: %v and %v", p, err))
+				s.DLog(ctx, fmt.Sprintf("SUDO PARENT: %v and %v", p, err))
 				if err == nil && p.PPid() == 1 {
 					os.Exit(1)
 				} else {
 					if p.Executable() != "sudo" {
-						s.Log(fmt.Sprintf("Not exiting: %v, %+v", err, p))
+						s.CtxLog(ctx, fmt.Sprintf("Not exiting: %v, %+v", err, p))
 					}
 				}
 			} else {
-				s.DLog(context.Background(), fmt.Sprintf("NOSUDO PARENT: %v and %v", os.Getppid(), s.Killme))
+				s.DLog(ctx, fmt.Sprintf("NOSUDO PARENT: %v and %v", os.Getppid(), s.Killme))
 				if os.Getppid() == 1 && s.Killme {
 					os.Exit(1)
 				}
 			}
+			cancel()
 		}
 	}
 }
