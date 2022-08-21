@@ -38,7 +38,6 @@ import (
 	pbks "github.com/brotherlogic/keystore/proto"
 	lpb "github.com/brotherlogic/logging/proto"
 	pbd "github.com/brotherlogic/monitor/proto"
-	pbt "github.com/brotherlogic/tracer/proto"
 	pbv "github.com/brotherlogic/versionserver/proto"
 
 	ps "github.com/mitchellh/go-ps"
@@ -124,22 +123,6 @@ func (s *GoServer) ChooseLead(ctx context.Context, req *pbl.ChooseLeadRequest) (
 	return &pbl.ChooseLeadResponse{Chosen: req.GetServer()}, nil
 }
 
-func (s *GoServer) trace(c context.Context, name string) context.Context {
-	go func() {
-		s.sendTrace(c, name, time.Now())
-	}()
-
-	// Add in the context
-	md, _ := metadata.FromIncomingContext(c)
-	return metadata.NewOutgoingContext(c, md)
-}
-
-func (s *GoServer) mark(c context.Context, t time.Duration, m string) {
-	go func() {
-		s.sendMark(c, t, m)
-	}()
-}
-
 func (s *GoServer) alive(ctx context.Context, entry *pb.RegistryEntry) error {
 	conn, err := s.FDial(fmt.Sprintf("%v:%v", entry.GetIdentifier(), entry.GetPort()))
 	if err != nil {
@@ -149,74 +132,6 @@ func (s *GoServer) alive(ctx context.Context, entry *pb.RegistryEntry) error {
 	client := pbl.NewGoserverServiceClient(conn)
 	_, err = client.IsAlive(ctx, &pbl.Alive{})
 	return err
-}
-
-func (s *GoServer) sendTrace(c context.Context, name string, t time.Time) error {
-	md, found := metadata.FromIncomingContext(c)
-	if found {
-		if _, ok := md["trace-id"]; ok {
-			idt := md["trace-id"][0]
-
-			if idt != "" {
-				id := idt
-				if strings.HasPrefix(id, "test") {
-					return errors.New("Test trace")
-				}
-
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-				defer cancel()
-
-				conn, err := s.FDialServer(ctx, "tracer")
-				if err == nil {
-					defer conn.Close()
-					client := pbt.NewTracerServiceClient(conn)
-
-					// Adjust the time if necessary
-					if t.IsZero() {
-						t = time.Now()
-					}
-
-					m := &pbt.Event{Server: s.Registry.Identifier, Binary: s.Registry.Name, Id: id, Call: name, Timestamp: t.UnixNano()}
-					_, err := client.Record(ctx, &pbt.RecordRequest{Event: m})
-					return err
-				}
-			}
-
-			return fmt.Errorf("Unable to trace - maybe because of %v", md)
-		}
-	}
-	s.incoming++
-	return fmt.Errorf("Unable to trace - context: %v", c)
-}
-
-func (s *GoServer) sendMark(c context.Context, t time.Duration, message string) error {
-	md, found := metadata.FromIncomingContext(c)
-	if found {
-		if _, ok := md["trace-id"]; ok {
-			idt := md["trace-id"][0]
-
-			if idt != "" {
-				id := idt
-				if strings.HasPrefix(id, "test") {
-					return errors.New("Test trace")
-				}
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-				defer cancel()
-
-				conn, err := s.FDialServer(ctx, "tracer")
-				if err == nil {
-					defer conn.Close()
-					client := pbt.NewTracerServiceClient(conn)
-
-					_, err := client.Mark(ctx, &pbt.MarkRequest{LongRunningId: id, RunningTimeInMs: t.Nanoseconds() / 1000000, Origin: s.Registry.Name, RequestMessage: message})
-					return err
-				}
-			}
-
-			return fmt.Errorf("Unable to trace - maybe because of %v", md)
-		}
-	}
-	return fmt.Errorf("Unable to trace - context: %v", c)
 }
 
 // DoDial dials a server
@@ -381,12 +296,6 @@ func (s *GoServer) recordTrace(ctx context.Context, tracer *rpcStats, name strin
 		}
 	}
 
-	// Raise an issue on a long call
-	if timeTaken > time.Second*5 && mark {
-		s.marks++
-		s.mark(ctx, timeTaken, fmt.Sprintf("%v/%v: %v -> %v", s.Registry.Name, s.Registry.Identifier, name, req))
-	}
-
 	if tracer.count > 100 {
 		seconds := time.Now().Sub(s.startup).Nanoseconds() / 1000000000
 		qps := float64(tracer.count) / float64(seconds)
@@ -430,10 +339,6 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 		tracer = s.getTrace(info.FullMethod, "server")
 	}
 
-	// Calls the handler
-	if s.SendTrace {
-		ctx = s.trace(ctx, info.FullMethod)
-	}
 	t := time.Now()
 	h, err := s.runHandle(ctx, handler, req, tracer, info.FullMethod)
 
