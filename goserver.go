@@ -446,7 +446,7 @@ type clientBuilder interface {
 	NewDiscoveryServiceClient(conn *grpc.ClientConn) pb.DiscoveryServiceClient
 }
 
-func getLocalIP() string {
+func (s *GoServer) getLocalIP(ctx context.Context) string {
 	ifaces, _ := net.Interfaces()
 
 	var ip net.IP
@@ -460,6 +460,10 @@ func getLocalIP() string {
 				}
 			}
 		}
+	}
+
+	if ip == nil || ip.String() == "<nil>" {
+		s.CtxLog(ctx, fmt.Sprintf("Unable to get IP: %v", ifaces))
 	}
 
 	return ip.String()
