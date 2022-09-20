@@ -543,7 +543,9 @@ func (s *GoServer) RegisterServer(ctx context.Context, servername string, extern
 }
 
 // RegisterServerV2 registers this server under the v2 protocol
-func (s *GoServer) RegisterServerV2(ctx context.Context, external bool) error {
+func (s *GoServer) RegisterServerV2(external bool) error {
+	ctx, cancel := utils.ManualContext(s.Registry.Name+"-register", time.Minute)
+	defer cancel()
 	// Short circuit if we don't need to register
 	if s.noRegister {
 		IP := s.getLocalIP(ctx)
@@ -749,7 +751,7 @@ func (s *GoServer) Reregister(ctx context.Context, in *pbl.ReregisterRequest) (*
 	if s.Registry == nil {
 		return nil, fmt.Errorf("You haven't registered yet")
 	}
-	err := s.RegisterServerV2(ctx, s.Registry.ExternalPort)
+	err := s.RegisterServerV2(s.Registry.ExternalPort)
 	return &pbl.ReregisterResponse{}, err
 }
 
