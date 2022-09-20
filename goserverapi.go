@@ -544,7 +544,7 @@ func (s *GoServer) RegisterServer(ctx context.Context, servername string, extern
 
 // RegisterServerV2 registers this server under the v2 protocol
 func (s *GoServer) RegisterServerV2(external bool) error {
-	ctx, cancel := utils.ManualContext(s.Registry.Name+"-register", time.Minute)
+	ctx, cancel := utils.ManualContext(s.serverName+"-register", time.Minute)
 	defer cancel()
 	// Short circuit if we don't need to register
 	if s.noRegister {
