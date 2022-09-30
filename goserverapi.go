@@ -1234,7 +1234,10 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 			s.CtxLog(ctx, fmt.Sprintf("Not setting up disk logging %v and %v", s.preppedDLog, s.DiskLog))
 		}
 
-		conn, err := dialler.Dial(utils.LocalDiscover, grpc.WithInsecure())
+		conn, err := s.FDial(utils.Discover)
+		if err != nil {
+			return -1, err
+		}
 		defer s.close(conn)
 		registry := pb.NewDiscoveryServiceV2Client(conn)
 		hostname, err := getter.Hostname()
