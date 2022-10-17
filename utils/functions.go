@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
@@ -332,7 +334,9 @@ func LFFind(ctx context.Context, servername string) ([]string, error) {
 
 // LFDial fundamental dial
 func LFDial(host string) (*grpc.ClientConn, error) {
-	return grpc.Dial(host, grpc.WithInsecure())
+	return grpc.Dial(host,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()))
 }
 
 // LFDialServer dial a specific job
