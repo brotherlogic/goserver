@@ -23,6 +23,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -1037,9 +1038,8 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 
 		return fmt.Errorf("Bad startup (%v) -> %v, %v", string(deets), err, err2)
 	}
-	fullOpts := append(opt,
-		grpc.UnaryInterceptor(s.serverInterceptor),
-	)
+	fullOpts := append(opt, grpc.UnaryInterceptor(s.serverInterceptor))
+	fullOpts = append(opt, grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()))
 	server := grpc.NewServer(fullOpts...)
 	s.Register.DoRegister(server)
 	pbl.RegisterGoserverServiceServer(server, s)

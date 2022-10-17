@@ -6,6 +6,7 @@ import (
 	"math/rand"
 
 	"github.com/brotherlogic/goserver/utils"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 
 	dpb "github.com/brotherlogic/discovery/proto"
@@ -121,5 +122,6 @@ func (s *GoServer) FDial(host string) (*grpc.ClientConn, error) {
 func (s *GoServer) FPDial(host string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
 	opts = append(opts, grpc.WithInsecure())
 	opts = append(opts, s.withClientUnaryInterceptor())
+	opts = append(opts, grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()))
 	return grpc.Dial(host, opts...)
 }

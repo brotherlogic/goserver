@@ -17,6 +17,12 @@ import (
 	keystoreclient "github.com/brotherlogic/keystore/client"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/sdk/resource"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -262,12 +268,38 @@ func (s *GoServer) RunSudo() {
 	s.Sudo = true
 }
 
+func tracerProvider(name string) (*tracesdk.TracerProvider, error) {
+	// Create the Jaeger exporter
+	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint("http://toru:14268/api/traces")))
+	if err != nil {
+		return nil, err
+	}
+	tp := tracesdk.NewTracerProvider(
+		// Always be sure to batch in production.
+		tracesdk.WithBatcher(exp),
+		// Record information about this application in a Resource.
+		tracesdk.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceNameKey.String(name),
+			attribute.String("environment", "prod"),
+			attribute.Int64("ID", 1),
+		)),
+	)
+	return tp, nil
+}
+
 // PrepServer builds out the server for use.
 func (s *GoServer) PrepServer(name string) {
 	s.registerTime = time.Now()
 
 	s.serverName = name
 	s.prepareServer(false)
+
+	tp, err := tracerProvider(name)
+	if err != nil {
+		s.RaiseIssue("Unable to trace", fmt.Sprintf("Error is %v", err))
+	}
+	otel.SetTracerProvider(tp)
 }
 
 // PrepServerNoRegister builds out a server that doesn't register
