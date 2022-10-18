@@ -8,6 +8,7 @@ import (
 	"github.com/brotherlogic/goserver/utils"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	dpb "github.com/brotherlogic/discovery/proto"
 )
@@ -115,7 +116,7 @@ func (s *GoServer) FFindSpecificServer(ctx context.Context, servername string, h
 
 // FDial fundamental dial
 func (s *GoServer) FDial(host string) (*grpc.ClientConn, error) {
-	return grpc.Dial(host, grpc.WithInsecure(),
+	return grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithChainUnaryInterceptor(
 			otelgrpc.UnaryClientInterceptor(),
 			s.clientInterceptor,
@@ -124,7 +125,7 @@ func (s *GoServer) FDial(host string) (*grpc.ClientConn, error) {
 
 // FPDial fundamental dial
 func (s *GoServer) FPDial(host string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
-	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	opts = append(opts, grpc.WithChainUnaryInterceptor(
 		otelgrpc.UnaryClientInterceptor(),
 		s.clientInterceptor,
