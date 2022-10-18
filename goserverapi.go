@@ -1039,7 +1039,7 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 		return fmt.Errorf("Bad startup (%v) -> %v, %v", string(deets), err, err2)
 	}
 	fullOpts := append(opt, grpc.UnaryInterceptor(s.serverInterceptor))
-	fullOpts = append(opt, grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()))
+	fullOpts = append(fullOpts, grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()))
 	server := grpc.NewServer(fullOpts...)
 	s.Register.DoRegister(server)
 	pbl.RegisterGoserverServiceServer(server, s)
