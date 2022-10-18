@@ -123,7 +123,9 @@ func (s *GoServer) FDial(host string) (*grpc.ClientConn, error) {
 // FPDial fundamental dial
 func (s *GoServer) FPDial(host string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
 	opts = append(opts, grpc.WithInsecure())
-	opts = append(opts, s.withClientUnaryInterceptor())
-	opts = append(opts, grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()))
+	opts = append(opts, grpc.WithChainUnaryInterceptor(
+		otelgrpc.UnaryClientInterceptor(),
+		s.clientInterceptor,
+	))
 	return grpc.Dial(host, opts...)
 }
