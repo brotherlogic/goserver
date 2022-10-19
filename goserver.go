@@ -18,8 +18,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
@@ -281,8 +281,6 @@ func tracerProvider(name string) (*tracesdk.TracerProvider, error) {
 		tracesdk.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceNameKey.String(name),
-			attribute.String("environment", "prod"),
-			attribute.Int64("ID", 1),
 		)),
 	)
 	return tp, nil
@@ -300,6 +298,8 @@ func (s *GoServer) PrepServer(name string) {
 		s.RaiseIssue("Unable to trace", fmt.Sprintf("Error is %v", err))
 	}
 	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
+
 }
 
 // PrepServerNoRegister builds out a server that doesn't register
