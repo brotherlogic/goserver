@@ -1158,12 +1158,15 @@ func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job stri
 				_, err := client.AddIssue(ctx, &pbgh.Issue{Service: job, Title: title, Body: body})
 				issueBounces.With(prometheus.Labels{"error": fmt.Sprintf("%v", err)}).Inc()
 				if err != nil {
+					s.CtxLog(ctx, fmt.Sprintf("Failure to add issue: %v", err))
 					s.alertError = fmt.Sprintf("Failure to add issue: %v", err)
 				}
 			} else {
+				s.CtxLog(ctx, fmt.Sprintf("Cannot locate ghc"))
 				s.alertError = fmt.Sprintf("Cannot locate githubcard")
 			}
 		} else {
+			s.CtxLog(ctx, "Skip Log enabled")
 			s.alertError = "Skip log enabled"
 		}
 	}()
