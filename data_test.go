@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	pb "github.com/brotherlogic/goserver/proto"
-	google_protobuf "github.com/golang/protobuf/ptypes/any"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 func TestBasicStore(t *testing.T) {
-	mts := &mts{store: &memstore{mem: make(map[string]*google_protobuf.Any)}}
+	mts := &mts{store: &memstore{mem: make(map[string]*anypb.Any)}}
 
 	test := &pb.Alive{Name: "testing"}
 

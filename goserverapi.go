@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/brotherlogic/goserver/utils"
-	"github.com/golang/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -30,6 +29,7 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/resolver"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	pbbs "github.com/brotherlogic/buildserver/proto"
 	pb "github.com/brotherlogic/discovery/proto"

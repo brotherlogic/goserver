@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	google_protobuf "github.com/golang/protobuf/ptypes/any"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	dspb "github.com/brotherlogic/dstore/proto"
 )
@@ -37,7 +37,7 @@ func (s *GoServer) SaveData(ctx context.Context, data []byte, key string, consen
 	defer conn.Close()
 
 	client := dspb.NewDStoreServiceClient(conn)
-	res, err := client.Write(ctx, &dspb.WriteRequest{Key: key, Value: &google_protobuf.Any{Value: data}})
+	res, err := client.Write(ctx, &dspb.WriteRequest{Key: key, Value: &anypb.Any{Value: data}})
 	if err != nil {
 		return err
 	}

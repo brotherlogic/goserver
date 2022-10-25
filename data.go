@@ -11,16 +11,16 @@ import (
 	dspb "github.com/brotherlogic/datastore/proto"
 	dpb "github.com/brotherlogic/dstore/proto"
 	kspb "github.com/brotherlogic/keystore/proto"
-	"github.com/golang/protobuf/proto"
-	google_protobuf "github.com/golang/protobuf/ptypes/any"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
-//NewMemoryStore build a memory store for testing
+// NewMemoryStore build a memory store for testing
 func (s *GoServer) NewMemoryStore() translatedStore {
-	return &mts{store: &memstore{mem: make(map[string]*google_protobuf.Any)}}
+	return &mts{store: &memstore{mem: make(map[string]*anypb.Any)}}
 }
 
-//NewFailMemoryStore fails
+// NewFailMemoryStore fails
 func (s *GoServer) NewFailMemoryStore() translatedStore {
 	return &fts{}
 }
@@ -58,19 +58,19 @@ func (mts *mts) Save(ctx context.Context, key string, message proto.Message) err
 	if err != nil {
 		return err
 	}
-	return mts.store.save(ctx, key, &google_protobuf.Any{Value: bytes})
+	return mts.store.save(ctx, key, &anypb.Any{Value: bytes})
 }
 
 type byteStore interface {
-	load(ctx context.Context, key string) (*google_protobuf.Any, error)
-	save(ctx context.Context, key string, data *google_protobuf.Any) error
+	load(ctx context.Context, key string) (*anypb.Any, error)
+	save(ctx context.Context, key string, data *anypb.Any) error
 }
 
 type memstore struct {
-	mem map[string]*google_protobuf.Any
+	mem map[string]*anypb.Any
 }
 
-func (m *memstore) load(ctx context.Context, key string) (*google_protobuf.Any, error) {
+func (m *memstore) load(ctx context.Context, key string) (*anypb.Any, error) {
 	if val, ok := m.mem[key]; ok {
 		return val, nil
 	}
@@ -78,7 +78,7 @@ func (m *memstore) load(ctx context.Context, key string) (*google_protobuf.Any, 
 	return nil, status.Errorf(codes.InvalidArgument, "Not found")
 }
 
-func (m *memstore) save(ctx context.Context, key string, data *google_protobuf.Any) error {
+func (m *memstore) save(ctx context.Context, key string, data *anypb.Any) error {
 	m.mem[key] = data
 	return nil
 }
@@ -87,7 +87,7 @@ type keystore struct {
 	dial func(ctx context.Context, server string) (*grpc.ClientConn, error)
 }
 
-func (k *keystore) load(ctx context.Context, key string) (*google_protobuf.Any, error) {
+func (k *keystore) load(ctx context.Context, key string) (*anypb.Any, error) {
 	conn, err := k.dial(ctx, "keystore")
 	if err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ func (k *keystore) load(ctx context.Context, key string) (*google_protobuf.Any, 
 	return resp.GetPayload(), err
 }
 
-func (k *keystore) save(ctx context.Context, key string, value *google_protobuf.Any) error {
+func (k *keystore) save(ctx context.Context, key string, value *anypb.Any) error {
 	conn, err := k.dial(ctx, "keystore")
 	if err != nil {
 		return err
@@ -119,7 +119,7 @@ type datastore struct {
 	dial func(ctx context.Context, server string) (*grpc.ClientConn, error)
 }
 
-func (d *datastore) load(ctx context.Context, key string) (*google_protobuf.Any, error) {
+func (d *datastore) load(ctx context.Context, key string) (*anypb.Any, error) {
 	conn, err := d.dial(ctx, "datastore")
 	if err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ func (d *datastore) load(ctx context.Context, key string) (*google_protobuf.Any,
 	return resp.GetValue(), err
 }
 
-func (d *datastore) save(ctx context.Context, key string, value *google_protobuf.Any) error {
+func (d *datastore) save(ctx context.Context, key string, value *anypb.Any) error {
 	conn, err := d.dial(ctx, "datastore")
 	if err != nil {
 		return err
@@ -151,7 +151,7 @@ type dstore struct {
 	dial func(ctx context.Context, server string) (*grpc.ClientConn, error)
 }
 
-func (d *dstore) load(ctx context.Context, key string) (*google_protobuf.Any, error) {
+func (d *dstore) load(ctx context.Context, key string) (*anypb.Any, error) {
 	conn, err := d.dial(ctx, "dstore")
 	if err != nil {
 		return nil, err
@@ -171,7 +171,7 @@ func (d *dstore) load(ctx context.Context, key string) (*google_protobuf.Any, er
 	return resp.GetValue(), err
 }
 
-func (d *dstore) save(ctx context.Context, key string, value *google_protobuf.Any) error {
+func (d *dstore) save(ctx context.Context, key string, value *anypb.Any) error {
 	conn, err := d.dial(ctx, "dstore")
 	if err != nil {
 		return err

@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -16,6 +15,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	pbdi "github.com/brotherlogic/discovery/proto"
 )
