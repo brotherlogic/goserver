@@ -1089,8 +1089,9 @@ github.com/brotherlogic/temp v0.0.0-20220819185254-5f529a740f11/go.mod h1:2OCEBW
 github.com/brotherlogic/temp v0.0.0-20220912143857-8954365caa2d/go.mod h1:qWlwnd7KbSFy1bk3xWndabG6nE2o8Fq8bP5gzw4QPH8=
 github.com/brotherlogic/temp v0.0.0-20221010180731-33146347b955/go.mod h1:KfJ1/rB5M/FnPw/1CjFFAsEOTb8XS78Dpe2WwSts9/A=
 github.com/brotherlogic/tracer v0.0.0-20200519014902-f0edd3e0722a/go.mod h1:G5egIzPDpfBFizGh991fMXD1DkJbFwZD5IhxxhUiKpY=
-github.com/brotherlogic/versionserver v0.0.0-20200424225322-e02615d8678f h1:CBkn5akC5Yrzlu47YZ0MaWQlec5cu0xLtvQGmvfuEXk=
 github.com/brotherlogic/versionserver v0.0.0-20200424225322-e02615d8678f/go.mod h1:o25hgF8jdYK2CABIu72BfovYNXaoxK4yrVGSTP5QK5w=
+github.com/brotherlogic/versionserver v0.0.0-20221025154054-c9bcd41be2f2 h1:YjFE4Sa+wwbl4yJwJaMQVeA4CMzLIDbbIuSMdsEp5/w=
+github.com/brotherlogic/versionserver v0.0.0-20221025154054-c9bcd41be2f2/go.mod h1:ODrbMDhG+yOp2vie9vE4oaKsKhILDralZMr7PJ4HrJY=
 github.com/brotherlogic/versiontracker v0.0.0-20200819052316-eb624326d315/go.mod h1:+6tCFFi2YcCgM1lY58pFbFqY8H72RA9VWnU93bQowfk=
 github.com/brotherlogic/versiontracker v0.0.0-20210605221821-235ea4862846/go.mod h1:sviLspIpJ+WyCa/bcAeg3nRc8VYPwypuZMUe6o3b/uA=
 github.com/brotherlogic/versiontracker v0.0.0-20210812191312-6aaea727fc29/go.mod h1:k7ZkdAfObEfnUovp7gVvdDeqohNSeW5xKFYBp8bF/Ns=
@@ -1357,8 +1358,9 @@ github.com/mattn/go-isatty v0.0.4/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNx
 github.com/mattn/go-runewidth v0.0.2/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/matttproud/golang_protobuf_extensions v1.0.2/go.mod h1:BSXmuO+STAnVfrANrmjBb36TMTDstsz7MSK+HVaYKv4=
-github.com/matttproud/golang_protobuf_extensions v1.0.3 h1:RhpFzbpyedYcLq/XT/Ez3MF8eXCoD3fpGevjDddiU+o=
 github.com/matttproud/golang_protobuf_extensions v1.0.3/go.mod h1:WEDCtRzq7vKwTlxNK8QeB2RZ7XEPQlGnSC9YSgRhMWc=
+github.com/matttproud/golang_protobuf_extensions v1.0.4 h1:mmDVorXM7PCGKw94cs5zkfA9PSy5pEvNWRP0ET0TIVo=
+github.com/matttproud/golang_protobuf_extensions v1.0.4/go.mod h1:BSXmuO+STAnVfrANrmjBb36TMTDstsz7MSK+HVaYKv4=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/mitchellh/cli v1.0.0/go.mod h1:hNIlj7HEI86fIcpObd7a0FcrxTWetlwJDGcceTlRvqc=
 github.com/mitchellh/go-homedir v1.0.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=

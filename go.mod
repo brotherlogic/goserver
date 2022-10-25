@@ -15,7 +15,8 @@ require (
 	github.com/brotherlogic/logging v0.0.0-20221025153509-fcd1f9a46d06
 	github.com/brotherlogic/monitor v0.0.0-20221025152653-c10877c5f9e6
 	github.com/brotherlogic/recordcollection v0.0.0-20221025153424-68cce63d7609
-	github.com/brotherlogic/versionserver v0.0.0-20200424225322-e02615d8678f
+	github.com/brotherlogic/versionserver v0.0.0-20221025154054-c9bcd41be2f2
+	github.com/golang/protobuf v1.5.2
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/prometheus/client_golang v1.13.0
 	github.com/struCoder/pidusage v0.2.1
@@ -33,8 +34,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.3 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
