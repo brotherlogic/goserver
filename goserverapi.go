@@ -165,7 +165,7 @@ func (s *GoServer) DialServer(server, host string) (*grpc.ClientConn, error) {
 	return nil, status.Errorf(codes.NotFound, "Unable to locate server called %v", server)
 }
 
-//DialLocal dials through the local discover
+// DialLocal dials through the local discover
 func (s *GoServer) DialLocal(server string) (*grpc.ClientConn, error) {
 	s.RaiseIssue("Dial Local", "has called Dial Local")
 	entry, err := utils.ResolveV2(server)
@@ -654,7 +654,7 @@ func (s *GoServer) IsAlive(ctx context.Context, in *pbl.Alive) (*pbl.Alive, erro
 	return nil, errors.New("Server reports unhealthy")
 }
 
-//State gets the state of the server.
+// State gets the state of the server.
 func (s *GoServer) State(ctx context.Context, in *pbl.Empty) (*pbl.ServerState, error) {
 	states := s.Register.GetState()
 	s.activeRPCsMutex.Lock()
@@ -792,12 +792,12 @@ func (s *GoServer) getRegisteredServerPort(IP string, servername string, externa
 	return s.registerServer(IP, servername, external, v2, grpcDialler{}, mainBuilder{}, osHostGetter{})
 }
 
-//Save a protobuf
+// Save a protobuf
 func (s *GoServer) Save(ctx context.Context, key string, p proto.Message) error {
 	return s.KSclient.Save(ctx, key, p)
 }
 
-//RunBackgroundTask with tracing and tracking
+// RunBackgroundTask with tracing and tracking
 func (s *GoServer) RunBackgroundTask(task func(ctx context.Context) error, name string) {
 	go s.run(sFunc{
 		fun:     task,
@@ -985,12 +985,12 @@ func (s *GoServer) runFunc(ctx context.Context, tracer *rpcStats, t sFunc) {
 	err = t.fun(ctx)
 }
 
-//Read a protobuf
+// Read a protobuf
 func (s *GoServer) Read(ctx context.Context, key string, typ proto.Message) (proto.Message, *pbks.ReadResponse, error) {
 	return s.KSclient.Read(ctx, key, typ)
 }
 
-//GetServers gets an IP address from the discovery server
+// GetServers gets an IP address from the discovery server
 func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
 	s.RaiseIssue("Trying to Get Servers", "Is trying to get servers")
 	conn, err := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
@@ -1112,7 +1112,7 @@ func (s *GoServer) DeleteIssue(ctx context.Context, number int32) error {
 	return err
 }
 
-//RaiseIssue raises an issue
+// RaiseIssue raises an issue
 func (s *GoServer) RaiseIssue(title, body string) {
 	s.IssueCount++
 	if s.SkipIssue {
@@ -1141,18 +1141,18 @@ var issueBounces = promauto.NewCounterVec(prometheus.CounterOpts{
 	Help: "The number of server requests",
 }, []string{"error"})
 
-//BounceIssue raises an issue for a different source
-func (s *GoServer) BounceIssue(title, body string, job string) {
+// BounceIssue raises an issue for a different source
+func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job string) {
 	s.AlertsFired++
 	go func() {
 		if !s.SkipLog {
-			ctx, cancel := utils.ManualContext(fmt.Sprintf("%v-%v", s.Registry.GetName(), "issue"), time.Minute)
+			ctx, cancel := utils.RefreshContext(ctx, "bounceissue", time.Minute)
 			defer cancel()
 			conn, err := s.FDialServer(ctx, "githubcard")
 			if err == nil {
 				defer conn.Close()
 				client := pbgh.NewGithubClient(conn)
-				ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+				ctx, cancel := context.WithTimeout(ctx, time.Minute)
 				defer cancel()
 
 				_, err := client.AddIssue(ctx, &pbgh.Issue{Service: job, Title: title, Body: body})
@@ -1169,7 +1169,7 @@ func (s *GoServer) BounceIssue(title, body string, job string) {
 	}()
 }
 
-//SendCrash reports a crash
+// SendCrash reports a crash
 func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.Crash_CrashType) {
 	conn, err := s.FDialServer(ctx, "buildserver")
 	if err != nil {
@@ -1195,7 +1195,7 @@ func (s *GoServer) SendCrash(ctx context.Context, crashText string, ctype pbbs.C
 	}
 }
 
-//PLog a simple string message with priority
+// PLog a simple string message with priority
 func (s *GoServer) PLog(ictx context.Context, message string, level pbd.LogLevel) {
 	if s.SkipLog {
 		log.Printf("LOG %v ->%v with %v", message, s.activeRPCsMutex, s.SkipLog)

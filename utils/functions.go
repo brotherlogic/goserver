@@ -44,6 +44,15 @@ func generateContext(origin string, t time.Duration) (context.Context, context.C
 	return context.WithTimeout(mContext, t)
 }
 
+func RefreshContext(ctx context.Context, key string, t time.Duration) (context.Context, context.CancelFunc) {
+	key, err := GetContextKey(ctx)
+	if err != nil {
+		return generateContext("context-failed", t)
+	}
+	mContext := metadata.AppendToOutgoingContext(context.Background(), "trace-id", key)
+	return context.WithTimeout(mContext, t)
+}
+
 func GetContextKey(ctx context.Context) (string, error) {
 	md, found := metadata.FromIncomingContext(ctx)
 	if found {
@@ -70,7 +79,7 @@ func GetContextKey(ctx context.Context) (string, error) {
 	return "", status.Errorf(codes.NotFound, "Could not extract trace-id from incoming or outgoing")
 }
 
-//FuzzyMatch experimental fuzzy match
+// FuzzyMatch experimental fuzzy match
 func FuzzyMatch(matcher, matchee proto.Message) error {
 	in := reflect.ValueOf(matcher)
 	out := reflect.ValueOf(matchee)
