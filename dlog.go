@@ -38,6 +38,10 @@ var (
 		Name: "dlog_size",
 		Help: "The number of server requests",
 	})
+	badWrites = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "dlog_bad_write",
+		Help: "The number of server requests",
+	})
 )
 
 func dirSize(path string) (int64, error) {
@@ -54,7 +58,7 @@ func dirSize(path string) (int64, error) {
 	return size, err
 }
 
-//DLog writes to the dlog
+// DLog writes to the dlog
 func (s *GoServer) DLog(ctx context.Context, text string) {
 	if s.dlogHandle != nil {
 		code, err := utils.GetContextKey(ctx)
@@ -63,6 +67,7 @@ func (s *GoServer) DLog(ctx context.Context, text string) {
 			if s.Registry != nil {
 				server = s.Registry.Identifier
 			}
+			badWrites.Inc()
 			s.RaiseIssue("Logging error", fmt.Sprintf("Log line %v had no context key (%v) -> %v", text, server, err))
 			code = "NONE"
 		}
