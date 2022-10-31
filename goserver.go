@@ -269,8 +269,12 @@ func (s *GoServer) RunSudo() {
 }
 
 func tracerProvider(name string) (*tracesdk.TracerProvider, error) {
+	logger := log.New(ioutil.Discard, "discared:", log.Lshortfile)
 	// Create the Jaeger exporter
-	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint("http://toru:14268/api/traces")))
+	exp, err := jaeger.New(jaeger.WithAgentEndpoint(
+		jaeger.WithAgentHost("toru"),
+		jaeger.WithAgentPort("14628"),
+		jaeger.WithLogger(logger)))
 	if err != nil {
 		return nil, err
 	}
