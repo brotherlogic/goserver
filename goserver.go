@@ -263,7 +263,7 @@ func (s *GoServer) getCPUUsage() (float64, float64) {
 	return v.CPU, v.Memory
 }
 
-//RunSudo runs as sudo
+// RunSudo runs as sudo
 func (s *GoServer) RunSudo() {
 	s.Sudo = true
 }
@@ -438,7 +438,7 @@ func (s *GoServer) reregister(d dialler, b clientBuilder) {
 	}
 }
 
-//GetIP gets an IP address from the discovery server
+// GetIP gets an IP address from the discovery server
 func (s *GoServer) GetIP(servername string) (string, int) {
 	badDial.With(prometheus.Labels{"call": "getip-" + servername}).Inc()
 	conn, err := s.dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())
@@ -501,7 +501,7 @@ func (s *GoServer) getLocalIP(ctx context.Context) string {
 	return ip.String()
 }
 
-//Dial a local server
+// Dial a local server
 func (s *GoServer) Dial(server string, dialler dialler, builder clientBuilder) (*grpc.ClientConn, error) {
 	badDial.With(prometheus.Labels{"call": "dial-" + server}).Inc()
 	conn, err := dialler.Dial(utils.RegistryIP+":"+strconv.Itoa(utils.RegistryPort), grpc.WithInsecure())

@@ -1020,6 +1020,9 @@ func (s *GoServer) GetServers(servername string) ([]*pb.RegistryEntry, error) {
 
 // Serve Runs the server
 func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
+	// Explicitly drop all logs
+	log.SetOutput(ioutil.Discard)
+
 	ctx, cancel := utils.ManualContext("goserver-server", time.Minute)
 	defer cancel()
 	time.Sleep(time.Second * 2)
