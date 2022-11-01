@@ -1242,7 +1242,7 @@ func (s *GoServer) registerServer(IP string, servername string, external bool, v
 			s.CtxLog(ctx, fmt.Sprintf("Not setting up disk logging %v and %v", s.preppedDLog, s.DiskLog))
 		}
 
-		conn, err := s.FDial(utils.Discover)
+		conn, err := s.FDial(utils.LocalDiscover)
 		if err != nil {
 			return -1, err
 		}
