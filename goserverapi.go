@@ -1064,6 +1064,7 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 	if !s.NoProm && s.Registry.Identifier != "rdisplay" {
 		http.Handle("/metrics", promhttp.Handler())
 		go func() {
+			s.CtxLog(ctx, fmt.Sprintf("Tracking metrics on port: %v", s.Port+2))
 			http.ListenAndServe(fmt.Sprintf(":%v", s.Port+2), nil)
 		}()
 	}
