@@ -1060,7 +1060,7 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 	// Enable profiling
 	go func() {
 		err := http.ListenAndServe(fmt.Sprintf(":%v", s.Port+1), nil)
-		s.CtxLog(ctx, "Listening for metrics: %v", err)
+		s.CtxLog(ctx, fmt.Sprintf("Listening for metrics: %v", err))
 	}()
 
 	// Enable prometheus
