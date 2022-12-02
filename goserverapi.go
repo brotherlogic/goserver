@@ -1035,11 +1035,12 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 		s.CtxLog(ctx, fmt.Sprintf("Unable to start: %v (%v), %v", err, string(deets), err2))
 
 		// Silent exit
-		if strings.Contains(fmt.Sprintf("%v", err2), "address already in use") {
+		if strings.Contains(fmt.Sprintf("%v", err2), "address already in use") ||
+			strings.Contains(fmt.Sprintf("%v", err), "address already in use") {
 			return nil
 		}
 
-		return fmt.Errorf("Bad startup (%v) -> %v, %v", string(deets), err, err2)
+		return fmt.Errorf("bad startup (%v) -> %v, %v", string(deets), err, err2)
 	}
 	fullOpts := append(opt, grpc.ChainUnaryInterceptor(
 		s.serverInterceptor,
