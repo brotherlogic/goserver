@@ -1037,6 +1037,7 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 		// Silent exit
 		if strings.Contains(fmt.Sprintf("%v", err2), "address already in use") ||
 			strings.Contains(fmt.Sprintf("%v", err), "address already in use") {
+			s.CtxLog(ctx, fmt.Sprintf("in use startup (%v) -> %v, %v", string(deets), err, err))
 			return nil
 		}
 
