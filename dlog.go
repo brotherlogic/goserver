@@ -116,6 +116,10 @@ func (s *GoServer) prepDLog(serviceName string) {
 		filename := fmt.Sprintf("/home/simon/gobuildmaster.tlog")
 		fhandle, _ := os.Create(filename)
 		s.dlogHandle = fhandle
+	} else if serviceName == "provisioner" {
+		filename := fmt.Sprintf("/home/simon/provisioner.tlog")
+		fhandle, _ := os.Create(filename)
+		s.dlogHandle = fhandle
 	} else {
 		hn, err := os.Hostname()
 		s.RaiseIssue("Missing Disk Logs", fmt.Sprintf("%v,%v,%v has not disk logging potential", hn, err, s.Registry.GetIdentifier()))
