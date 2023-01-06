@@ -17,9 +17,7 @@ import (
 	keystoreclient "github.com/brotherlogic/keystore/client"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/jaeger"
-	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
@@ -297,12 +295,12 @@ func (s *GoServer) PrepServer(name string) {
 	s.serverName = name
 	s.prepareServer(false)
 
-	tp, err := tracerProvider(name)
-	if err != nil {
-		s.RaiseIssue("Unable to trace", fmt.Sprintf("Error is %v", err))
-	}
-	otel.SetTracerProvider(tp)
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
+	//tp, err := tracerProvider(name)
+	//if err != nil {
+	//		s.RaiseIssue("Unable to trace", fmt.Sprintf("Error is %v", err))
+	//	}
+	//otel.SetTracerProvider(tp)
+	//otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 
 }
 
