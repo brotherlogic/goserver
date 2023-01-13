@@ -1093,6 +1093,10 @@ func init() {
 }
 
 func (s *GoServer) ImmediateIssue(ctx context.Context, title, body string, print bool) (*pbgh.Issue, error) {
+	return s.BounceImmediateIssue(ctx, s.serverName, title, body, print)
+}
+
+func (s *GoServer) BounceImmediateIssue(ctx context.Context, server, title, body string, print bool) (*pbgh.Issue, error) {
 	if s.SkipIssue {
 		return &pbgh.Issue{Number: 12}, nil
 	}
@@ -1103,7 +1107,7 @@ func (s *GoServer) ImmediateIssue(ctx context.Context, title, body string, print
 	defer conn.Close()
 
 	client := pbgh.NewGithubClient(conn)
-	return client.AddIssue(ctx, &pbgh.Issue{Service: s.serverName, Title: title, Body: body, Sticky: false, PrintImmediately: print})
+	return client.AddIssue(ctx, &pbgh.Issue{Service: server, Title: title, Body: body, Sticky: false, PrintImmediately: print})
 }
 
 func (s *GoServer) DeleteIssue(ctx context.Context, number int32) error {
