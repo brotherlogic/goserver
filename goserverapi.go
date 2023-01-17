@@ -458,14 +458,6 @@ func (s *GoServer) suicideWatch() {
 			mem = mem2
 		}
 
-		var m runtime.MemStats
-		runtime.ReadMemStats(&m)
-		if m.HeapAlloc > 15000000 && time.Since(s.startup) > time.Minute*5 {
-			var m runtime.MemStats
-			runtime.ReadMemStats(&m)
-			s.RaiseIssue("Memory Pressure", fmt.Sprintf("Memory is high: %v bytes but hang on: %v (%v/%v)", mem, m.HeapAlloc, s.Registry.Identifier, s.Registry.Name))
-		}
-
 		s.checkMem(mem)
 
 		//commit suicide if we're detached from the parent and we're not sudoing
