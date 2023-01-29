@@ -13,6 +13,7 @@ import (
 	"github.com/brotherlogic/goserver/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"google.golang.org/grpc/peer"
 )
 
 func (s *GoServer) hasScratch() bool {
@@ -68,7 +69,8 @@ func (s *GoServer) DLog(ctx context.Context, text string) {
 				server = s.Registry.Identifier
 			}
 			badWrites.Inc()
-			s.RaiseIssue("Logging error", fmt.Sprintf("Log line %v had no context key (%v) -> %v", text, server, err))
+			peer, ok := peer.FromContext(ctx)
+			s.RaiseIssue("Logging error", fmt.Sprintf("Log line %v had no context key (%v) -> %v [%v/%v]", text, server, err, peer, ok))
 			code = "NONE"
 		}
 		s.dlogHandle.WriteString(fmt.Sprintf("%v|%v|%v|%v\n", time.Now().Format(time.RFC3339Nano), s.Registry.GetIdentifier(), code, text))
