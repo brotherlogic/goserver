@@ -26,7 +26,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
-	"google.golang.org/grpc/resolver"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
@@ -1076,10 +1075,6 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 
 	server.Serve(lis)
 	return nil
-}
-
-func init() {
-	resolver.Register(&utils.DiscoveryServerResolverBuilder{})
 }
 
 func (s *GoServer) ImmediateIssue(ctx context.Context, title, body string, printImmediately, print bool) (*pbgh.Issue, error) {
