@@ -210,10 +210,12 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	opts ...grpc.CallOption,
 ) error {
 	rSize := proto.Size(req.(proto.Message))
-	if rSize > 100 {
-		s.DLog(ctx, fmt.Sprintf("C: %v <- %v bytes", method, rSize))
-	} else {
-		s.DLog(ctx, fmt.Sprintf("C: %v <- %v bytes", method, req))
+	if !strings.Contains(method, "IsAlive") {
+		if rSize > 100 {
+			s.DLog(ctx, fmt.Sprintf("C: %v <- %v bytes", method, rSize))
+		} else {
+			s.DLog(ctx, fmt.Sprintf("C: %v <- %v bytes", method, req))
+		}
 	}
 
 	s.clientr++
@@ -258,7 +260,9 @@ func (s *GoServer) clientInterceptor(ctx context.Context,
 	s.activeRPCs[method]--
 	s.activeRPCsMutex.Unlock()
 
-	s.DLog(ctx, fmt.Sprintf("C: %v -> %v", method, err))
+	if !strings.Contains(method, "IsAlive") {
+		s.DLog(ctx, fmt.Sprintf("C: %v -> %v", method, err))
+	}
 	return err
 }
 
@@ -316,10 +320,12 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (interface{}, error) {
 
-	if s.NoBody {
-		s.DLog(ctx, fmt.Sprintf("S: %v <- bytes %v", info.FullMethod, proto.Size(req.(proto.Message))))
-	} else {
-		s.DLog(ctx, fmt.Sprintf("S: %v <- %v", info.FullMethod, req))
+	if !strings.Contains(info.FullMethod, "IsAlive") {
+		if s.NoBody {
+			s.DLog(ctx, fmt.Sprintf("S: %v <- bytes %v", info.FullMethod, proto.Size(req.(proto.Message))))
+		} else {
+			s.DLog(ctx, fmt.Sprintf("S: %v <- %v", info.FullMethod, req))
+		}
 	}
 
 	s.serverr++
@@ -361,7 +367,9 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 	s.activeRPCs[info.FullMethod]--
 	s.activeRPCsMutex.Unlock()
 
-	s.DLog(ctx, fmt.Sprintf("S: %v -> %v", info.FullMethod, err))
+	if !strings.Contains(info.FullMethod, "IsAlive") {
+		s.DLog(ctx, fmt.Sprintf("S: %v -> %v", info.FullMethod, err))
+	}
 
 	return h, err
 }
