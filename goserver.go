@@ -17,10 +17,6 @@ import (
 	keystoreclient "github.com/brotherlogic/keystore/client"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"go.opentelemetry.io/otel/exporters/jaeger"
-	"go.opentelemetry.io/otel/sdk/resource"
-	tracesdk "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -264,28 +260,6 @@ func (s *GoServer) getCPUUsage() (float64, float64) {
 // RunSudo runs as sudo
 func (s *GoServer) RunSudo() {
 	s.Sudo = true
-}
-
-func tracerProvider(name string) (*tracesdk.TracerProvider, error) {
-	logger := log.New(ioutil.Discard, "discared:", log.Lshortfile)
-	// Create the Jaeger exporter
-	exp, err := jaeger.New(jaeger.WithAgentEndpoint(
-		jaeger.WithAgentHost("toru"),
-		jaeger.WithAgentPort("14628"),
-		jaeger.WithLogger(logger)))
-	if err != nil {
-		return nil, err
-	}
-	tp := tracesdk.NewTracerProvider(
-		// Always be sure to batch in production.
-		tracesdk.WithBatcher(exp),
-		// Record information about this application in a Resource.
-		tracesdk.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceNameKey.String(name),
-		)),
-	)
-	return tp, nil
 }
 
 // PrepServer builds out the server for use.

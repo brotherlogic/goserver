@@ -22,12 +22,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
-	"google.golang.org/grpc/resolver"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
@@ -464,14 +462,6 @@ func (s *GoServer) suicideWatch() {
 			s.latestMem = int(mem2)
 			s.CtxLog(ctx, fmt.Sprintf("Running GC with memory %v (took %v) %v -> %v", mem, time.Since(t), mem, mem2))
 			mem = mem2
-		}
-
-		var m runtime.MemStats
-		runtime.ReadMemStats(&m)
-		if m.HeapAlloc > 15000000 && time.Since(s.startup) > time.Minute*5 {
-			var m runtime.MemStats
-			runtime.ReadMemStats(&m)
-			s.RaiseIssue("Memory Pressure", fmt.Sprintf("Memory is high: %v bytes but hang on: %v (%v/%v)", mem, m.HeapAlloc, s.Registry.Identifier, s.Registry.Name))
 		}
 
 		s.checkMem(mem)
@@ -1053,7 +1043,6 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 	}
 	fullOpts := append(opt, grpc.ChainUnaryInterceptor(
 		s.serverInterceptor,
-		otelgrpc.UnaryServerInterceptor(),
 	))
 	server := grpc.NewServer(fullOpts...)
 	s.Register.DoRegister(server)
@@ -1096,15 +1085,11 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 	return nil
 }
 
-func init() {
-	resolver.Register(&utils.DiscoveryServerResolverBuilder{})
+func (s *GoServer) ImmediateIssue(ctx context.Context, title, body string, printImmediately, print bool) (*pbgh.Issue, error) {
+	return s.BounceImmediateIssue(ctx, s.serverName, title, body, printImmediately, print)
 }
 
-func (s *GoServer) ImmediateIssue(ctx context.Context, title, body string, print bool) (*pbgh.Issue, error) {
-	return s.BounceImmediateIssue(ctx, s.serverName, title, body, print)
-}
-
-func (s *GoServer) BounceImmediateIssue(ctx context.Context, server, title, body string, print bool) (*pbgh.Issue, error) {
+func (s *GoServer) BounceImmediateIssue(ctx context.Context, server, title, body string, printImmediately, print bool) (*pbgh.Issue, error) {
 	if s.SkipIssue {
 		return &pbgh.Issue{Number: 12}, nil
 	}
@@ -1115,7 +1100,7 @@ func (s *GoServer) BounceImmediateIssue(ctx context.Context, server, title, body
 	defer conn.Close()
 
 	client := pbgh.NewGithubClient(conn)
-	return client.AddIssue(ctx, &pbgh.Issue{Service: server, Title: title, Body: body, Sticky: false, PrintImmediately: print})
+	return client.AddIssue(ctx, &pbgh.Issue{Service: server, Title: title, Body: body, Sticky: false, PrintImmediately: print, Print: print})
 }
 
 func (s *GoServer) DeleteIssue(ctx context.Context, number int32) error {
@@ -1150,7 +1135,7 @@ func (s *GoServer) RaiseIssue(title, body string) {
 		if !s.SkipIssue && len(body) != 0 {
 			ctx, cancel := utils.ManualContext(fmt.Sprintf("%v-%v", s.Registry.GetName(), "issue"), time.Minute)
 			defer cancel()
-			s.ImmediateIssue(ctx, title, body, false)
+			s.ImmediateIssue(ctx, title, body, false, false)
 		} else {
 			s.alertError = "Skip log enabled"
 		}
