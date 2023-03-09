@@ -1131,13 +1131,13 @@ func (s *GoServer) RaiseIssue(title, body string) {
 	s.alertWait = time.Now().Add(time.Minute * 10)
 	s.AlertsFired++
 
-	go func() {
-		if !s.SkipIssue && len(body) != 0 {
+	if !s.SkipIssue && len(body) != 0 {
+		go func() {
 			ctx, cancel := utils.ManualContext(fmt.Sprintf("%v-%v", s.Registry.GetName(), "issue"), time.Minute)
 			defer cancel()
 			s.ImmediateIssue(ctx, title, body, false, false)
-		}
-	}()
+		}()
+	}
 }
 
 var issueBounces = promauto.NewCounterVec(prometheus.CounterOpts{
