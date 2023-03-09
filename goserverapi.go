@@ -1128,8 +1128,6 @@ func (s *GoServer) RaiseIssue(title, body string) {
 			ctx, cancel := utils.ManualContext(fmt.Sprintf("%v-%v", s.Registry.GetName(), "issue"), time.Minute)
 			defer cancel()
 			s.ImmediateIssue(ctx, title, body, false, false)
-		} else {
-			s.alertError = "Skip log enabled"
 		}
 	}()
 }
