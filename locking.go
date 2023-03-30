@@ -16,6 +16,9 @@ var election = promauto.NewGauge(prometheus.GaugeOpts{
 })
 
 func (s *GoServer) RunLockingElection(ctx context.Context, key string, detail string) (string, error) {
+	if s.SkipElect {
+		return "blah", nil
+	}
 	conn, err := s.FDialServer(ctx, "lock")
 	if err != nil {
 		return "", err
@@ -43,6 +46,9 @@ func (s *GoServer) RunLockingElection(ctx context.Context, key string, detail st
 }
 
 func (s *GoServer) ReleaseLockingElection(ctx context.Context, key string, lockKey string) error {
+	if s.SkipElect {
+		return nil
+	}
 	conn, err := s.FDialServer(ctx, "lock")
 	if err != nil {
 		return err
