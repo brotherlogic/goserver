@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"time"
 
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -344,8 +343,7 @@ func LFFind(ctx context.Context, servername string) ([]string, error) {
 // LFDial fundamental dial
 func LFDial(host string) (*grpc.ClientConn, error) {
 	return grpc.Dial(host,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()))
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 }
 
 // LFDialServer dial a specific job
