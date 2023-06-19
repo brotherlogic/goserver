@@ -1118,6 +1118,21 @@ func (s *GoServer) DeleteIssue(ctx context.Context, number int32) error {
 	return err
 }
 
+func (s *GoServer) DeleteBounceIssue(ctx context.Context, number int32, server string) error {
+	if s.SkipIssue {
+		return nil
+	}
+	conn, err := s.FDialServer(ctx, "githubcard")
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	client := pbgh.NewGithubClient(conn)
+	_, err = client.DeleteIssue(ctx, &pbgh.DeleteRequest{Issue: &pbgh.Issue{Service: server, Number: number}})
+	return err
+}
+
 // RaiseIssue raises an issue
 func (s *GoServer) RaiseIssue(title, body string) {
 	s.IssueCount++
