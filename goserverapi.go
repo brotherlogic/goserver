@@ -352,10 +352,6 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 		serverLatency.With(prometheus.Labels{"method": info.FullMethod}).Observe(float64(time.Now().Sub(t).Milliseconds()))
 	}
 
-	if time.Now().Sub(t) > time.Hour {
-		s.RaiseIssue("Slow Request", fmt.Sprintf("%v on %v/%v took %v (%v)", info.FullMethod, s.Registry.GetName(), s.Registry.GetIdentifier(), time.Now().Sub(t), req))
-	}
-
 	if err == nil && h != nil {
 		if proto.Size(h.(proto.Message)) > 1024*1024 {
 			s.RaiseIssue("Large Response", fmt.Sprintf("%v has produced a large response from %v (%vMb) -> %v", info.FullMethod, req, proto.Size(h.(proto.Message))/(1024*1024), ctx))
