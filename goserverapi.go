@@ -352,10 +352,6 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 		serverLatency.With(prometheus.Labels{"method": info.FullMethod}).Observe(float64(time.Now().Sub(t).Milliseconds()))
 	}
 
-	if time.Now().Sub(t) > time.Hour {
-		s.RaiseIssue("Slow Request", fmt.Sprintf("%v on %v/%v took %v (%v)", info.FullMethod, s.Registry.GetName(), s.Registry.GetIdentifier(), time.Now().Sub(t), req))
-	}
-
 	s.activeRPCsMutex.Lock()
 	s.activeRPCs[info.FullMethod]--
 	s.activeRPCsMutex.Unlock()
