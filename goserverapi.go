@@ -356,11 +356,6 @@ func (s *GoServer) serverInterceptor(ctx context.Context,
 		s.RaiseIssue("Slow Request", fmt.Sprintf("%v on %v/%v took %v (%v)", info.FullMethod, s.Registry.GetName(), s.Registry.GetIdentifier(), time.Now().Sub(t), req))
 	}
 
-	if err == nil && h != nil {
-		if proto.Size(h.(proto.Message)) > 1024*1024 {
-			s.RaiseIssue("Large Response", fmt.Sprintf("%v has produced a large response from %v (%vMb) -> %v", info.FullMethod, req, proto.Size(h.(proto.Message))/(1024*1024), ctx))
-		}
-	}
 	s.activeRPCsMutex.Lock()
 	s.activeRPCs[info.FullMethod]--
 	s.activeRPCsMutex.Unlock()
