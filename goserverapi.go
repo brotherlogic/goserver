@@ -1099,6 +1099,7 @@ func (s *GoServer) BounceImmediateIssue(ctx context.Context, server, title, body
 		s.CtxLog(ctx, fmt.Sprintf("Error adding issue: %v", err))
 		return nil, err
 	}
+	ghbReqs.Inc()
 	return &pbgh.Issue{
 		Number: int32(resp.GetIssueId()),
 	}, nil
@@ -1160,6 +1161,11 @@ var issueBounces = promauto.NewCounterVec(prometheus.CounterOpts{
 	Name: "server_bounces",
 	Help: "The number of server requests",
 }, []string{"error"})
+
+var ghbReqs = promauto.NewCounter(prometheus.CounterOpts{
+	Name: "ghb_count",
+	Help: "The number of server requests",
+})
 
 // BounceIssue raises an issue for a different source
 func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job string) {
