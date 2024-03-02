@@ -32,6 +32,7 @@ import (
 	pbbs "github.com/brotherlogic/buildserver/proto"
 	pb "github.com/brotherlogic/discovery/proto"
 	pbgh "github.com/brotherlogic/githubcard/proto"
+	ghbpb "github.com/brotherlogic/githubridge/proto"
 	pbgbs "github.com/brotherlogic/gobuildslave/proto"
 	pbl "github.com/brotherlogic/goserver/proto"
 	pbks "github.com/brotherlogic/keystore/proto"
@@ -76,6 +77,10 @@ var (
 
 	startupTime = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "startup_time",
+		Help: "The number of running routines at startup",
+	})
+	issueErrors = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "issue_errors",
 		Help: "The number of running routines at startup",
 	})
 
@@ -1082,14 +1087,21 @@ func (s *GoServer) BounceImmediateIssue(ctx context.Context, server, title, body
 	if s.SkipIssue {
 		return &pbgh.Issue{Number: 12}, nil
 	}
-	conn, err := s.FDialServer(ctx, "githubcard")
+
+	resp, err := s.ghbclient.CreateIssue(ctx, &ghbpb.CreateIssueRequest{
+		User:  "brotherlogic",
+		Repo:  "server",
+		Title: title,
+		Body:  body,
+	})
 	if err != nil {
+		issueErrors.Inc()
+		s.CtxLog(ctx, fmt.Sprintf("Error adding issue: %v", err))
 		return nil, err
 	}
-	defer conn.Close()
-
-	client := pbgh.NewGithubClient(conn)
-	return client.AddIssue(ctx, &pbgh.Issue{Service: server, Title: title, Body: body, Sticky: false, PrintImmediately: print, Print: print})
+	return &pbgh.Issue{
+		Number: int32(resp.GetIssueId()),
+	}, nil
 }
 
 func (s *GoServer) DeleteIssue(ctx context.Context, number int32) error {

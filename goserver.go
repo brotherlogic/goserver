@@ -14,7 +14,9 @@ import (
 	"sync"
 	"time"
 
+	githubridgeclient "github.com/brotherlogic/githubridge/client"
 	keystoreclient "github.com/brotherlogic/keystore/client"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"google.golang.org/grpc"
@@ -162,6 +164,7 @@ type GoServer struct {
 	serverName              string
 	IssueCount              int
 	ElideRequests           bool
+	ghbclient               githubridgeclient.GithubridgeClient
 }
 
 func (s *GoServer) pickLead() {
