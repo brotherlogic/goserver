@@ -1090,7 +1090,7 @@ func (s *GoServer) BounceImmediateIssue(ctx context.Context, server, title, body
 
 	resp, err := s.ghbclient.CreateIssue(ctx, &ghbpb.CreateIssueRequest{
 		User:  "brotherlogic",
-		Repo:  "server",
+		Repo:  server,
 		Title: title,
 		Body:  body,
 	})
