@@ -370,6 +370,19 @@ func (s *GoServer) prepareServer(register bool) {
 	if !s.preppedDLog {
 		s.prepDLog(s.serverName)
 	}
+
+	dirname, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+	password, err := os.ReadFile(fmt.Sprintf("%v/.ghb", dirname))
+	if err != nil {
+		log.Fatalf("Can't read token: %v", err)
+	}
+	s.ghbclient, err = githubridgeclient.GetClient(string(password))
+	if err != nil {
+		log.Fatalf("Bad client init: %v", err)
+	}
 }
 
 func (s *GoServer) teardown() {
