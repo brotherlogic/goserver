@@ -1100,6 +1100,7 @@ func (s *GoServer) BounceImmediateIssue(ctx context.Context, server, title, body
 		return nil, err
 	}
 	ghbReqs.Inc()
+
 	return &pbgh.Issue{
 		Number: int32(resp.GetIssueId()),
 	}, nil
@@ -1174,26 +1175,7 @@ func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job stri
 		if !s.SkipLog {
 			ctx, cancel := utils.RefreshContext(ctx, "bounceissue", time.Minute)
 			defer cancel()
-			conn, err := s.FDialServer(ctx, "githubcard")
-			if err == nil {
-				defer conn.Close()
-				client := pbgh.NewGithubClient(conn)
-				ctx, cancel := context.WithTimeout(ctx, time.Minute)
-				defer cancel()
-
-				_, err := client.AddIssue(ctx, &pbgh.Issue{Service: job, Title: title, Body: body})
-				issueBounces.With(prometheus.Labels{"error": fmt.Sprintf("%v", err)}).Inc()
-				if err != nil {
-					s.CtxLog(ctx, fmt.Sprintf("Failure to add issue: %v", err))
-					s.alertError = fmt.Sprintf("Failure to add issue: %v", err)
-				}
-			} else {
-				s.CtxLog(ctx, fmt.Sprintf("Cannot locate ghc"))
-				s.alertError = fmt.Sprintf("Cannot locate githubcard")
-			}
-		} else {
-			s.CtxLog(ctx, "Skip Log enabled")
-			s.alertError = "Skip log enabled"
+			s.BounceImmediateIssue(ctx, job, title, body, false, true)
 		}
 	}()
 }
