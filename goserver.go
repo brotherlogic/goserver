@@ -379,7 +379,7 @@ func (s *GoServer) prepareServer(register bool) {
 	if err != nil {
 		log.Fatalf("Can't read token: %v", err)
 	}
-	s.ghbclient, err = githubridgeclient.GetClient(string(password))
+	s.ghbclient, err = githubridgeclient.GetClientExternal(string(password))
 	if err != nil {
 		log.Fatalf("Bad client init: %v", err)
 	}

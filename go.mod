@@ -8,7 +8,7 @@ require (
 	github.com/brotherlogic/discovery v0.0.0-20230527174721-899846f80b8c
 	github.com/brotherlogic/dstore v0.0.0-20230527173950-04e3ae8f02ec
 	github.com/brotherlogic/githubcard v0.0.0-20230524015807-3bafe4a97e26
-	github.com/brotherlogic/githubridge v0.2766.0
+	github.com/brotherlogic/githubridge v0.2767.0
 	github.com/brotherlogic/gobuildslave v0.0.0-20230528035915-9de608647d34
 	github.com/brotherlogic/godiscogs v0.0.0-20230530030232-e7e2f67fbe33
 	github.com/brotherlogic/keystore v0.0.0-20230529052121-9d261c934fc9
