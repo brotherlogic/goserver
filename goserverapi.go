@@ -1088,6 +1088,10 @@ func (s *GoServer) BounceImmediateIssue(ctx context.Context, server, title, body
 		return &pbgh.Issue{Number: 12}, nil
 	}
 
+	if s.ghbclient == nil {
+		return nil, fmt.Errorf("Trying to raise issue before server is ready")
+	}
+
 	resp, err := s.ghbclient.CreateIssue(ctx, &ghbpb.CreateIssueRequest{
 		User:  "brotherlogic",
 		Repo:  server,
