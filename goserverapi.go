@@ -1079,11 +1079,11 @@ func (s *GoServer) Serve(opt ...grpc.ServerOption) error {
 	return nil
 }
 
-func (s *GoServer) ImmediateIssue(ctx context.Context, title, body string, printImmediately, print bool) (*pbgh.Issue, error) {
-	return s.BounceImmediateIssue(ctx, s.serverName, title, body, printImmediately, print)
+func (s *GoServer) ImmediateIssue(ctx context.Context, title, body string, printImmediately, print bool, labels ...string) (*pbgh.Issue, error) {
+	return s.BounceImmediateIssue(ctx, s.serverName, title, body, printImmediately, print, labels...)
 }
 
-func (s *GoServer) BounceImmediateIssue(ctx context.Context, server, title, body string, printImmediately, print bool) (*pbgh.Issue, error) {
+func (s *GoServer) BounceImmediateIssue(ctx context.Context, server, title, body string, printImmediately, print bool, labels ...string) (*pbgh.Issue, error) {
 	if s.SkipIssue {
 		return &pbgh.Issue{Number: 12}, nil
 	}
@@ -1104,6 +1104,20 @@ func (s *GoServer) BounceImmediateIssue(ctx context.Context, server, title, body
 		return nil, err
 	}
 	ghbReqs.Inc()
+
+	for _, label := range labels {
+		_, err = s.ghbclient.AddLabel(ctx, &ghbpb.AddLabelRequest{
+			User:  "brotherlogic",
+			Repo:  server,
+			Id:    int32(resp.GetIssueId()),
+			Label: label,
+		})
+		if err != nil {
+			s.CtxLog(ctx, fmt.Sprintf("Error adding label: %v", err))
+		} else {
+			ghbReqs.Inc()
+		}
+	}
 
 	return &pbgh.Issue{
 		Number: int32(resp.GetIssueId()),
@@ -1141,7 +1155,7 @@ func (s *GoServer) DeleteBounceIssue(ctx context.Context, number int32, server s
 }
 
 // RaiseIssue raises an issue
-func (s *GoServer) RaiseIssue(title, body string) {
+func (s *GoServer) RaiseIssue(title, body string, labels ...string) {
 	s.IssueCount++
 	if s.SkipIssue {
 		log.Printf("Raising Issue %v -> %v", title, body)
@@ -1157,7 +1171,7 @@ func (s *GoServer) RaiseIssue(title, body string) {
 		go func() {
 			ctx, cancel := utils.ManualContext(fmt.Sprintf("%v-%v", s.Registry.GetName(), "issue"), time.Minute)
 			defer cancel()
-			s.ImmediateIssue(ctx, title, body, false, false)
+			s.ImmediateIssue(ctx, title, body, false, false, labels...)
 		}()
 	}
 }
@@ -1173,13 +1187,13 @@ var ghbReqs = promauto.NewCounter(prometheus.CounterOpts{
 })
 
 // BounceIssue raises an issue for a different source
-func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job string) {
+func (s *GoServer) BounceIssue(ctx context.Context, title, body string, job string, labels ...string) {
 	s.AlertsFired++
 	go func() {
 		if !s.SkipLog {
 			ctx, cancel := utils.RefreshContext(ctx, "bounceissue", time.Minute)
 			defer cancel()
-			s.BounceImmediateIssue(ctx, job, title, body, false, true)
+			s.BounceImmediateIssue(ctx, job, title, body, false, true, labels...)
 		}
 	}()
 }
