@@ -1113,7 +1113,7 @@ func (s *GoServer) BounceImmediateIssue(ctx context.Context, server, title, body
 			Label: label,
 		})
 		if err != nil {
-			s.CtxLog(ctx, fmt.Sprintf("Error adding label: %v", err))
+			s.CtxLog(ctx, fmt.Sprintf("Failured to add label: %v", err))
 		} else {
 			ghbReqs.Inc()
 		}
